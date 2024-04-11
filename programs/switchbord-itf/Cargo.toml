@@ -1,0 +1,21 @@
+[package]
+name = "switchboard-itf"
+version = "0.1.0"
+description = "Interface to read switchboard aggregator data"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "switchboard_itf"
+
+[features]
+no-entrypoint = []
+cpi = ["no-entrypoint"]
+idl-build = ["anchor-lang/idl-build"]
+test-bpf = []
+debug = []
+
+[dependencies]
+anchor-lang = "0.29.0"
+bytemuck = { version = "1.4.0", features = ["derive", "min_const_generics"] }
+rust_decimal = "1.32.0"

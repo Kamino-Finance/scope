@@ -1,0 +1,20 @@
+[package]
+name = "lb-clmm-itf"
+version = "0.1.0"
+description = "Interface to interact with Meteora's lb-clmm program (partial)"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "lb_clmm_itf"
+
+[features]
+no-entrypoint = []
+cpi = ["no-entrypoint"]
+test-bpf = []
+debug = []
+
+[dependencies]
+anchor-lang = "0.28.0"
+decimal-wad = "0.1.9"
+bytemuck = { version = "1.4.0", features = ["derive", "min_const_generics"] }

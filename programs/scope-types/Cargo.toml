@@ -1,0 +1,27 @@
+[package]
+name = "scope-types"
+version = "1.0.0"
+description = "Types for Scope"
+repository = "https://github.com/Kamino-Finance/scope"
+authors = ["Scope Maintainers <dev@hubbleprotocol.io>"]
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib", "lib"]
+
+[features]
+# If none of the following is set, one will be selected based on env $CLUSTER variable
+# If $CLUSTER is not set either, default will be mainnet
+devnet = []
+localnet = []
+mainnet = []
+
+[dependencies]
+anchor-lang = ">= 0.28.0"
+solana-program = ">= 1.16.18"
+num_enum = ">0.5.7"
+cfg-if = "1.0.0"
+bytemuck = { version = "1.14.0", features = ["min_const_generics", "derive"] }

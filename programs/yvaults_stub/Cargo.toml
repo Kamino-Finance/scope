@@ -1,0 +1,16 @@
+[package]
+name = "yvaults_stub"
+version = "0.1.0"
+description = "A stub to allow compiling scope without access to the yvaults repo"
+edition = "2021"
+
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "yvaults_stub"
+
+[features]
+no-entrypoint = []
+devnet = []
+localnet = []
+mainnet = []

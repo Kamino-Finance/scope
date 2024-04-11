@@ -1,0 +1,66 @@
+[package]
+name = "scope"
+version = "0.1.0"
+description = "Scope is Hubble's oracle aggregator"
+repository = "https://github.com/Kamino-Finance/scope"
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "scope"
+
+[features]
+no-entrypoint = []
+cpi = ["no-entrypoint"]
+skip_price_validation = []
+test-bpf = []
+debug = []
+
+# If none of the following is set, one will be selected based on env $CLUSTER variable
+# If $CLUSTER is not set either, default will be mainnet
+default = ["yvaults"]
+yvaults = ["dep:yvaults"]
+devnet = ["skip_price_validation"]
+localnet = []
+mainnet = []
+serde = ["dep:serde"]
+
+[dependencies]
+anchor-lang = "0.28.0"
+anchor-spl = "0.28.0"
+solana-program = "~1.16.18"
+bytemuck = { version = "1.4.0", features = ["min_const_generics", "derive"] }
+num_enum = "0.7.0"
+cfg-if = "1.0.0"
+serde = { version = "1.0.136", optional = true }
+strum = { git = "https://github.com/hubbleprotocol/strum", features = [
+    "derive",
+], branch = "checked_arithmetics" }
+pyth-sdk-solana = "0.10.1"
+switchboard-program = "0.2.0"
+arrayref = "0.3.6"
+decimal-wad = "0.1.7"
+rust_decimal = "1.18.0"
+# Comment out the line below if you do not have access to the yvaults repo
+yvaults = { git = "ssh://git@github.com/hubbleprotocol/yvaults.git", features = [
+    "no-entrypoint",
+    "cpi",
+    "mainnet",
+], optional = true }
+# Uncomment the line below if you do not have access to the yvaults repo
+#yvaults = { path = "../yvaults_stub", package = "yvaults_stub", optional = true }
+sha2 = "0.10.0"
+whirlpool = { git = "https://github.com/hubbleprotocol/whirlpools", branch = "anchor/0.28.0", features = [
+    "no-entrypoint",
+    "cpi",
+] }
+raydium-amm-v3 = { git = "https://github.com/raydium-io/raydium-clmm", features = [
+    "no-entrypoint",
+    "cpi",
+] }
+jup-perp-itf = { path = "../jup-perp-itf", features = ["cpi"] }
+lb-clmm-itf = { path = "../lb-clmm-itf", features = ["no-entrypoint"] }
+intbits = "0.2.0"
+
