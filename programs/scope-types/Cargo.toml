@@ -18,6 +18,7 @@ crate-type = ["cdylib", "lib"]
 devnet = []
 localnet = []
 mainnet = []
+idl-build = ["anchor-lang/idl-build"]
 
 [dependencies]
 anchor-lang = ">= 0.28.0"
