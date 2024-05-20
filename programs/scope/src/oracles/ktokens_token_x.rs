@@ -3,20 +3,16 @@ use std::ops::Deref;
 use anchor_lang::{prelude::*, Result};
 use yvaults::{
     self as kamino,
-    clmm::{orca_clmm::OrcaClmm, Clmm},
+    clmm::Clmm,
     operations::vault_operations::common,
-    raydium_amm_v3::states::{PersonalPositionState as RaydiumPosition, PoolState as RaydiumPool},
-    raydium_clmm::RaydiumClmm,
     state::CollateralToken,
     state::{CollateralInfos, GlobalConfig, WhirlpoolStrategy},
-    utils::types::DEX,
     utils::{enums::LiquidityCalculationMode, price::TokenPrices},
-    whirlpool::state::{Position as OrcaPosition, Whirlpool as OrcaWhirlpool},
 };
 
+use crate::ScopeResult;
 use crate::{
     utils::{
-        account_deserialize,
         math::{price_of_lamports_to_price_of_tokens, u64_div_to_price},
         zero_copy_deserialize,
     },
@@ -43,7 +39,7 @@ pub fn get_token_x_per_share<'a, 'b>(
     clock: &Clock,
     extra_accounts: &mut impl Iterator<Item = &'b AccountInfo<'a>>,
     token: TokenTypes,
-) -> Result<DatedPrice>
+) -> ScopeResult<DatedPrice>
 where
     'a: 'b,
 {
@@ -83,7 +79,7 @@ where
                 name,
                 expected
             );
-            err!(ScopeError::UnexpectedAccount)
+            Err(ScopeError::UnexpectedAccount)
         } else {
             Ok(())
         }
@@ -118,7 +114,7 @@ where
     let scope_prices_ref =
         zero_copy_deserialize::<kamino::scope::OraclePrices>(scope_prices_account_info)?;
 
-    let clmm = get_clmm(
+    let clmm = super::ktokens::get_clmm(
         pool_account_info,
         position_account_info,
         &strategy_account_ref,
@@ -130,10 +126,16 @@ where
         &strategy_account_ref,
         None,
         clock.slot,
-    )?;
+    )
+    .map_err(|_| ScopeError::KTokenUnderlyingPriceNotValid)?;
 
     let num_token_x =
-        holdings_of_token_x(&strategy_account_ref, clmm.as_ref(), &token_prices, token)?;
+        holdings_of_token_x(&strategy_account_ref, clmm.as_ref(), &token_prices, token).map_err(
+            |e| {
+                msg!("Error while computing the Ktoken pool holdings: {:?}", e);
+                ScopeError::KTokenHoldingsCalculationError
+            },
+        )?;
     let num_shares = strategy_account_ref.shares_issued;
 
     // Get the least-recently updated component price from both scope chains
@@ -166,48 +168,6 @@ where
         unix_timestamp,
         ..Default::default()
     })
-}
-
-fn get_clmm<'a, 'info>(
-    pool: &'a AccountInfo<'info>,
-    position: &'a AccountInfo<'info>,
-    strategy: &WhirlpoolStrategy,
-) -> Result<Box<dyn Clmm + 'a>> {
-    let dex = DEX::try_from(strategy.strategy_dex).unwrap();
-    let clmm: Box<dyn Clmm> = match dex {
-        DEX::Orca => {
-            let pool = account_deserialize::<OrcaWhirlpool>(pool)?;
-            let position = if strategy.position != Pubkey::default() {
-                let position = account_deserialize::<OrcaPosition>(position)?;
-                Some(position)
-            } else {
-                None
-            };
-            Box::new(OrcaClmm {
-                pool,
-                position,
-                lower_tick_array: None,
-                upper_tick_array: None,
-            })
-        }
-        DEX::Raydium => {
-            let pool = zero_copy_deserialize::<RaydiumPool>(pool)?;
-            let position = if strategy.position != Pubkey::default() {
-                let position = account_deserialize::<RaydiumPosition>(position)?;
-                Some(position)
-            } else {
-                None
-            };
-            Box::new(RaydiumClmm {
-                pool,
-                position,
-                protocol_position: None,
-                lower_tick_array: None,
-                upper_tick_array: None,
-            })
-        }
-    };
-    Ok(clmm)
 }
 
 /// Returns amount of token x in the strategy

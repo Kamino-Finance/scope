@@ -1,44 +1,59 @@
-use anchor_lang::prelude::*;
-
+use crate::utils::pdas::seeds;
+use crate::utils::zero_copy_deserialize_mut;
 use crate::{
     oracles::{check_context, validate_oracle_account, OracleType},
-    OracleMappings, ScopeError,
+    OracleMappingsCore, ScopeError,
 };
+use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
-#[instruction(token:u64, price_type: u8, twap_enabled: bool, twap_source: u16, feed_name: String)]
+#[instruction(token:u16, price_type: u8, twap_enabled: bool, twap_source: u16, ref_price_index: u16, feed_name: String)]
 pub struct UpdateOracleMapping<'info> {
     pub admin: Signer<'info>,
-    #[account(seeds = [b"conf", feed_name.as_bytes()], bump, has_one = admin, has_one = oracle_mappings)]
+    #[account(seeds = [seeds::CONFIG, feed_name.as_bytes()], bump, has_one = admin, has_one = oracle_mappings)]
     pub configuration: AccountLoader<'info, crate::Configuration>,
-    #[account(mut)]
-    pub oracle_mappings: AccountLoader<'info, OracleMappings>,
+
+    /// CHECK: checked above + on deserialize
+    #[account(mut, owner = crate::ID)]
+    pub oracle_mappings: AccountInfo<'info>,
     /// CHECK: We trust the admin to provide a trustable account here. Some basic sanity checks are done based on type
     pub price_info: Option<AccountInfo<'info>>,
 }
 
+pub fn reset_price_ref_mapping(ctx: Context<UpdateOracleMapping>) -> Result<()> {
+    let mut oracle_mappings =
+        zero_copy_deserialize_mut::<OracleMappingsCore>(&ctx.accounts.oracle_mappings)?;
+    for i in 0..oracle_mappings.price_info_accounts.len() {
+        oracle_mappings.ref_price[i] = u16::MAX;
+    }
+    Ok(())
+}
+
 pub fn process(
     ctx: Context<UpdateOracleMapping>,
-    token: usize,
+    entry_id: usize,
     price_type: u8,
     twap_enabled: bool,
     twap_source: u16,
+    ref_price_index: u16,
     _: String,
 ) -> Result<()> {
     check_context(&ctx)?;
 
     msg!(
-        "UpdateOracleMapping, token: {}, price_type: {}, twap_enabled: {}, twap_source: {}",
-        token,
+        "UpdateOracleMapping, token: {}, price_type: {}, twap_enabled: {}, twap_source: {}, ref_price_index: {}",
+        entry_id,
         price_type,
         twap_enabled,
-        twap_source
+        twap_source,
+        ref_price_index
     );
 
-    let mut oracle_mappings = ctx.accounts.oracle_mappings.load_mut()?;
+    let mut oracle_mappings =
+        zero_copy_deserialize_mut::<OracleMappingsCore>(&ctx.accounts.oracle_mappings)?;
     let ref_price_pubkey = oracle_mappings
         .price_info_accounts
-        .get_mut(token)
+        .get_mut(entry_id)
         .ok_or(ScopeError::BadTokenNb)?;
     let price_type: OracleType = price_type
         .try_into()
@@ -61,9 +76,10 @@ pub fn process(
         }
     }
 
-    oracle_mappings.price_types[token] = price_type.into();
-    oracle_mappings.twap_enabled[token] = u8::from(twap_enabled);
-    oracle_mappings.twap_source[token] = twap_source;
+    oracle_mappings.price_types[entry_id] = price_type.into();
+    oracle_mappings.twap_enabled[entry_id] = u8::from(twap_enabled);
+    oracle_mappings.twap_source[entry_id] = twap_source;
+    oracle_mappings.ref_price[entry_id] = ref_price_index;
 
     Ok(())
 }

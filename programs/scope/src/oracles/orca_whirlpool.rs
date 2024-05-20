@@ -58,7 +58,11 @@ where
         pool_data.sqrt_price,
         mint_a_decimals,
         mint_b_decimals,
-    )?;
+    )
+    .map_err(|e| {
+        msg!("Error while computing the price of the tokens in the pool: {e:?}",);
+        e
+    })?;
 
     // Return price
     Ok(DatedPrice {

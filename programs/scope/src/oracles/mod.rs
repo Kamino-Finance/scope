@@ -10,6 +10,7 @@ pub mod msol_stake;
 pub mod orca_whirlpool;
 pub mod pyth;
 pub mod pyth_ema;
+pub mod pyth_pull_based;
 pub mod raydium_ammv3;
 pub mod spl_stake;
 pub mod switchboard_v2;
@@ -22,8 +23,9 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::{DatedPrice, OracleMappings, OraclePrices, OracleTwaps, ScopeError};
+use crate::{DatedPrice, OracleMappingsCore, OraclePrices, OracleTwaps, ScopeError};
 
+#[cfg(feature = "yvaults")]
 use self::ktokens_token_x::TokenTypes;
 
 pub fn check_context<T>(ctx: &Context<T>) -> Result<()> {
@@ -93,6 +95,8 @@ pub enum OracleType {
     MeteoraDlmmBtoA = 19,
     /// Jupiter's perpetual LP tokens computed from scope prices
     JupiterLpScope = 20,
+    /// Pyth Pull based oracles
+    PythPullBased = 21,
 }
 
 impl OracleType {
@@ -103,7 +107,8 @@ impl OracleType {
     /// Get the number of compute unit needed to refresh the price of a token
     pub fn get_update_cu_budget(&self) -> u32 {
         match self {
-            OracleType::Pyth => 20_000,
+            OracleType::PythPullBased => 20_000,
+            OracleType::Pyth => 35_000,
             OracleType::SwitchboardV2 => 30_000,
             OracleType::CToken => 130_000,
             OracleType::SplStake => 20_000,
@@ -112,11 +117,11 @@ impl OracleType {
             OracleType::KTokenToTokenA | OracleType::KTokenToTokenB => 100_000,
             OracleType::MsolStake => 20_000,
             OracleType::JupiterLpFetch => 40_000,
-            OracleType::ScopeTwap => 15_000,
+            OracleType::ScopeTwap => 30_000,
             OracleType::OrcaWhirlpoolAtoB
             | OracleType::OrcaWhirlpoolBtoA
             | OracleType::RaydiumAmmV3AtoB
-            | OracleType::RaydiumAmmV3BtoA => 20_000,
+            | OracleType::RaydiumAmmV3BtoA => 25_000,
             OracleType::MeteoraDlmmAtoB | OracleType::MeteoraDlmmBtoA => 30_000,
             OracleType::JupiterLpCompute | OracleType::JupiterLpScope => 120_000,
             OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
@@ -138,7 +143,7 @@ pub fn get_price<'a, 'b>(
     extra_accounts: &mut impl Iterator<Item = &'b AccountInfo<'a>>,
     clock: &Clock,
     oracle_twaps: &OracleTwaps,
-    oracle_mappings: &OracleMappings,
+    oracle_mappings: &OracleMappingsCore,
     oracle_prices: &AccountLoader<OraclePrices>,
     index: usize,
 ) -> crate::Result<DatedPrice>
@@ -147,7 +152,14 @@ where
 {
     match price_type {
         OracleType::Pyth => pyth::get_price(base_account, clock),
-        OracleType::SwitchboardV2 => switchboard_v2::get_price(base_account),
+        OracleType::PythPullBased => pyth_pull_based::get_price(
+            index,
+            base_account,
+            clock,
+            oracle_prices.load()?.deref(),
+            oracle_mappings,
+        ),
+        OracleType::SwitchboardV2 => switchboard_v2::get_price(base_account).map_err(Into::into),
         OracleType::CToken => ctokens::get_price(base_account, clock),
         OracleType::SplStake => spl_stake::get_price(base_account, clock),
         #[cfg(not(feature = "yvaults"))]
@@ -156,21 +168,34 @@ where
         }
         OracleType::PythEMA => pyth_ema::get_price(base_account, clock),
         #[cfg(feature = "yvaults")]
-        OracleType::KToken => ktokens::get_price(base_account, clock, extra_accounts),
+        OracleType::KToken => {
+            ktokens::get_price(base_account, clock, extra_accounts).map_err(|e| {
+                msg!("Error getting KToken price: {:?}", e);
+                e.into()
+            })
+        }
         #[cfg(feature = "yvaults")]
         OracleType::KTokenToTokenA => ktokens_token_x::get_token_x_per_share(
             base_account,
             clock,
             extra_accounts,
             TokenTypes::TokenA,
-        ),
+        )
+        .map_err(|e| {
+            msg!("Error getting KToken share ratio: {:?}", e);
+            e.into()
+        }),
         #[cfg(feature = "yvaults")]
         OracleType::KTokenToTokenB => ktokens_token_x::get_token_x_per_share(
             base_account,
             clock,
             extra_accounts,
             TokenTypes::TokenB,
-        ),
+        )
+        .map_err(|e| {
+            msg!("Error getting KToken share ratio: {:?}", e);
+            e.into()
+        }),
         #[cfg(not(feature = "yvaults"))]
         OracleType::KTokenToTokenA => {
             panic!("yvaults feature is not enabled, KToken oracle type is not available")
@@ -179,11 +204,18 @@ where
         OracleType::KTokenToTokenB => {
             panic!("yvaults feature is not enabled, KToken oracle type is not available")
         }
-        OracleType::MsolStake => msol_stake::get_price(base_account, clock),
+        OracleType::MsolStake => msol_stake::get_price(base_account, clock).map_err(Into::into),
         OracleType::JupiterLpFetch => {
-            jupiter_lp::get_price_no_recompute(base_account, clock, extra_accounts)
+            jupiter_lp::get_price_no_recompute(base_account, clock, extra_accounts).map_err(|e| {
+                msg!("Error getting Jupiter LP price: {:?}", e);
+                e
+            })
         }
-        OracleType::ScopeTwap => twap::get_price(oracle_mappings, oracle_twaps, index, clock),
+        OracleType::ScopeTwap => twap::get_price(oracle_mappings, oracle_twaps, index, clock)
+            .map_err(|e| {
+                msg!("Error getting Scope TWAP price: {:?}", e);
+                e.into()
+            }),
         OracleType::OrcaWhirlpoolAtoB => {
             orca_whirlpool::get_price(true, base_account, clock, extra_accounts)
         }
@@ -207,6 +239,7 @@ where
             clock,
             &oracle_prices.key(),
             oracle_prices.load()?.deref(),
+            oracle_mappings,
             extra_accounts,
         ),
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
@@ -225,6 +258,7 @@ pub fn validate_oracle_account(
 ) -> crate::Result<()> {
     match price_type {
         OracleType::Pyth => pyth::validate_pyth_price_info(price_account),
+        OracleType::PythPullBased => pyth_pull_based::validate_price_update_v2_info(price_account),
         OracleType::SwitchboardV2 => Ok(()), // TODO at least check account ownership?
         OracleType::CToken => Ok(()),        // TODO how shall we validate ctoken account?
         OracleType::SplStake => Ok(()),      // TODO, should validate ownership of the account

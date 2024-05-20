@@ -10,7 +10,9 @@ const MAX_EXPONENT: u32 = 10;
 const MIN_CONFIDENCE_PERCENTAGE: u64 = 2u64;
 const CONFIDENCE_FACTOR: u64 = 100 / MIN_CONFIDENCE_PERCENTAGE;
 
-pub fn get_price(switchboard_feed_info: &AccountInfo) -> Result<DatedPrice> {
+pub fn get_price(
+    switchboard_feed_info: &AccountInfo,
+) -> std::result::Result<DatedPrice, ScopeError> {
     let feed = AggregatorAccountData::new(switchboard_feed_info)
         .map_err(|_| ScopeError::SwitchboardV2Error)?;
 
@@ -43,7 +45,7 @@ pub fn get_price(switchboard_feed_info: &AccountInfo) -> Result<DatedPrice> {
                     stdev_mantissa,
                     stdev_scale
                 );
-            return err!(ScopeError::SwitchboardV2Error);
+            return Err(ScopeError::SwitchboardV2Error);
         }
     };
 
@@ -209,7 +211,7 @@ mod switchboard {
                     "Switchboard aggregator account has an invalid discriminator: {:?}",
                     disc_bytes
                 );
-                return err!(ScopeError::SwitchboardV2Error);
+                return Err(ScopeError::InvalidAccountDiscriminator.into());
             }
 
             Ok(Ref::map(data, |data| bytemuck::from_bytes(&data[8..])))

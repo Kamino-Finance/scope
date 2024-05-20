@@ -1,12 +1,12 @@
+use crate::utils::pdas::seeds;
 use crate::ScopeError;
 use anchor_lang::prelude::*;
 use num_enum::TryFromPrimitive;
-
 #[derive(TryFromPrimitive, PartialEq, Eq, Clone, Copy, Debug)]
 #[repr(u64)]
 pub enum UpdateTokenMetadataMode {
     Name = 0,
-    MaxPriceAgeSeconds = 1,
+    MaxPriceAgeSlots = 1,
 }
 
 impl UpdateTokenMetadataMode {
@@ -17,7 +17,7 @@ impl UpdateTokenMetadataMode {
     pub fn to_u16(self) -> u16 {
         match self {
             UpdateTokenMetadataMode::Name => 0,
-            UpdateTokenMetadataMode::MaxPriceAgeSeconds => 1,
+            UpdateTokenMetadataMode::MaxPriceAgeSlots => 1,
         }
     }
 }
@@ -26,7 +26,7 @@ impl UpdateTokenMetadataMode {
 #[instruction(index: u64, mode: u64,  feed_name: String, value: Vec<u8>)]
 pub struct UpdateTokensMetadata<'info> {
     pub admin: Signer<'info>,
-    #[account(seeds = [b"conf", feed_name.as_bytes()], bump, has_one = admin, has_one = tokens_metadata)]
+    #[account(seeds = [seeds::CONFIG, feed_name.as_bytes()], bump, has_one = admin, has_one = tokens_metadata)]
     pub configuration: AccountLoader<'info, crate::Configuration>,
 
     #[account(mut)]
@@ -51,10 +51,10 @@ pub fn process(
         .try_into()
         .map_err(|_| ScopeError::InvalidTokenUpdateMode)?;
     match mode {
-        UpdateTokenMetadataMode::MaxPriceAgeSeconds => {
+        UpdateTokenMetadataMode::MaxPriceAgeSlots => {
             let value = u64::from_le_bytes(value[..8].try_into().unwrap());
             msg!("Setting token max age for index {:?} to {}", index, value);
-            token_metadata.max_age_price_seconds = value;
+            token_metadata.max_age_price_slots = value;
         }
         UpdateTokenMetadataMode::Name => {
             assert!(

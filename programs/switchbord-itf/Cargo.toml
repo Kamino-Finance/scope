@@ -11,11 +11,10 @@ name = "switchboard_itf"
 [features]
 no-entrypoint = []
 cpi = ["no-entrypoint"]
-idl-build = ["anchor-lang/idl-build"]
 test-bpf = []
 debug = []
 
 [dependencies]
-anchor-lang = "0.29.0"
+anchor-lang = ">=0.28.0"
 bytemuck = { version = "1.4.0", features = ["derive", "min_const_generics"] }
 rust_decimal = "1.32.0"

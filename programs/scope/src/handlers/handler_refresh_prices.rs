@@ -9,6 +9,8 @@ use solana_program::{
     },
 };
 
+use crate::utils::zero_copy_deserialize;
+use crate::OracleMappingsCore;
 use crate::{
     oracles::{get_price, OracleType},
     ScopeError,
@@ -20,8 +22,9 @@ const COMPUTE_BUDGET_ID: Pubkey = pubkey!("ComputeBudget111111111111111111111111
 pub struct RefreshList<'info> {
     #[account(mut, has_one = oracle_mappings)]
     pub oracle_prices: AccountLoader<'info, crate::OraclePrices>,
-    #[account()]
-    pub oracle_mappings: AccountLoader<'info, crate::OracleMappings>,
+    /// CHECK: Checked above
+    #[account(owner = crate::ID)]
+    pub oracle_mappings: AccountInfo<'info>,
     #[account(mut, has_one = oracle_prices, has_one = oracle_mappings)]
     pub oracle_twaps: AccountLoader<'info, crate::OracleTwaps>,
     /// CHECK: Sysvar fixed address
@@ -36,7 +39,8 @@ pub fn refresh_price_list<'info>(
 ) -> Result<()> {
     check_execution_ctx(&ctx.accounts.instruction_sysvar_account_info)?;
 
-    let oracle_mappings = &ctx.accounts.oracle_mappings.load()?;
+    let oracle_mappings =
+        &zero_copy_deserialize::<OracleMappingsCore>(&ctx.accounts.oracle_mappings)?;
     let mut oracle_twaps = ctx.accounts.oracle_twaps.load_mut()?;
 
     // No token to refresh
@@ -102,9 +106,9 @@ pub fn refresh_price_list<'info>(
         } else {
             match price_res {
                 Ok(price) => price,
-                Err(e) => {
+                Err(_) => {
                     msg!(
-                        "Price skipped as validation failed (token {token_idx}, type {price_type:?}): {e}",
+                        "Price skipped as validation failed (token {token_idx}, type {price_type:?})",
                     );
                     continue;
                 }

@@ -25,8 +25,10 @@ const STALENESS_THRESHOLD: u64 = 10 * 60; // 10 minutes
 pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> {
     let data = price_info.try_borrow_data()?;
     let price_account: &pyth_client::SolanaPriceAccount =
-        pyth_client::load_price_account(data.as_ref())
-            .map_err(|_| error!(ScopeError::PriceNotValid))?;
+        pyth_client::load_price_account(data.as_ref()).map_err(|_| {
+            msg!("Loading pyth price account failed {}", price_info.key);
+            ScopeError::PriceNotValid
+        })?;
 
     let pyth_raw = price_account.to_price_feed(price_info.key);
 
@@ -36,23 +38,22 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
     } else if let Some(pyth_ema_price) =
         pyth_raw.get_ema_price_no_older_than(clock.unix_timestamp, STALENESS_THRESHOLD)
     {
-        if price_account.agg.status != pyth_client::PriceStatus::Trading {
-            msg!("No valid EMA price in pyth account {}", price_info.key);
-            return err!(ScopeError::PriceNotValid);
-        }
-        // Or use the current valid price if available
         pyth_ema_price
     } else {
-        msg!("No valid EMA price in pyth account {}", price_info.key);
-        return err!(ScopeError::PriceNotValid);
+        msg!(
+            "No recent (10 minutes) EMA price in pyth account {}",
+            price_info.key
+        );
+        return Err(ScopeError::PriceNotValid.into());
     };
 
     if pyth_ema_price.expo > 0 {
         msg!(
-            "Pyth price account provided has a negative EMA price exponent: {}",
-            pyth_ema_price.expo
+            "Pyth price account {} provided has a negative EMA price exponent: {}",
+            price_info.key,
+            pyth_ema_price.expo,
         );
-        return err!(ScopeError::PriceNotValid);
+        return Err(ScopeError::PriceNotValid.into());
     }
 
     let ema_price =

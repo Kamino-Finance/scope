@@ -24,6 +24,7 @@ use yvaults::{
     },
 };
 
+use crate::ScopeResult;
 use crate::{
     utils::{account_deserialize, zero_copy_deserialize},
     DatedPrice, Price, ScopeError,
@@ -47,7 +48,7 @@ pub fn get_price<'a, 'b>(
     k_account: &AccountInfo,
     clock: &Clock,
     extra_accounts: &mut impl Iterator<Item = &'b AccountInfo<'a>>,
-) -> Result<DatedPrice>
+) -> ScopeResult<DatedPrice>
 where
     'a: 'b,
 {
@@ -87,7 +88,7 @@ where
                 name,
                 expected
             );
-            err!(ScopeError::UnexpectedAccount)
+            Err(ScopeError::UnexpectedAccount)
         } else {
             Ok(())
         }
@@ -134,7 +135,8 @@ where
         &strategy_account_ref,
         None,
         clock.slot,
-    )?;
+    )
+    .map_err(|_| ScopeError::KTokenUnderlyingPriceNotValid)?;
 
     let holdings = holdings(&strategy_account_ref, clmm.as_ref(), &token_prices)?;
 
@@ -149,7 +151,11 @@ where
         &scope_prices_ref,
         &collateral_infos_ref,
         &strategy_account_ref,
-    )?;
+    )
+    .map_err(|e| {
+        msg!("Error getting component price last update: {:?}", e);
+        e
+    })?;
 
     Ok(DatedPrice {
         price,
@@ -159,17 +165,19 @@ where
     })
 }
 
-fn get_clmm<'a, 'info>(
+pub(super) fn get_clmm<'a, 'info>(
     pool: &'a AccountInfo<'info>,
     position: &'a AccountInfo<'info>,
     strategy: &WhirlpoolStrategy,
-) -> Result<Box<dyn Clmm + 'a>> {
+) -> ScopeResult<Box<dyn Clmm + 'a>> {
     let dex = DEX::try_from(strategy.strategy_dex).unwrap();
     let clmm: Box<dyn Clmm> = match dex {
         DEX::Orca => {
-            let pool = account_deserialize::<OrcaWhirlpool>(pool)?;
+            let pool = account_deserialize::<OrcaWhirlpool>(pool)
+                .map_err(|_| ScopeError::UnableToDeserializeAccount)?;
             let position = if strategy.position != Pubkey::default() {
-                let position = account_deserialize::<OrcaPosition>(position)?;
+                let position = account_deserialize::<OrcaPosition>(position)
+                    .map_err(|_| ScopeError::UnableToDeserializeAccount)?;
                 Some(position)
             } else {
                 None
@@ -207,7 +215,7 @@ fn get_component_px_last_update(
     scope_prices: &ScopePrices,
     collateral_infos: &CollateralInfos,
     strategy: &WhirlpoolStrategy,
-) -> Result<(u64, u64)> {
+) -> ScopeResult<(u64, u64)> {
     let token_a = yvaults::state::CollateralToken::try_from(strategy.token_a_collateral_id)
         .map_err(|_| ScopeError::ConversionFailure)?;
     let token_b = yvaults::state::CollateralToken::try_from(strategy.token_b_collateral_id)
@@ -251,22 +259,30 @@ pub fn holdings(
     strategy: &WhirlpoolStrategy,
     clmm: &dyn Clmm,
     prices: &TokenPrices,
-) -> Result<Holdings> {
+) -> ScopeResult<Holdings> {
     // https://github.com/0xparashar/UniV3NFTOracle/blob/master/contracts/UniV3NFTOracle.sol#L27
     // We are using the sqrt price derived from price_a and price_b
     // instead of the whirlpool price which could be manipulated/stale
     let pool_sqrt_price = price_utils::sqrt_price_from_scope_prices(
-        &prices.get(
-            CollateralToken::try_from(strategy.token_a_collateral_id)
-                .map_err(|_| ScopeError::ConversionFailure)?,
-        )?,
-        &prices.get(
-            CollateralToken::try_from(strategy.token_b_collateral_id)
-                .map_err(|_| ScopeError::ConversionFailure)?,
-        )?,
+        &prices
+            .get(
+                CollateralToken::try_from(strategy.token_a_collateral_id)
+                    .map_err(|_| ScopeError::ConversionFailure)?,
+            )
+            .map_err(|_| ScopeError::KTokenUnderlyingPriceNotValid)?,
+        &prices
+            .get(
+                CollateralToken::try_from(strategy.token_b_collateral_id)
+                    .map_err(|_| ScopeError::ConversionFailure)?,
+            )
+            .map_err(|_| ScopeError::KTokenUnderlyingPriceNotValid)?,
         strategy.token_a_mint_decimals,
         strategy.token_b_mint_decimals,
-    )?;
+    )
+    .map_err(|e| {
+        msg!("Error calculating sqrt price: {:?}", e);
+        ScopeError::ConversionFailure
+    })?;
 
     if cfg!(feature = "debug") {
         let w = price_utils::calc_price_from_sqrt_price(
@@ -283,7 +299,10 @@ pub fn holdings(
         msg!("o: {} w: {} d: {}%", w, o, diff * 100.0);
     }
 
-    holdings_no_rewards(strategy, clmm, prices, pool_sqrt_price)
+    holdings_no_rewards(strategy, clmm, prices, pool_sqrt_price).map_err(|e| {
+        msg!("Error calculating holdings: {:?}", e);
+        ScopeError::KTokenHoldingsCalculationError
+    })
 }
 
 pub fn holdings_no_rewards(

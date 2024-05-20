@@ -1,11 +1,17 @@
 use std::mem::size_of;
+use std::ops::Deref;
 
+use crate::utils::consts::*;
 use crate::{MAX_ENTRIES, MAX_ENTRIES_U16};
 use anchor_lang::prelude::*;
 use decimal_wad::decimal::Decimal;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+
+pub use mapping::core::OracleMappings as OracleMappingsCore;
+pub use mapping::extended::OracleMappings as OracleMappingsExtended;
+pub use mapping::old::OracleMappings as OracleMappingsOld;
 
 #[zero_copy]
 #[derive(Debug, Default)]
@@ -95,6 +101,8 @@ impl EmaTwap {
     }
 }
 
+static_assertions::const_assert_eq!(ORACLE_TWAPS_SIZE, std::mem::size_of::<OracleTwaps>());
+static_assertions::const_assert_eq!(0, std::mem::size_of::<OracleTwaps>() % 8);
 // Account to store dated TWAP prices
 #[account(zero_copy)]
 pub struct OracleTwaps {
@@ -103,6 +111,8 @@ pub struct OracleTwaps {
     pub twaps: [EmaTwap; MAX_ENTRIES],
 }
 
+static_assertions::const_assert_eq!(ORACLE_PRICES_SIZE, std::mem::size_of::<OraclePrices>());
+static_assertions::const_assert_eq!(0, std::mem::size_of::<OraclePrices>() % 8);
 // Account to store dated prices
 #[account(zero_copy)]
 pub struct OraclePrices {
@@ -110,27 +120,112 @@ pub struct OraclePrices {
     pub prices: [DatedPrice; MAX_ENTRIES],
 }
 
-// Accounts holding source of prices
-#[account(zero_copy)]
-pub struct OracleMappings {
-    pub price_info_accounts: [Pubkey; MAX_ENTRIES],
-    pub price_types: [u8; MAX_ENTRIES],
-    pub twap_source: [u16; MAX_ENTRIES], // meaningful only if type == TWAP; the index of where we find the TWAP
-    pub twap_enabled: [u8; MAX_ENTRIES], // true or false
-    pub _reserved1: [u8; MAX_ENTRIES],
-    pub _reserved2: [u32; MAX_ENTRIES],
-}
+pub mod mapping {
+    use std::ops::DerefMut;
 
-impl OracleMappings {
-    pub fn is_twap_enabled(&self, token: usize) -> bool {
-        self.twap_enabled[token] > 0
+    use super::*;
+
+    pub mod idl_trick {
+        use super::*;
+        #[zero_copy]
+        pub struct OracleMappingsCore {
+            pub data: [u8; 19456],
+        }
+
+        #[account(zero_copy)]
+        pub struct OracleMappingsForIdl {
+            pub core: OracleMappingsCore,
+            pub _reserved0: [u16; MAX_ENTRIES],
+            pub _reserved1: [u8; MAX_ENTRIES],
+        }
     }
 
-    pub fn get_twap_source(&self, token: usize) -> usize {
-        usize::from(self.twap_source[token])
+    pub mod core {
+        use super::*;
+        #[account(zero_copy)]
+        #[derive(Debug, AnchorDeserialize)]
+        pub struct OracleMappings {
+            pub price_info_accounts: [Pubkey; MAX_ENTRIES],
+            pub price_types: [u8; MAX_ENTRIES],
+            pub twap_source: [u16; MAX_ENTRIES], // meaningful only if type == TWAP; the index of where we find the TWAP
+            pub twap_enabled: [u8; MAX_ENTRIES], // true or false
+            pub ref_price: [u16; MAX_ENTRIES], // reference price against which we check confidence within 5%
+        }
+    }
+
+    pub mod old {
+        use super::*;
+
+        static_assertions::const_assert_eq!(
+            ORACLE_MAPPING_SIZE,
+            std::mem::size_of::<OracleMappings>()
+        );
+        static_assertions::const_assert_eq!(0, std::mem::size_of::<OracleMappings>() % 8);
+        // Accounts holding source of prices
+        #[account(zero_copy)]
+        pub struct OracleMappings {
+            pub core: OracleMappingsCore,
+            pub _reserved0: [u16; MAX_ENTRIES],
+            pub _reserved1: [u8; MAX_ENTRIES],
+        }
+    }
+    pub mod extended {
+        use super::*;
+
+        static_assertions::const_assert_eq!(
+            ORACLE_MAPPING_EXTENDED_SIZE,
+            std::mem::size_of::<OracleMappings>()
+        );
+        static_assertions::const_assert_eq!(0, std::mem::size_of::<OracleMappings>() % 8);
+        // Accounts holding source of prices
+        #[account(zero_copy)]
+        pub struct OracleMappings {
+            pub core: OracleMappingsCore,
+            pub generic: [[u8; 20]; MAX_ENTRIES],
+        }
+    }
+
+    impl core::OracleMappings {
+        pub fn is_twap_enabled(&self, entry_id: usize) -> bool {
+            self.twap_enabled[entry_id] > 0
+        }
+
+        pub fn get_twap_source(&self, entry_id: usize) -> usize {
+            usize::from(self.twap_source[entry_id])
+        }
+    }
+
+    impl Deref for old::OracleMappings {
+        type Target = core::OracleMappings;
+
+        fn deref(&self) -> &Self::Target {
+            &self.core
+        }
+    }
+
+    impl Deref for extended::OracleMappings {
+        type Target = core::OracleMappings;
+
+        fn deref(&self) -> &Self::Target {
+            &self.core
+        }
+    }
+
+    impl DerefMut for old::OracleMappings {
+        fn deref_mut(&mut self) -> &mut Self::Target {
+            &mut self.core
+        }
+    }
+
+    impl DerefMut for extended::OracleMappings {
+        fn deref_mut(&mut self) -> &mut Self::Target {
+            &mut self.core
+        }
     }
 }
 
+static_assertions::const_assert_eq!(TOKEN_METADATA_SIZE, std::mem::size_of::<TokenMetadatas>());
+static_assertions::const_assert_eq!(0, std::mem::size_of::<TokenMetadatas>() % 8);
 #[account(zero_copy)]
 pub struct TokenMetadatas {
     pub metadatas_array: [TokenMetadata; MAX_ENTRIES],
@@ -140,10 +235,12 @@ pub struct TokenMetadatas {
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, PartialEq, Eq, Default)]
 pub struct TokenMetadata {
     pub name: [u8; 32],
-    pub max_age_price_seconds: u64,
+    pub max_age_price_slots: u64,
     pub _reserved: [u64; 16],
 }
 
+static_assertions::const_assert_eq!(CONFIGURATION_SIZE, std::mem::size_of::<Configuration>());
+static_assertions::const_assert_eq!(0, std::mem::size_of::<Configuration>() % 8);
 // Configuration account of the program
 #[account(zero_copy)]
 pub struct Configuration {

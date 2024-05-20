@@ -59,7 +59,7 @@ where
         lb_clmm::get_x64_price_from_id(lb_pair_state.active_id, lb_pair_state.bin_step)
             .ok_or_else(|| {
                 msg!("Math overflow when calculating dlmm price");
-                error!(ScopeError::MathOverflow)
+                ScopeError::MathOverflow
             })?;
     let q64x64_price = if a_to_b {
         U192::from(q64x64_price)
@@ -68,7 +68,10 @@ where
         (U192::one() << 128) / q64x64_price
     };
 
-    let lamport_price = math::q64x64_price_to_price(q64x64_price)?;
+    let lamport_price = math::q64x64_price_to_price(q64x64_price).map_err(|e| {
+        msg!("Error while computing the price of the tokens in the pool: {e:?}",);
+        e
+    })?;
     let (src_token_decimals, dst_token_decimals) = if a_to_b {
         (mint_a_decimals, mint_b_decimals)
     } else {

@@ -1,10 +1,11 @@
+pub mod consts;
 pub mod macros;
 pub mod math;
 pub mod pdas;
 pub mod price_impl;
 pub mod scope_chain;
 
-use std::cell::Ref;
+use std::cell::{Ref, RefMut};
 
 use anchor_lang::{
     __private::bytemuck,
@@ -67,6 +68,33 @@ pub fn zero_copy_deserialize<'info, T: bytemuck::AnyBitPattern + Discriminator>(
         );
         return Err(ScopeError::InvalidAccountDiscriminator);
     }
+    let end = std::mem::size_of::<T>() + 8;
+    Ok(Ref::map(data, |data| bytemuck::from_bytes(&data[8..end])))
+}
 
-    Ok(Ref::map(data, |data| bytemuck::from_bytes(&data[8..])))
+pub fn zero_copy_deserialize_mut<'info, T: bytemuck::Pod + Discriminator>(
+    account: &'info AccountInfo,
+) -> ScopeResult<RefMut<'info, T>> {
+    let data = account.data.try_borrow_mut().unwrap();
+
+    let disc_bytes = data.get(..8).ok_or_else(|| {
+        msg!(
+            "Account {:?} does not have enough bytes to be deserialized",
+            account.key()
+        );
+        ScopeError::UnableToDeserializeAccount
+    })?;
+    if disc_bytes != T::discriminator() {
+        msg!(
+            "Expected discriminator for account {:?} ({:?}) is different from received {:?}",
+            account.key(),
+            T::discriminator(),
+            disc_bytes
+        );
+        return Err(ScopeError::InvalidAccountDiscriminator);
+    }
+    let end = std::mem::size_of::<T>() + 8;
+    Ok(RefMut::map(data, |data| {
+        bytemuck::from_bytes_mut(&mut data[8..end])
+    }))
 }

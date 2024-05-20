@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use solana_program::borsh0_10::try_from_slice_unchecked;
 
-use crate::{DatedPrice, Price, Result, ScopeError};
+use crate::{DatedPrice, Price, ScopeError, ScopeResult};
 
 use self::msol_stake_pool::State;
 
@@ -11,14 +11,17 @@ const DECIMALS: u32 = 15u32;
 pub fn get_price(
     msol_pool_account_info: &AccountInfo,
     current_clock: &Clock,
-) -> Result<DatedPrice> {
+) -> ScopeResult<DatedPrice> {
     let stake_pool = try_from_slice_unchecked::<State>(&msol_pool_account_info.data.borrow()[8..])
         .map_err(|_| {
-            msg!("Provided pubkey is not a MSOL Stake account");
+            msg!("Provided pubkey is not a valid MSOL Stake account");
             ScopeError::UnexpectedAccount
         })?;
 
-    let value = scaled_rate(&stake_pool)?;
+    let value = scaled_rate(&stake_pool).map_err(|e| {
+        msg!("Error while calculating the scaled rate: {:?}", e);
+        e
+    })?;
 
     let price = Price {
         value,
@@ -34,7 +37,7 @@ pub fn get_price(
     Ok(dated_price)
 }
 
-fn scaled_rate(stake_pool: &State) -> Result<u64> {
+fn scaled_rate(stake_pool: &State) -> ScopeResult<u64> {
     const FACTOR: u64 = 10u64.pow(DECIMALS);
     stake_pool.calc_lamports_from_msol_amount(FACTOR)
 }
@@ -46,16 +49,16 @@ mod msol_stake_pool {
     /// as value  = shares * share_price where share_price=total_value/total_shares
     /// or shares = amount_value / share_price where share_price=total_value/total_shares
     ///     => shares = amount_value * 1/share_price where 1/share_price=total_shares/total_value
-    pub fn proportional(amount: u64, numerator: u64, denominator: u64) -> Result<u64> {
+    pub fn proportional(amount: u64, numerator: u64, denominator: u64) -> ScopeResult<u64> {
         if denominator == 0 {
             return Ok(amount);
         }
         u64::try_from((amount as u128) * (numerator as u128) / (denominator as u128))
-            .map_err(|_| ScopeError::MathOverflow.into())
+            .map_err(|_| ScopeError::MathOverflow)
     }
 
     #[inline] //alias for proportional
-    pub fn value_from_shares(shares: u64, total_value: u64, total_shares: u64) -> Result<u64> {
+    pub fn value_from_shares(shares: u64, total_value: u64, total_shares: u64) -> ScopeResult<u64> {
         proportional(shares, total_value, total_shares)
     }
 
@@ -190,31 +193,31 @@ mod msol_stake_pool {
     }
 
     impl State {
-        pub fn total_cooling_down(&self) -> Result<u64> {
+        pub fn total_cooling_down(&self) -> ScopeResult<u64> {
             self.stake_system
                 .delayed_unstake_cooling_down
                 .checked_add(self.emergency_cooling_down)
-                .ok_or_else(|| ScopeError::MathOverflow.into())
+                .ok_or(ScopeError::MathOverflow)
         }
 
         /// total_active_balance + total_cooling_down + available_reserve_balance
-        pub fn total_lamports_under_control(&self) -> Result<u64> {
+        pub fn total_lamports_under_control(&self) -> ScopeResult<u64> {
             self.validator_system
                 .total_active_balance
                 .checked_add(self.total_cooling_down()?)
                 .ok_or(ScopeError::MathOverflow)?
                 .checked_add(self.available_reserve_balance) // reserve_pda.lamports() - self.rent_exempt_for_token_acc
-                .ok_or_else(|| ScopeError::MathOverflow.into())
+                .ok_or(ScopeError::MathOverflow)
         }
 
-        pub fn total_virtual_staked_lamports(&self) -> Result<u64> {
+        pub fn total_virtual_staked_lamports(&self) -> ScopeResult<u64> {
             // if we get slashed it may be negative but we must use 0 instead
             Ok(self
                 .total_lamports_under_control()?
                 .saturating_sub(self.circulating_ticket_balance)) //tickets created -> cooling down lamports or lamports already in reserve and not claimed yet
         }
 
-        pub fn calc_lamports_from_msol_amount(&self, msol_amount: u64) -> Result<u64> {
+        pub fn calc_lamports_from_msol_amount(&self, msol_amount: u64) -> ScopeResult<u64> {
             value_from_shares(
                 msol_amount,
                 self.total_virtual_staked_lamports()?,
