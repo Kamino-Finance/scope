@@ -16,6 +16,11 @@
     "oracle_mapping": "GVXRSBjFk6e6J3NbVPXohDJetcTjaeeuykUpbQF8UoMU",
     "oracle_type": "Pyth"
   },
+  "3": {
+    "label": "SRM/USD",
+    "oracle_mapping": "3NBReDRTLKMQEKiLD5tGcx4kXbTf88b7f2xLS9UuGjym",
+    "oracle_type": "Pyth"
+  },
   "4": {
     "label": "RAY/USD",
     "oracle_mapping": "AnLf8tVYCM816gmBjiy8n53eXKKEDydT5piYjjQDPgTB",
@@ -187,6 +192,11 @@
   "54": {
     "label": "EMA BTC/USD",
     "oracle_mapping": "GVXRSBjFk6e6J3NbVPXohDJetcTjaeeuykUpbQF8UoMU",
+    "oracle_type": "PythEMA"
+  },
+  "55": {
+    "label": "EMA SRM/USD",
+    "oracle_mapping": "3NBReDRTLKMQEKiLD5tGcx4kXbTf88b7f2xLS9UuGjym",
     "oracle_type": "PythEMA"
   },
   "56": {
@@ -2012,11 +2022,18 @@
     "twap_source": 360,
     "max_age": 120
   },
+  "362": {
+    "label": "Scope JLP/USD",
+    "oracle_mapping": "5BUwFW4nRbftYTDMbgxykoFWqWHPzahFSNAaaaJtVKsq",
+    "oracle_type": "JupiterLpScope",
+    "max_age": 200,
+    "twap_enabled": true
+  },
   "363": {
     "label": "TWAP Scope JLP/USD",
     "oracle_type": "ScopeTwap",
     "twap_source": 362,
-    "max_age": 260
+    "max_age": 200
   },
   "364": {
     "label": "Orca SHARK/SOL",
@@ -2215,5 +2232,40 @@
     "oracle_type": "ScopeTwap",
     "twap_source": 394,
     "max_age": 120
+  },
+  "396": {
+    "label": "Pyth Pull BTC/USD",
+    "oracle_mapping": "4cSM2e6rvbGQUFiJbqytoVMi5GgghSMr8LwVrT9VPSPo",
+    "oracle_type": "PythPullBased",
+    "ref_price": 2,
+    "max_age": 175
+  },
+  "397": {
+    "label": "Pyth Pull USDC/USD",
+    "oracle_mapping": "Dpw1EAVrSB1ibxiDQyTAW6Zip3J4Btk2x4SgApQCeFbX",
+    "oracle_type": "PythPullBased",
+    "ref_price": 20,
+    "max_age": 175
+  },
+  "398": {
+    "label": "Pyth Pull USDT/USD",
+    "oracle_mapping": "HT2PLQBcG5EiCcNSaMHAjSgd9F98ecpATbk4Sk5oYuM",
+    "oracle_type": "PythPullBased",
+    "ref_price": 22,
+    "max_age": 175
+  },
+  "399": {
+    "label": "Pyth Pull SOL/USD",
+    "oracle_mapping": "7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE",
+    "oracle_type": "PythPullBased",
+    "ref_price": 0,
+    "max_age": 175
+  },
+  "400": {
+    "label": "Pyth Pull ETH/USD",
+    "oracle_mapping": "42amVS4KgzR9rA28tkVYqVXjq9Qa8dcZQMbH5EYFX6XC",
+    "oracle_type": "PythPullBased",
+    "ref_price": 1,
+    "max_age": 175
   }
 }
