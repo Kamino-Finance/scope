@@ -15,6 +15,7 @@ fn main() {
         println!("cargo:rerun-if-env-changed=CLUSTER");
         // Set feature according to current cluster
         match cluster.as_str() {
+            "staging" => println!("cargo:rustc-cfg=feature=\"staging\""),
             "localnet" => println!("cargo:rustc-cfg=feature=\"localnet\""),
             "devnet" => {
                 println!("cargo:rustc-cfg=feature=\"devnet\"");

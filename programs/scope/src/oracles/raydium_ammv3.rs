@@ -16,7 +16,11 @@ pub fn get_price(a_to_b: bool, pool: &AccountInfo, clock: &Clock) -> Result<Date
         pool_data.sqrt_price_x64,
         pool_data.mint_decimals_0,
         pool_data.mint_decimals_1,
-    )?;
+    )
+    .map_err(|e| {
+        msg!("Error while computing the price of the tokens in the pool: {e:?}",);
+        e
+    })?;
 
     // Return price
     Ok(DatedPrice {

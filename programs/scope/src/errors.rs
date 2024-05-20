@@ -84,6 +84,15 @@ pub enum ScopeError {
 
     #[msg("The stake pool fee is higher than the maximum allowed")]
     StakeFeeTooHigh,
+
+    #[msg("Cannot get a valid price for the tokens composing the Ktoken")]
+    KTokenUnderlyingPriceNotValid,
+
+    #[msg("Error while computing the Ktoken pool holdings")]
+    KTokenHoldingsCalculationError,
+
+    #[msg("Cannot resize the account we only allow it to grow in size")]
+    CannotResizeAccount,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

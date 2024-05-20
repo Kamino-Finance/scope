@@ -110,12 +110,12 @@ pub struct OracleMappings {
 }
 
 impl OracleMappings {
-    pub fn is_twap_enabled(&self, token: usize) -> bool {
-        self.twap_enabled[token] > 0
+    pub fn is_twap_enabled(&self, entry_id: usize) -> bool {
+        self.twap_enabled[entry_id] > 0
     }
 
-    pub fn get_twap_source(&self, token: usize) -> usize {
-        usize::from(self.twap_source[token])
+    pub fn get_twap_source(&self, entry_id: usize) -> usize {
+        usize::from(self.twap_source[entry_id])
     }
 }
 

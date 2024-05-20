@@ -43,9 +43,15 @@ pub fn get_price(
         }
     }
 
-    check_fees(&stake_pool)?;
+    check_fees(&stake_pool).map_err(|e| {
+        msg!("Stake pool fees are too high: {}", e);
+        e
+    })?;
 
-    let value = scaled_rate(&stake_pool)?;
+    let value = scaled_rate(&stake_pool).map_err(|e| {
+        msg!("Overflow while scaling stake rate");
+        e
+    })?;
 
     let price = Price {
         value,

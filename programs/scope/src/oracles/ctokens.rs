@@ -10,7 +10,13 @@ const DECIMALS: u32 = 15u32;
 
 // Gives the price of 1 cToken in the collateral token
 pub fn get_price(solend_reserve_account: &AccountInfo, clock: &Clock) -> Result<DatedPrice> {
-    let mut reserve = Reserve::unpack(&solend_reserve_account.data.borrow())?;
+    let mut reserve = Reserve::unpack(&solend_reserve_account.data.borrow()).map_err(|e| {
+        msg!(
+            "Error unpacking CToken account {}",
+            solend_reserve_account.key()
+        );
+        e
+    })?;
 
     // Manual refresh of the reserve to ensure the most accurate price
     let (last_updated_slot, unix_timestamp) = if reserve.accrue_interest(clock.slot).is_ok() {
@@ -30,7 +36,13 @@ pub fn get_price(solend_reserve_account: &AccountInfo, clock: &Clock) -> Result<
         )
     };
 
-    let value = scaled_rate(&reserve)?;
+    let value = scaled_rate(&reserve).map_err(|e| {
+        msg!(
+            "Error getting scaled rate for CToken account {}: {e:?}",
+            solend_reserve_account.key()
+        );
+        e
+    })?;
 
     let price = Price {
         value,

@@ -1,8 +1,13 @@
-use decimal_wad::decimal::Decimal;
+use decimal_wad::{common::PERCENT_SCALER, decimal::Decimal};
+use solana_program::msg;
 
-use crate::Price;
+use crate::{Price, ScopeError};
+use anchor_lang::prelude::*;
 
 use super::math::ten_pow;
+
+pub const MAX_REF_RATIO_TOLERANCE_PCT: u64 = 5;
+pub const MAX_REF_RATIO_TOLERANCE_SCALED: u64 = MAX_REF_RATIO_TOLERANCE_PCT * PERCENT_SCALER;
 
 impl From<Price> for f64 {
     fn from(val: Price) -> Self {
@@ -22,6 +27,27 @@ impl Price {
             value * ten_pow(diff)
         }
     }
+}
+
+pub fn check_ref_price_difference(curr_price: Price, ref_price: Price) -> Result<()> {
+    let ref_price_decimal = Decimal::from(ref_price);
+    let curr_price_decimal = Decimal::from(curr_price);
+    let absolute_diff = if ref_price_decimal > curr_price_decimal {
+        ref_price_decimal - curr_price_decimal
+    } else {
+        curr_price_decimal - ref_price_decimal
+    };
+
+    if absolute_diff * 100 > ref_price_decimal * MAX_REF_RATIO_TOLERANCE_PCT {
+        msg!(
+            "Price diff is too high: absolute_diff {}, tolerance = {}",
+            absolute_diff,
+            ref_price_decimal * Decimal::from_percent(MAX_REF_RATIO_TOLERANCE_PCT)
+        );
+        return Err(ScopeError::PriceNotValid.into());
+    }
+
+    Ok(())
 }
 
 fn decimal_to_price(decimal: Decimal) -> Price {

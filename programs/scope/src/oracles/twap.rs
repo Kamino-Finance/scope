@@ -1,8 +1,8 @@
 use std::cmp::Ordering;
 
-use crate::ScopeError;
 use crate::ScopeError::PriceAccountNotExpected;
-use crate::{DatedPrice, OracleMappings, OracleTwaps, Price};
+use crate::{DatedPrice, OracleMappingsCore, OracleTwaps, Price};
+use crate::{ScopeError, ScopeResult};
 use anchor_lang::prelude::*;
 use intbits::Bits;
 
@@ -21,10 +21,14 @@ pub fn validate_price_account(account: &AccountInfo) -> Result<()> {
     Err(PriceAccountNotExpected.into())
 }
 
-pub fn update_twap(oracle_twaps: &mut OracleTwaps, token: usize, price: &DatedPrice) -> Result<()> {
+pub fn update_twap(
+    oracle_twaps: &mut OracleTwaps,
+    entry_id: usize,
+    price: &DatedPrice,
+) -> Result<()> {
     let twap = oracle_twaps
         .twaps
-        .get_mut(token)
+        .get_mut(entry_id)
         .ok_or(ScopeError::TwapSourceIndexOutOfRange)?;
 
     // if there is no previous twap, store the existent
@@ -39,27 +43,27 @@ pub fn update_twap(oracle_twaps: &mut OracleTwaps, token: usize, price: &DatedPr
 
 pub fn reset_twap(
     oracle_twaps: &mut OracleTwaps,
-    token: usize,
+    entry_id: usize,
     price: Price,
     price_ts: u64,
     price_slot: u64,
 ) -> Result<()> {
     let twap = oracle_twaps
         .twaps
-        .get_mut(token)
+        .get_mut(entry_id)
         .ok_or(ScopeError::TwapSourceIndexOutOfRange)?;
     reset_ema_twap(twap, price, price_ts, price_slot);
     Ok(())
 }
 
 pub fn get_price(
-    oracle_mappings: &OracleMappings,
+    oracle_mappings: &OracleMappingsCore,
     oracle_twaps: &OracleTwaps,
-    token: usize,
+    entry_id: usize,
     clock: &Clock,
-) -> Result<DatedPrice> {
-    let source_index = usize::from(oracle_mappings.twap_source[token]);
-    msg!("Get twap price at index {source_index} for tk {token}",);
+) -> ScopeResult<DatedPrice> {
+    let source_index = usize::from(oracle_mappings.twap_source[entry_id]);
+    msg!("Get twap price at index {source_index} for tk {entry_id}",);
 
     let twap = oracle_twaps
         .twaps

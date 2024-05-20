@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use solana_program::sysvar::instructions::ID as SYSVAR_INSTRUCTIONS_ID;
 
-use crate::oracles::check_context;
+use crate::{oracles::check_context, utils::pdas::seeds};
 
 #[derive(Accounts)]
 #[instruction(token:u64, feed_name: String)]
@@ -10,11 +10,11 @@ pub struct ResetTwap<'info> {
 
     #[account()]
     pub oracle_prices: AccountLoader<'info, crate::OraclePrices>,
-    #[account(seeds = [b"conf", feed_name.as_bytes()], bump,
-                has_one = admin,
-                has_one = oracle_prices,
-                has_one = oracle_twaps,
-            )]
+    #[account(seeds = [seeds::CONFIG, feed_name.as_bytes()], bump,
+        has_one = admin,
+        has_one = oracle_prices,
+        has_one = oracle_twaps,
+    )]
     pub configuration: AccountLoader<'info, crate::Configuration>,
     #[account(mut, has_one = oracle_prices)]
     pub oracle_twaps: AccountLoader<'info, crate::OracleTwaps>,

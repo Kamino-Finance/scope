@@ -27,38 +27,37 @@ pub struct Initialize<'info> {
 
     // Account is pre-reserved/paid outside the program
     #[account(zero)]
-    pub oracle_mappings: AccountLoader<'info, crate::OracleMappings>,
+    pub oracle_mappings: AccountLoader<'info, crate::OracleMappingsOld>,
 }
 
 pub fn process(ctx: Context<Initialize>, _: String) -> Result<()> {
-    // Initialize oracle mapping account
     let _ = ctx.accounts.oracle_mappings.load_init()?;
+    let _ = ctx.accounts.token_metadatas.load_init()?;
+    let mut oracle_prices = ctx.accounts.oracle_prices.load_init()?;
+    let mut oracle_twaps = ctx.accounts.oracle_twaps.load_init()?;
+    let mut configuration: std::cell::RefMut<'_, crate::Configuration> =
+        ctx.accounts.configuration.load_init()?;
 
-    // Initialize oracle price account
+    let admin = ctx.accounts.admin.key();
     let oracle_pbk = ctx.accounts.oracle_mappings.key();
     let twaps_pbk = ctx.accounts.oracle_twaps.key();
+    let prices_pbk = ctx.accounts.oracle_prices.key();
+    let metadata_pbk = ctx.accounts.token_metadatas.key();
 
-    let mut oracle_prices = ctx.accounts.oracle_prices.load_init()?;
+    // Initialize oracle mapping account
     oracle_prices.oracle_mappings = oracle_pbk;
 
     // Initialize configuration account
-    let prices_pbk = ctx.accounts.oracle_prices.key();
-    let admin = ctx.accounts.admin.key();
-    let mut configuration: std::cell::RefMut<'_, crate::Configuration> =
-        ctx.accounts.configuration.load_init()?;
     configuration.admin = admin;
     configuration.oracle_mappings = oracle_pbk;
     configuration.oracle_prices = prices_pbk;
     configuration.oracle_twaps = twaps_pbk;
+    configuration.tokens_metadata = metadata_pbk;
     configuration.admin_cached = Pubkey::default();
 
     // Initialize oracle twap account
-    let mut oracle_twaps = ctx.accounts.oracle_twaps.load_init()?;
     oracle_twaps.oracle_prices = prices_pbk;
     oracle_twaps.oracle_mappings = oracle_pbk;
-
-    let _ = ctx.accounts.token_metadatas.load_init()?;
-    configuration.tokens_metadata = ctx.accounts.token_metadatas.key();
 
     Ok(())
 }

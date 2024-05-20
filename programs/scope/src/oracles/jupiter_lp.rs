@@ -9,8 +9,10 @@ use solana_program::program_pack::Pack;
 use crate::scope_chain::get_price_from_chain;
 use crate::utils::account_deserialize;
 use crate::utils::math::ten_pow;
+use crate::utils::price_impl::check_ref_price_difference;
 use crate::{
-    DatedPrice, MintToScopeChain, MintsToScopeChains, OraclePrices, Price, Result, ScopeError,
+    DatedPrice, MintToScopeChain, MintsToScopeChains, OracleMappingsCore, OraclePrices, Price,
+    Result, ScopeError,
 };
 
 pub use jup_perp_itf as perpetuals;
@@ -108,13 +110,19 @@ where
     );
 
     // 2. Check accounts
-    check_accounts(jup_pool_pk, &jup_pool, mint_acc, &custodies_accs)?;
+    check_accounts(jup_pool_pk, &jup_pool, mint_acc, &custodies_accs).map_err(|e| {
+        msg!("Error while checking accounts: {:?}", e);
+        e
+    })?;
     // Check of oracles will be done in the next step while deserializing custodies
     // (avoid double iteration or keeping custodies in memory)
 
     // 3. Get mint supply
 
-    let lp_token_supply = get_lp_token_supply(mint_acc)?;
+    let lp_token_supply = get_lp_token_supply(mint_acc).map_err(|e| {
+        msg!("Error while getting mint supply: {:?}", e);
+        e
+    })?;
 
     // 4. Compute AUM and prices
 
@@ -142,6 +150,13 @@ where
         custodies_and_prices_iter,
         aum_and_age_getter,
     )
+    .map_err(|e| {
+        msg!(
+            "Error while computing price from custodies and prices: {:?}",
+            e
+        );
+        e
+    })
 }
 
 /// Get the price of 1 JLP token in USD using a scope mapping
@@ -158,6 +173,7 @@ pub fn get_price_recomputed_scope<'a, 'b>(
     clock: &Clock,
     oracle_prices_pk: &Pubkey,
     oracle_prices: &OraclePrices,
+    oracle_mappings: &OracleMappingsCore,
     extra_accounts: &mut impl Iterator<Item = &'b AccountInfo<'a>>,
 ) -> Result<DatedPrice>
 where
@@ -194,7 +210,10 @@ where
     require_gte!(mint_to_price_map.mapping.len(), num_custodies);
 
     // 2. Check accounts
-    check_accounts(jup_pool_pk, &jup_pool, mint_acc, &custodies_accs)?;
+    check_accounts(jup_pool_pk, &jup_pool, mint_acc, &custodies_accs).map_err(|e| {
+        msg!("Error while checking accounts: {:?}", e);
+        e
+    })?;
 
     require_keys_eq!(
         *oracle_prices_pk,
@@ -218,7 +237,10 @@ where
 
     // 3. Get mint supply
 
-    let lp_token_supply = get_lp_token_supply(mint_acc)?;
+    let lp_token_supply = get_lp_token_supply(mint_acc).map_err(|e| {
+        msg!("Error while getting mint supply: {:?}", e);
+        e
+    })?;
 
     // 4. Compute AUM and prices
 
@@ -246,12 +268,27 @@ where
         compute_custody_aum(&custody, &dated_price)
     };
 
-    compute_price_from_custodies_and_prices(
+    let price = compute_price_from_custodies_and_prices(
         lp_token_supply,
         clock,
         custodies_and_prices_iter,
         aum_and_age_getter,
     )
+    .map_err(|e| {
+        msg!(
+            "Error while computing price from custodies and prices: {:?}",
+            e
+        );
+        e
+    })?;
+
+    if oracle_mappings.ref_price[entry_id] != u16::MAX {
+        let ref_price =
+            oracle_prices.prices[usize::from(oracle_mappings.ref_price[entry_id])].price;
+        check_ref_price_difference(price.price, ref_price)?;
+    }
+
+    Ok(price)
 }
 
 fn compute_price_from_custodies_and_prices<T>(
