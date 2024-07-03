@@ -14,6 +14,7 @@ pub mod pyth_pull_based;
 pub mod raydium_ammv3;
 pub mod spl_stake;
 pub mod switchboard_v2;
+pub mod switchboard_on_demand;
 pub mod twap;
 
 use std::ops::Deref;
@@ -160,6 +161,9 @@ where
             oracle_mappings,
         ),
         OracleType::SwitchboardV2 => switchboard_v2::get_price(base_account).map_err(Into::into),
+        OracleType::SwitchboardOnDemand => {
+            switchboard_on_demand::get_price(base_account, clock).map_err(Into::into)
+        }
         OracleType::CToken => ctokens::get_price(base_account, clock),
         OracleType::SplStake => spl_stake::get_price(base_account, clock),
         #[cfg(not(feature = "yvaults"))]

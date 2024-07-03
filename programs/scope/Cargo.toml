@@ -66,4 +66,4 @@ lb-clmm-itf = { path = "../lb-clmm-itf", features = ["no-entrypoint"] }
 intbits = "0.2.0"
 pyth-solana-receiver-sdk = "0.1.0"
 static_assertions = "1.1.0"
-
+switchboard-on-demand = "0.1.12"
