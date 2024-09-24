@@ -1,7 +1,6 @@
 pub mod handler_approve_admin_cached;
 pub mod handler_close_mint_map;
 pub mod handler_create_mint_map;
-pub mod handler_extend_mapping;
 pub mod handler_initialize;
 pub mod handler_refresh_prices;
 pub mod handler_reset_twap;
@@ -12,7 +11,6 @@ pub mod handler_update_token_metadata;
 pub use handler_approve_admin_cached::*;
 pub use handler_close_mint_map::*;
 pub use handler_create_mint_map::*;
-pub use handler_extend_mapping::*;
 pub use handler_initialize::*;
 pub use handler_refresh_prices::*;
 pub use handler_reset_twap::*;

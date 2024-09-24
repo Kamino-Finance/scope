@@ -27,7 +27,7 @@ pub struct Initialize<'info> {
 
     // Account is pre-reserved/paid outside the program
     #[account(zero)]
-    pub oracle_mappings: AccountLoader<'info, crate::OracleMappingsOld>,
+    pub oracle_mappings: AccountLoader<'info, crate::OracleMappings>,
 }
 
 pub fn process(ctx: Context<Initialize>, _: String) -> Result<()> {

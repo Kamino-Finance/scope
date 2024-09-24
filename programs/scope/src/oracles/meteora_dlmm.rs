@@ -92,7 +92,11 @@ where
     })
 }
 
-pub fn validate_pool_account(pool: &AccountInfo) -> Result<()> {
+pub fn validate_pool_account(pool: &Option<AccountInfo>) -> Result<()> {
+    let Some(pool) = pool else {
+        msg!("No pool account provided");
+        return err!(ScopeError::PriceNotValid);
+    };
     let _: Ref<'_, lb_clmm::LbPair> = zero_copy_deserialize(pool)?;
     Ok(())
 }

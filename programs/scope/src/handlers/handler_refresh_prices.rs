@@ -9,8 +9,8 @@ use solana_program::{
     },
 };
 
-use crate::utils::zero_copy_deserialize;
-use crate::OracleMappingsCore;
+use crate::utils::{price_impl::check_ref_price_difference, zero_copy_deserialize};
+use crate::OracleMappings;
 use crate::{
     oracles::{get_price, OracleType},
     ScopeError,
@@ -39,8 +39,7 @@ pub fn refresh_price_list<'info>(
 ) -> Result<()> {
     check_execution_ctx(&ctx.accounts.instruction_sysvar_account_info)?;
 
-    let oracle_mappings =
-        &zero_copy_deserialize::<OracleMappingsCore>(&ctx.accounts.oracle_mappings)?;
+    let oracle_mappings = &zero_copy_deserialize::<OracleMappings>(&ctx.accounts.oracle_mappings)?;
     let mut oracle_twaps = ctx.accounts.oracle_twaps.load_mut()?;
 
     // No token to refresh
@@ -124,6 +123,13 @@ pub fn refresh_price_list<'info>(
         // from the price feed that is currently updated
 
         let mut oracle_prices = ctx.accounts.oracle_prices.load_mut()?;
+
+        // check that the price is close enough to the ref price is there is a ref price
+        if oracle_mappings.ref_price[token_idx] != u16::MAX {
+            let ref_price =
+                oracle_prices.prices[usize::from(oracle_mappings.ref_price[token_idx])].price;
+            check_ref_price_difference(price.price, ref_price)?;
+        }
         let to_update = oracle_prices
             .prices
             .get_mut(token_idx)

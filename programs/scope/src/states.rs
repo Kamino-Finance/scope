@@ -1,5 +1,4 @@
 use std::mem::size_of;
-use std::ops::Deref;
 
 use crate::utils::consts::*;
 use crate::{MAX_ENTRIES, MAX_ENTRIES_U16};
@@ -9,12 +8,8 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-pub use mapping::core::OracleMappings as OracleMappingsCore;
-pub use mapping::extended::OracleMappings as OracleMappingsExtended;
-pub use mapping::old::OracleMappings as OracleMappingsOld;
-
 #[zero_copy]
-#[derive(Debug, Default)]
+#[derive(Debug, Default, AnchorDeserialize, AnchorSerialize)]
 pub struct Price {
     // Pyth price, integer + exponent representation
     // decimal price would be
@@ -120,107 +115,26 @@ pub struct OraclePrices {
     pub prices: [DatedPrice; MAX_ENTRIES],
 }
 
-pub mod mapping {
-    use std::ops::DerefMut;
+static_assertions::const_assert_eq!(ORACLE_MAPPING_SIZE, std::mem::size_of::<OracleMappings>());
+static_assertions::const_assert_eq!(0, std::mem::size_of::<OracleMappings>() % 8);
+#[account(zero_copy)]
+#[derive(Debug, AnchorDeserialize)]
+pub struct OracleMappings {
+    pub price_info_accounts: [Pubkey; MAX_ENTRIES],
+    pub price_types: [u8; MAX_ENTRIES],
+    pub twap_source: [u16; MAX_ENTRIES], // meaningful only if type == TWAP; the index of where we find the TWAP
+    pub twap_enabled: [u8; MAX_ENTRIES], // true or false
+    pub ref_price: [u16; MAX_ENTRIES], // reference price against which we check confidence within 5%
+    pub generic: [[u8; 20]; MAX_ENTRIES], // generic data parsed depending on oracle type
+}
 
-    use super::*;
-
-    pub mod idl_trick {
-        use super::*;
-        #[zero_copy]
-        pub struct OracleMappingsCore {
-            pub data: [u8; 19456],
-        }
-
-        #[account(zero_copy)]
-        pub struct OracleMappingsForIdl {
-            pub core: OracleMappingsCore,
-            pub _reserved0: [u16; MAX_ENTRIES],
-            pub _reserved1: [u8; MAX_ENTRIES],
-        }
+impl OracleMappings {
+    pub fn is_twap_enabled(&self, entry_id: usize) -> bool {
+        self.twap_enabled[entry_id] > 0
     }
 
-    pub mod core {
-        use super::*;
-        #[account(zero_copy)]
-        #[derive(Debug, AnchorDeserialize)]
-        pub struct OracleMappings {
-            pub price_info_accounts: [Pubkey; MAX_ENTRIES],
-            pub price_types: [u8; MAX_ENTRIES],
-            pub twap_source: [u16; MAX_ENTRIES], // meaningful only if type == TWAP; the index of where we find the TWAP
-            pub twap_enabled: [u8; MAX_ENTRIES], // true or false
-            pub ref_price: [u16; MAX_ENTRIES], // reference price against which we check confidence within 5%
-        }
-    }
-
-    pub mod old {
-        use super::*;
-
-        static_assertions::const_assert_eq!(
-            ORACLE_MAPPING_SIZE,
-            std::mem::size_of::<OracleMappings>()
-        );
-        static_assertions::const_assert_eq!(0, std::mem::size_of::<OracleMappings>() % 8);
-        // Accounts holding source of prices
-        #[account(zero_copy)]
-        pub struct OracleMappings {
-            pub core: OracleMappingsCore,
-            pub _reserved0: [u16; MAX_ENTRIES],
-            pub _reserved1: [u8; MAX_ENTRIES],
-        }
-    }
-    pub mod extended {
-        use super::*;
-
-        static_assertions::const_assert_eq!(
-            ORACLE_MAPPING_EXTENDED_SIZE,
-            std::mem::size_of::<OracleMappings>()
-        );
-        static_assertions::const_assert_eq!(0, std::mem::size_of::<OracleMappings>() % 8);
-        // Accounts holding source of prices
-        #[account(zero_copy)]
-        pub struct OracleMappings {
-            pub core: OracleMappingsCore,
-            pub generic: [[u8; 20]; MAX_ENTRIES],
-        }
-    }
-
-    impl core::OracleMappings {
-        pub fn is_twap_enabled(&self, entry_id: usize) -> bool {
-            self.twap_enabled[entry_id] > 0
-        }
-
-        pub fn get_twap_source(&self, entry_id: usize) -> usize {
-            usize::from(self.twap_source[entry_id])
-        }
-    }
-
-    impl Deref for old::OracleMappings {
-        type Target = core::OracleMappings;
-
-        fn deref(&self) -> &Self::Target {
-            &self.core
-        }
-    }
-
-    impl Deref for extended::OracleMappings {
-        type Target = core::OracleMappings;
-
-        fn deref(&self) -> &Self::Target {
-            &self.core
-        }
-    }
-
-    impl DerefMut for old::OracleMappings {
-        fn deref_mut(&mut self) -> &mut Self::Target {
-            &mut self.core
-        }
-    }
-
-    impl DerefMut for extended::OracleMappings {
-        fn deref_mut(&mut self) -> &mut Self::Target {
-            &mut self.core
-        }
+    pub fn get_twap_source(&self, entry_id: usize) -> usize {
+        usize::from(self.twap_source[entry_id])
     }
 }
 

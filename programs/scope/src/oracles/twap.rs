@@ -1,7 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::ScopeError::PriceAccountNotExpected;
-use crate::{DatedPrice, OracleMappingsCore, OracleTwaps, Price};
+use crate::{DatedPrice, OracleMappings, OracleTwaps, Price, MAX_ENTRIES_U16};
 use crate::{ScopeError, ScopeResult};
 use anchor_lang::prelude::*;
 use intbits::Bits;
@@ -13,12 +12,18 @@ const MIN_SAMPLES_IN_PERIOD: u32 = 10;
 const NUM_SUB_PERIODS: usize = 3;
 const MIN_SAMPLES_IN_FIRST_AND_LAST_PERIOD: u32 = 1;
 
-pub fn validate_price_account(account: &AccountInfo) -> Result<()> {
-    if account.key().eq(&crate::id()) {
-        return Ok(());
+pub fn validate_price_account(account: &Option<AccountInfo>, twap_source: u16) -> Result<()> {
+    if account.is_some() {
+        return err!(ScopeError::PriceAccountNotExpected);
     }
 
-    Err(PriceAccountNotExpected.into())
+    require_gt!(
+        MAX_ENTRIES_U16,
+        twap_source,
+        ScopeError::TwapSourceIndexOutOfRange
+    );
+
+    Ok(())
 }
 
 pub fn update_twap(
@@ -57,7 +62,7 @@ pub fn reset_twap(
 }
 
 pub fn get_price(
-    oracle_mappings: &OracleMappingsCore,
+    oracle_mappings: &OracleMappings,
     oracle_twaps: &OracleTwaps,
     entry_id: usize,
     clock: &Clock,

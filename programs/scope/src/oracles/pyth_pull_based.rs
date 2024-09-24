@@ -2,22 +2,15 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::clock;
 use pyth_solana_receiver_sdk::price_update::{self, PriceUpdateV2, VerificationLevel};
 
-use crate::{
-    utils::{account_deserialize, price_impl::check_ref_price_difference},
-    DatedPrice, OracleMappingsCore as OracleMappings, OraclePrices, Price, ScopeError,
-};
+use crate::{utils::account_deserialize, DatedPrice, Price, ScopeError};
 pub const MAXIMUM_AGE: u64 = 10 * 60; // Ten minutes
 use pyth_sdk_solana::state as pyth_client;
 
+use self::utils::get_last_updated_slot;
+
 use super::pyth::{validate_valid_price, ORACLE_CONFIDENCE_FACTOR};
 
-pub fn get_price(
-    entry_id: usize,
-    price_info: &AccountInfo,
-    clock: &Clock,
-    oracle_prices: &OraclePrices,
-    oracle_mappings: &OracleMappings,
-) -> Result<DatedPrice> {
+pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> {
     let price_account: PriceUpdateV2 = account_deserialize(price_info)?;
 
     let price = price_account.get_price_no_older_than_with_custom_verification_level(
@@ -64,19 +57,8 @@ pub fn get_price(
         exp: exponent.abs().try_into().unwrap(),
     };
 
-    if oracle_mappings.ref_price[entry_id] != u16::MAX {
-        let ref_price =
-            oracle_prices.prices[usize::from(oracle_mappings.ref_price[entry_id])].price;
-        check_ref_price_difference(final_price, ref_price)?;
-    }
-
     // todo: Discuss how we should handle the time jump that can happen when there is an outage?
-    let elapsed_time_s = u64::try_from(clock.unix_timestamp)
-        .unwrap()
-        .saturating_sub(u64::try_from(publish_time).unwrap());
-    let elapsed_slot_estimate = elapsed_time_s * 1000 / clock::DEFAULT_MS_PER_SLOT;
-    let estimated_published_slot = clock.slot.saturating_sub(elapsed_slot_estimate);
-    let last_updated_slot = u64::min(estimated_published_slot, price_account.posted_slot);
+    let last_updated_slot = get_last_updated_slot(clock, publish_time);
     Ok(DatedPrice {
         price: final_price,
         last_updated_slot,
@@ -85,10 +67,26 @@ pub fn get_price(
     })
 }
 
-pub fn validate_price_update_v2_info(price_info: &AccountInfo) -> Result<()> {
+pub fn validate_price_update_v2_info(price_info: &Option<AccountInfo>) -> Result<()> {
     if cfg!(feature = "skip_price_validation") {
         return Ok(());
     }
+    let Some(price_info) = price_info else {
+        msg!("No pyth pull price account provided");
+        return err!(ScopeError::PriceNotValid);
+    };
     let _: PriceUpdateV2 = account_deserialize(price_info)?;
     Ok(())
+}
+
+pub mod utils {
+    use super::*;
+
+    pub fn get_last_updated_slot(clock: &Clock, publish_time: i64) -> u64 {
+        let elapsed_time_s = u64::try_from(clock.unix_timestamp)
+            .unwrap()
+            .saturating_sub(u64::try_from(publish_time).unwrap());
+        let elapsed_slot_estimate = elapsed_time_s * 1000 / clock::DEFAULT_MS_PER_SLOT;
+        clock.slot.saturating_sub(elapsed_slot_estimate)
+    }
 }
