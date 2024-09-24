@@ -96,6 +96,9 @@ pub enum ScopeError {
 
     #[msg("The provided fixed price is invalid")]
     FixedPriceInvalid,
+
+    #[msg("Switchboard On Demand price derive error")]
+    SbOnDemandError,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError
