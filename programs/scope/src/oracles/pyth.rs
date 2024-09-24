@@ -139,10 +139,14 @@ fn validate_pyth_price(pyth_price: &pyth_client::SolanaPriceAccount) -> Result<(
     Ok(())
 }
 
-pub fn validate_pyth_price_info(pyth_price_info: &AccountInfo) -> Result<()> {
+pub fn validate_pyth_price_info(pyth_price_info: &Option<AccountInfo>) -> Result<()> {
     if cfg!(feature = "skip_price_validation") {
         return Ok(());
     }
+    let Some(pyth_price_info) = pyth_price_info else {
+        msg!("No pyth price account provided");
+        return err!(ScopeError::PriceNotValid);
+    };
     let pyth_price_data = pyth_price_info.try_borrow_data()?;
     let pyth_price = pyth_client::load_price_account(&pyth_price_data).unwrap();
 

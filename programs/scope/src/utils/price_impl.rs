@@ -9,6 +9,7 @@ use super::math::ten_pow;
 pub const MAX_REF_RATIO_TOLERANCE_PCT: u64 = 5;
 pub const MAX_REF_RATIO_TOLERANCE_SCALED: u64 = MAX_REF_RATIO_TOLERANCE_PCT * PERCENT_SCALER;
 
+#[cfg(not(target_os = "solana"))]
 impl From<Price> for f64 {
     fn from(val: Price) -> Self {
         val.value as f64 / 10u64.pow(val.exp as u32) as f64
@@ -96,6 +97,23 @@ impl From<Decimal> for Price {
 impl From<Price> for Decimal {
     fn from(val: Price) -> Self {
         Decimal::from(val.value) / 10u128.pow(val.exp as u32)
+    }
+}
+
+#[cfg(not(target_os = "solana"))]
+impl From<f64> for Price {
+    fn from(val: f64) -> Self {
+        let number_of_integer_digits = val.log10() as i64;
+        let exp = if number_of_integer_digits >= 0 {
+            12_u8.saturating_sub(number_of_integer_digits as u8)
+        } else {
+            u8::min((12 + number_of_integer_digits.abs()) as u8, 18)
+        };
+        let value = (val * 10f64.powi(exp.into())) as u64;
+        Price {
+            value,
+            exp: exp.into(),
+        }
     }
 }
 

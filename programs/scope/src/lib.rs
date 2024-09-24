@@ -48,6 +48,7 @@ pub mod scope {
         handler_refresh_prices::refresh_price_list(ctx, &tokens)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn update_mapping(
         ctx: Context<UpdateOracleMapping>,
         token: u16,
@@ -56,10 +57,12 @@ pub mod scope {
         twap_source: u16,
         ref_price_index: u16,
         feed_name: String,
+        generic_data: [u8; 20],
     ) -> Result<()> {
         let token: usize = token
             .try_into()
             .map_err(|_| ScopeError::OutOfRangeIntegralConversion)?;
+        let _feed_name = feed_name;
         handler_update_mapping::process(
             ctx,
             token,
@@ -67,28 +70,8 @@ pub mod scope {
             twap_enabled,
             twap_source,
             ref_price_index,
-            feed_name,
+            &generic_data,
         )
-    }
-
-    pub fn update_mapping_reset_price_ref(
-        ctx: Context<UpdateOracleMapping>,
-        token: u16,
-        price_type: u8,
-        twap_enabled: bool,
-        twap_source: u16,
-        ref_price_index: u16,
-        feed_name: String,
-    ) -> Result<()> {
-        let _ = (
-            token,
-            price_type,
-            twap_enabled,
-            twap_source,
-            ref_price_index,
-            feed_name,
-        );
-        handler_update_mapping::reset_price_ref_mapping(ctx)
     }
 
     pub fn reset_twap(ctx: Context<ResetTwap>, token: u64, feed_name: String) -> Result<()> {
@@ -141,9 +124,5 @@ pub mod scope {
 
     pub fn close_mint_map(ctx: Context<CloseMintMap>) -> Result<()> {
         handler_close_mint_map::process(ctx)
-    }
-
-    pub fn extend_mapping(ctx: Context<ExtendMapping>, feed_name: String) -> Result<()> {
-        handler_extend_mapping::process(ctx, feed_name)
     }
 }

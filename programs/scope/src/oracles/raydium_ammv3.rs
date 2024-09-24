@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::utils::account_deserialize;
 use crate::utils::math::sqrt_price_to_price;
-use crate::{DatedPrice, Result};
+use crate::{DatedPrice, Result, ScopeError};
 use raydium_amm_v3::states::PoolState;
 
 /// Gives the price of the given token pair in the given pool
@@ -31,7 +31,11 @@ pub fn get_price(a_to_b: bool, pool: &AccountInfo, clock: &Clock) -> Result<Date
     })
 }
 
-pub fn validate_pool_account(pool: &AccountInfo) -> Result<()> {
+pub fn validate_pool_account(pool: &Option<AccountInfo>) -> Result<()> {
+    let Some(pool) = pool else {
+        msg!("No pool account provided");
+        return err!(ScopeError::PriceNotValid);
+    };
     let _: PoolState = account_deserialize(pool)?;
     Ok(())
 }

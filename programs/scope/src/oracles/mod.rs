@@ -11,6 +11,7 @@ pub mod orca_whirlpool;
 pub mod pyth;
 pub mod pyth_ema;
 pub mod pyth_pull_based;
+pub mod pyth_pull_based_ema;
 pub mod raydium_ammv3;
 pub mod spl_stake;
 pub mod switchboard_v2;
@@ -24,7 +25,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::{DatedPrice, OracleMappingsCore, OraclePrices, OracleTwaps, ScopeError};
+use crate::{DatedPrice, OracleMappings, OraclePrices, OracleTwaps, Price, ScopeError};
 
 #[cfg(feature = "yvaults")]
 use self::ktokens_token_x::TokenTypes;
@@ -98,6 +99,10 @@ pub enum OracleType {
     JupiterLpScope = 20,
     /// Pyth Pull based oracles
     PythPullBased = 21,
+    // Pyth Pull based oracles EMA
+    PythPullBasedEMA = 22,
+    /// Fixed price oracle
+    FixedPrice = 23,
 }
 
 impl OracleType {
@@ -108,13 +113,15 @@ impl OracleType {
     /// Get the number of compute unit needed to refresh the price of a token
     pub fn get_update_cu_budget(&self) -> u32 {
         match self {
+            OracleType::FixedPrice => 10_000,
             OracleType::PythPullBased => 20_000,
-            OracleType::Pyth => 35_000,
+            OracleType::PythPullBasedEMA => 20_000,
+            OracleType::Pyth => 30_000,
             OracleType::SwitchboardV2 => 30_000,
             OracleType::CToken => 130_000,
             OracleType::SplStake => 20_000,
             OracleType::KToken => 120_000,
-            OracleType::PythEMA => 20_000,
+            OracleType::PythEMA => 30_000,
             OracleType::KTokenToTokenA | OracleType::KTokenToTokenB => 100_000,
             OracleType::MsolStake => 20_000,
             OracleType::JupiterLpFetch => 40_000,
@@ -144,7 +151,7 @@ pub fn get_price<'a, 'b>(
     extra_accounts: &mut impl Iterator<Item = &'b AccountInfo<'a>>,
     clock: &Clock,
     oracle_twaps: &OracleTwaps,
-    oracle_mappings: &OracleMappingsCore,
+    oracle_mappings: &OracleMappings,
     oracle_prices: &AccountLoader<OraclePrices>,
     index: usize,
 ) -> crate::Result<DatedPrice>
@@ -153,13 +160,8 @@ where
 {
     match price_type {
         OracleType::Pyth => pyth::get_price(base_account, clock),
-        OracleType::PythPullBased => pyth_pull_based::get_price(
-            index,
-            base_account,
-            clock,
-            oracle_prices.load()?.deref(),
-            oracle_mappings,
-        ),
+        OracleType::PythPullBased => pyth_pull_based::get_price(base_account, clock),
+        OracleType::PythPullBasedEMA => pyth_pull_based_ema::get_price(base_account, clock),
         OracleType::SwitchboardV2 => switchboard_v2::get_price(base_account).map_err(Into::into),
         OracleType::SwitchboardOnDemand => {
             switchboard_on_demand::get_price(base_account, clock).map_err(Into::into)
@@ -246,6 +248,16 @@ where
             oracle_mappings,
             extra_accounts,
         ),
+        OracleType::FixedPrice => {
+            let mut price_data: &[u8] = &oracle_mappings.generic[index];
+            let price = AnchorDeserialize::deserialize(&mut price_data).unwrap();
+            Ok(DatedPrice {
+                price,
+                last_updated_slot: clock.slot,
+                unix_timestamp: clock.unix_timestamp.try_into().unwrap(),
+                ..Default::default()
+            })
+        }
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
@@ -256,16 +268,21 @@ where
 /// given oracle type.
 ///
 /// This function shall be called before update of oracle mappings
-pub fn validate_oracle_account(
+pub fn validate_oracle_cfg(
     price_type: OracleType,
-    price_account: &AccountInfo,
+    price_account: &Option<AccountInfo>,
+    twap_source: u16,
+    generic_data: &[u8; 20],
 ) -> crate::Result<()> {
     match price_type {
         OracleType::Pyth => pyth::validate_pyth_price_info(price_account),
         OracleType::PythPullBased => pyth_pull_based::validate_price_update_v2_info(price_account),
+        OracleType::PythPullBasedEMA => {
+            pyth_pull_based::validate_price_update_v2_info(price_account)
+        }
         OracleType::SwitchboardV2 => Ok(()), // TODO at least check account ownership?
         OracleType::CToken => Ok(()),        // TODO how shall we validate ctoken account?
-        OracleType::SplStake => Ok(()),      // TODO, should validate ownership of the account
+        OracleType::SplStake => Ok(()),
         OracleType::KToken => Ok(()), // TODO, should validate ownership of the ktoken account
         OracleType::KTokenToTokenA => Ok(()), // TODO, should validate ownership of the ktoken account
         OracleType::KTokenToTokenB => Ok(()), // TODO, should validate ownership of the ktoken account
@@ -274,7 +291,7 @@ pub fn validate_oracle_account(
         OracleType::JupiterLpFetch | OracleType::JupiterLpCompute | OracleType::JupiterLpScope => {
             jupiter_lp::validate_jlp_pool(price_account)
         }
-        OracleType::ScopeTwap => twap::validate_price_account(price_account),
+        OracleType::ScopeTwap => twap::validate_price_account(price_account, twap_source),
         OracleType::OrcaWhirlpoolAtoB | OracleType::OrcaWhirlpoolBtoA => {
             orca_whirlpool::validate_pool_account(price_account)
         }
@@ -283,6 +300,16 @@ pub fn validate_oracle_account(
         }
         OracleType::MeteoraDlmmAtoB | OracleType::MeteoraDlmmBtoA => {
             meteora_dlmm::validate_pool_account(price_account)
+        }
+        OracleType::FixedPrice => {
+            if price_account.is_some() {
+                msg!("No account is expected with a fixed price oracle");
+                return err!(ScopeError::PriceNotValid);
+            }
+            let mut price_data: &[u8] = generic_data;
+            let _price: Price = AnchorDeserialize::deserialize(&mut price_data)
+                .map_err(|_| error!(ScopeError::FixedPriceInvalid))?;
+            Ok(())
         }
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")

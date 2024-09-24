@@ -11,8 +11,8 @@ use crate::utils::account_deserialize;
 use crate::utils::math::ten_pow;
 use crate::utils::price_impl::check_ref_price_difference;
 use crate::{
-    DatedPrice, MintToScopeChain, MintsToScopeChains, OracleMappingsCore, OraclePrices, Price,
-    Result, ScopeError,
+    DatedPrice, MintToScopeChain, MintsToScopeChains, OracleMappings, OraclePrices, Price, Result,
+    ScopeError,
 };
 
 pub use jup_perp_itf as perpetuals;
@@ -64,7 +64,11 @@ where
     Ok(dated_price)
 }
 
-pub fn validate_jlp_pool(account: &AccountInfo) -> Result<()> {
+pub fn validate_jlp_pool(account: &Option<AccountInfo>) -> Result<()> {
+    let Some(account) = account else {
+        msg!("No jlp pool account provided");
+        return err!(ScopeError::PriceNotValid);
+    };
     let _jlp_pool: perpetuals::Pool = account_deserialize(account)?;
     Ok(())
 }
@@ -173,7 +177,7 @@ pub fn get_price_recomputed_scope<'a, 'b>(
     clock: &Clock,
     oracle_prices_pk: &Pubkey,
     oracle_prices: &OraclePrices,
-    oracle_mappings: &OracleMappingsCore,
+    oracle_mappings: &OracleMappings,
     extra_accounts: &mut impl Iterator<Item = &'b AccountInfo<'a>>,
 ) -> Result<DatedPrice>
 where

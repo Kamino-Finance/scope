@@ -94,6 +94,9 @@ pub enum ScopeError {
     #[msg("Cannot resize the account we only allow it to grow in size")]
     CannotResizeAccount,
 
+    #[msg("The provided fixed price is invalid")]
+    FixedPriceInvalid,
+
     #[msg("Switchboard On Demand price derive error")]
     SbOnDemandError,
 }
