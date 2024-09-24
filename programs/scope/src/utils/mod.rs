@@ -12,6 +12,7 @@ use anchor_lang::{
     prelude::{msg, AccountDeserialize, AccountInfo},
     Discriminator, Key,
 };
+pub use decimal_wad;
 
 use crate::{ScopeError, ScopeResult};
 
