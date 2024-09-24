@@ -3,26 +3,30 @@ use std::convert::TryInto;
 use anchor_lang::prelude::*;
 
 use self::switchboard::*;
-use crate::{DatedPrice, Price, Result, ScopeError};
+use super::switchboard_v2::validate_confidence;
+use crate::{DatedPrice, Price, ScopeError};
 
-const MAX_EXPONENT: u32 = 10;
-
-const MIN_CONFIDENCE_PERCENTAGE: u64 = 2u64;
-const CONFIDENCE_FACTOR: u64 = 100 / MIN_CONFIDENCE_PERCENTAGE;
+const MAX_EXPONENT: u32 = 15;
 
 pub fn get_price(
     switchboard_feed_info: &AccountInfo,
 ) -> std::result::Result<DatedPrice, ScopeError> {
-    let feed_buffer = switchboard_feed_info.borrow()
+    let feed_buffer = switchboard_feed_info
+        .try_borrow_data()
         .map_err(|_| ScopeError::SwitchboardOnDemandError)?;
-    let feed = PullFeedAccountData::parse(&feed_buffer)?;
+    let feed = PullFeedAccountData::parse(feed_buffer)?;
 
-    let price_switchboard_desc = feed.result()
-        .ok_or(ScopeError::SbOnDemandError)?;
+    let price_switchboard_desc = feed
+        .result
+        .value()
+        .ok_or(ScopeError::SwitchboardOnDemandError)?;
     let price: Price = price_switchboard_desc.try_into()?;
 
     if !cfg!(feature = "skip_price_validation") {
-        let std_dev = feed.result.std_dev().ok_or(ScopeError::SbOnDemandError)?;
+        let std_dev = feed
+            .result
+            .std_dev()
+            .ok_or(ScopeError::SwitchboardOnDemandError)?;
         if validate_confidence(
             price_switchboard_desc.mantissa(),
             price_switchboard_desc.scale(),
@@ -31,7 +35,6 @@ pub fn get_price(
         )
         .is_err()
         {
-            // Using sol log because with exactly 5 parameters, msg! expect u64s.
             msg!(
                     "Validation of confidence interval for SB On-Demand feed {} failed. Price: {:?}, stdev_mantissa: {:?}, stdev_scale: {:?}",
                     switchboard_feed_info.key(),
@@ -39,18 +42,14 @@ pub fn get_price(
                     std_dev.mantissa(),
                     std_dev.scale()
                 );
-            return Err(ScopeError::SbOnDemandError);
+            return Err(ScopeError::SwitchboardOnDemandError);
         }
     };
 
     // NOTE: This is the slot and timestamp of the selected sample,
     // not necessarily the most recent one.
     let last_updated_slot = feed.result.slot;
-    let unix_timestamp = feed
-        .result
-        .timestamp
-        .try_into()
-        .unwrap();
+    let unix_timestamp = feed.result.timestamp.try_into().unwrap();
 
     Ok(DatedPrice {
         price,
@@ -60,48 +59,25 @@ pub fn get_price(
     })
 }
 
-fn validate_confidence(
-    price_mantissa: i128,
-    price_scale: u32,
-    stdev_mantissa: i128,
-    stdev_scale: u32,
-) -> std::result::Result<(), ScopeError> {
-    // Step 1: compute scaling factor to bring the stdev to the same scale as the price.
-    let (scale_op, scale_diff): (&dyn Fn(i128, i128) -> Option<i128>, _) =
-        if price_scale >= stdev_scale {
-            (
-                &i128::checked_mul,
-                price_scale.checked_sub(stdev_scale).unwrap(),
-            )
-        } else {
-            (
-                &i128::checked_div,
-                stdev_scale.checked_sub(price_scale).unwrap(),
-            )
-        };
-
-    let scaling_factor = 10_i128
-        .checked_pow(scale_diff)
-        .ok_or(ScopeError::MathOverflow)?;
-
-    // Step 2: multiply the stdev by the CONFIDENCE_FACTOR and apply scaling factor.
-
-    let stdev_x_confidence_factor_scaled = stdev_mantissa
-        .checked_mul(CONFIDENCE_FACTOR.into())
-        .and_then(|a| scale_op(a, scaling_factor))
-        .ok_or(ScopeError::MathOverflow)?;
-
-    if stdev_x_confidence_factor_scaled >= price_mantissa {
-        Err(ScopeError::PriceNotValid)
-    } else {
-        Ok(())
+pub fn validate_price_account(switchboard_feed_info: &Option<AccountInfo>) -> crate::Result<()> {
+    if cfg!(feature = "skip_price_validation") {
+        return Ok(());
     }
+    let Some(switchboard_feed_info) = switchboard_feed_info else {
+        msg!("No pyth pull price account provided");
+        return err!(ScopeError::PriceNotValid);
+    };
+    let feed_buffer = switchboard_feed_info
+        .try_borrow_data()
+        .map_err(|_| ScopeError::SwitchboardOnDemandError)?;
+    let _feed = PullFeedAccountData::parse(feed_buffer)?;
+    Ok(())
 }
 
-impl TryFrom<Decimal> for Price {
+impl TryFrom<rust_decimal::Decimal> for Price {
     type Error = ScopeError;
 
-    fn try_from(sb_decimal: Decimal) -> std::result::Result<Self, Self::Error> {
+    fn try_from(sb_decimal: rust_decimal::Decimal) -> std::result::Result<Self, Self::Error> {
         if sb_decimal.mantissa() < 0 {
             msg!("Switchboard v2 oracle price feed is negative");
             return Err(ScopeError::PriceNotValid);
@@ -127,12 +103,13 @@ impl TryFrom<Decimal> for Price {
     }
 }
 
-mod switchboard {
-    use rust_decimal::Decimal;
-    use sha2::{Digest, Sha256};
-    use solana_program::pubkey::Pubkey;
-    use solana_program::clock::Clock;
+pub mod switchboard {
     use std::cell::Ref;
+
+    use rust_decimal::Decimal;
+    use solana_program::pubkey::Pubkey;
+
+    use crate::ScopeError;
 
     pub const PRECISION: u32 = 18;
 
@@ -175,59 +152,6 @@ mod switchboard {
                 return None;
             }
             Some(Decimal::from_i128_with_scale(self.std_dev, PRECISION))
-        }
-
-        /// The mean of the submissions needed for quorom size
-        pub fn mean(&self) -> Option<Decimal> {
-            if self.slot == 0 {
-                return None;
-            }
-            Some(Decimal::from_i128_with_scale(self.mean, PRECISION))
-        }
-
-        /// The range of the submissions needed for quorom size
-        pub fn range(&self) -> Option<Decimal> {
-            if self.slot == 0 {
-                return None;
-            }
-            Some(Decimal::from_i128_with_scale(self.range, PRECISION))
-        }
-
-        /// The minimum value of the submissions needed for quorom size
-        pub fn min_value(&self) -> Option<Decimal> {
-            if self.slot == 0 {
-                return None;
-            }
-            Some(Decimal::from_i128_with_scale(self.min_value, PRECISION))
-        }
-
-        /// The maximum value of the submissions needed for quorom size
-        pub fn max_value(&self) -> Option<Decimal> {
-            if self.slot == 0 {
-                return None;
-            }
-            Some(Decimal::from_i128_with_scale(self.max_value, PRECISION))
-        }
-
-        pub fn result_slot(&self) -> Option<u64> {
-            if self.slot == 0 {
-                return None;
-            }
-            Some(self.slot)
-        }
-
-        pub fn min_slot(&self) -> Option<u64> {
-            if self.slot == 0 {
-                return None;
-            }
-            Some(self.min_slot)
-        }
-
-        pub fn max_slot(&self) -> Option<u64> {
-            if self.slot == 0 {
-                return None;
-            }
-            Some(self.max_slot)
         }
     }
 
@@ -278,29 +202,16 @@ mod switchboard {
         _ebuf1: [u8; 512],
     }
 
-    impl OracleSubmission {
-        pub fn is_empty(&self) -> bool {
-            self.slot == 0
-        }
-
-        pub fn value(&self) -> Decimal {
-            Decimal::from_i128_with_scale(self.value, PRECISION)
-        }
-    }
-
     impl PullFeedAccountData {
-
-        pub fn parse<'info>(
-            data: Ref<'info, &mut [u8]>,
-        ) -> Result<Ref<'info, Self>, OnDemandError> {
+        pub fn parse<'info>(data: Ref<'info, &mut [u8]>) -> Result<Ref<'info, Self>, ScopeError> {
             if data.len() < Self::discriminator().len() {
-                return Err(OnDemandError::InvalidDiscriminator);
+                return Err(ScopeError::InvalidAccountDiscriminator);
             }
 
             let mut disc_bytes = [0u8; 8];
             disc_bytes.copy_from_slice(&data[..8]);
             if disc_bytes != Self::discriminator() {
-                return Err(OnDemandError::InvalidDiscriminator);
+                return Err(ScopeError::InvalidAccountDiscriminator);
             }
 
             Ok(Ref::map(data, |data: &&mut [u8]| {
@@ -312,34 +223,20 @@ mod switchboard {
             [196, 27, 108, 196, 10, 215, 219, 40]
         }
 
-        /// The median value of the submissions needed for quorom size
-        pub fn value(&self) -> Option<Decimal> {
-            self.result.value()
-        }
+        pub fn parse_data(data: &[u8]) -> Result<&Self, ScopeError> {
+            if data.len() < Self::discriminator().len() {
+                return Err(ScopeError::InvalidAccountDiscriminator);
+            }
 
-        /// The standard deviation of the submissions needed for quorom size
-        pub fn std_dev(&self) -> Option<Decimal> {
-            self.result.std_dev()
-        }
+            let mut disc_bytes = [0u8; 8];
+            disc_bytes.copy_from_slice(&data[..8]);
+            if disc_bytes != Self::discriminator() {
+                return Err(ScopeError::InvalidAccountDiscriminator);
+            }
 
-        /// The mean of the submissions needed for quorom size
-        pub fn mean(&self) -> Option<Decimal> {
-            self.result.mean()
-        }
-
-        /// The range of the submissions needed for quorom size
-        pub fn range(&self) -> Option<Decimal> {
-            self.result.range()
-        }
-
-        /// The minimum value of the submissions needed for quorom size
-        pub fn min_value(&self) -> Option<Decimal> {
-            self.result.min_value()
-        }
-
-        /// The maximum value of the submissions needed for quorom size
-        pub fn max_value(&self) -> Option<Decimal> {
-            self.result.max_value()
+            Ok(bytemuck::from_bytes(
+                &data[8..std::mem::size_of::<Self>() + 8],
+            ))
         }
     }
 }

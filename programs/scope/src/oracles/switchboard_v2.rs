@@ -3,12 +3,12 @@ use std::convert::TryInto;
 use anchor_lang::prelude::*;
 
 use self::switchboard::*;
-use crate::{DatedPrice, Price, Result, ScopeError};
+use crate::{
+    utils::{consts::ORACLE_CONFIDENCE_FACTOR, math::check_confidence_interval},
+    DatedPrice, Price, Result, ScopeError,
+};
 
 const MAX_EXPONENT: u32 = 10;
-
-const MIN_CONFIDENCE_PERCENTAGE: u64 = 2u64;
-const CONFIDENCE_FACTOR: u64 = 100 / MIN_CONFIDENCE_PERCENTAGE;
 
 pub fn get_price(
     switchboard_feed_info: &AccountInfo,
@@ -37,7 +37,6 @@ pub fn get_price(
         )
         .is_err()
         {
-            // Using sol log because with exactly 5 parameters, msg! expect u64s.
             msg!(
                     "Validation of confidence interval for switchboard v2 feed {} failed. Price: {:?}, stdev_mantissa: {:?}, stdev_scale: {:?}",
                     switchboard_feed_info.key(),
@@ -64,42 +63,20 @@ pub fn get_price(
     })
 }
 
-fn validate_confidence(
+#[inline(always)]
+pub(super) fn validate_confidence(
     price_mantissa: i128,
     price_scale: u32,
     stdev_mantissa: i128,
     stdev_scale: u32,
 ) -> std::result::Result<(), ScopeError> {
-    // Step 1: compute scaling factor to bring the stdev to the same scale as the price.
-    let (scale_op, scale_diff): (&dyn Fn(i128, i128) -> Option<i128>, _) =
-        if price_scale >= stdev_scale {
-            (
-                &i128::checked_mul,
-                price_scale.checked_sub(stdev_scale).unwrap(),
-            )
-        } else {
-            (
-                &i128::checked_div,
-                stdev_scale.checked_sub(price_scale).unwrap(),
-            )
-        };
-
-    let scaling_factor = 10_i128
-        .checked_pow(scale_diff)
-        .ok_or(ScopeError::MathOverflow)?;
-
-    // Step 2: multiply the stdev by the CONFIDENCE_FACTOR and apply scaling factor.
-
-    let stdev_x_confidence_factor_scaled = stdev_mantissa
-        .checked_mul(CONFIDENCE_FACTOR.into())
-        .and_then(|a| scale_op(a, scaling_factor))
-        .ok_or(ScopeError::MathOverflow)?;
-
-    if stdev_x_confidence_factor_scaled >= price_mantissa {
-        Err(ScopeError::PriceNotValid)
-    } else {
-        Ok(())
-    }
+    check_confidence_interval(
+        price_mantissa.try_into().unwrap(),
+        price_scale,
+        stdev_mantissa.try_into().unwrap(),
+        stdev_scale,
+        ORACLE_CONFIDENCE_FACTOR,
+    )
 }
 
 impl TryFrom<SwitchboardDecimal> for Price {

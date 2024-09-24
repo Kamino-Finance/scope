@@ -9,11 +9,10 @@ use solana_program::{
     },
 };
 
-use crate::utils::{price_impl::check_ref_price_difference, zero_copy_deserialize};
-use crate::OracleMappings;
 use crate::{
     oracles::{get_price, OracleType},
-    ScopeError,
+    utils::{price_impl::check_ref_price_difference, zero_copy_deserialize},
+    OracleMappings, ScopeError,
 };
 
 const COMPUTE_BUDGET_ID: Pubkey = pubkey!("ComputeBudget111111111111111111111111111111");
@@ -128,7 +127,16 @@ pub fn refresh_price_list<'info>(
         if oracle_mappings.ref_price[token_idx] != u16::MAX {
             let ref_price =
                 oracle_prices.prices[usize::from(oracle_mappings.ref_price[token_idx])].price;
-            check_ref_price_difference(price.price, ref_price)?;
+            if let Err(diff_err) = check_ref_price_difference(price.price, ref_price) {
+                if fail_tx_on_error {
+                    return Err(diff_err);
+                } else {
+                    msg!(
+                    "Price skipped as ref price check failed (token {token_idx}, type {price_type:?})",
+                );
+                    continue;
+                }
+            }
         }
         let to_update = oracle_prices
             .prices

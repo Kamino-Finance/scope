@@ -1,10 +1,9 @@
+use anchor_lang::prelude::*;
 use decimal_wad::{common::PERCENT_SCALER, decimal::Decimal};
 use solana_program::msg;
 
-use crate::{Price, ScopeError};
-use anchor_lang::prelude::*;
-
 use super::math::ten_pow;
+use crate::{Price, ScopeError};
 
 pub const MAX_REF_RATIO_TOLERANCE_PCT: u64 = 5;
 pub const MAX_REF_RATIO_TOLERANCE_SCALED: u64 = MAX_REF_RATIO_TOLERANCE_PCT * PERCENT_SCALER;

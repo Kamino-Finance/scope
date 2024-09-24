@@ -11,15 +11,14 @@
 
 use std::convert::{TryFrom, TryInto};
 
-use anchor_lang::prelude::*;
-use anchor_lang::solana_program::clock::DEFAULT_MS_PER_SLOT;
+use anchor_lang::{prelude::*, solana_program::clock::DEFAULT_MS_PER_SLOT};
 use pyth_client::PriceType;
 use pyth_sdk_solana::state as pyth_client;
 
-use crate::{DatedPrice, Price, ScopeError};
-
-/// validate price confidence - confidence/price ratio should be less than 2%
-pub const ORACLE_CONFIDENCE_FACTOR: u64 = 50; // 100% / 2%
+use crate::{
+    utils::{consts::ORACLE_CONFIDENCE_FACTOR, math::check_confidence_interval},
+    DatedPrice, Price, ScopeError,
+};
 
 /// Only update with prices not older than 10 minutes, users can still check actual price age
 const STALENESS_SLOT_THRESHOLD: u64 = (10 * 60 * 1000) / DEFAULT_MS_PER_SLOT; // 10 minutes
@@ -87,10 +86,7 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
     })?;
 
     Ok(DatedPrice {
-        price: Price {
-            value: price,
-            exp: pyth_price.expo.abs().try_into().unwrap(),
-        },
+        price,
         last_updated_slot: slot,
         unix_timestamp: u64::try_from(timestamp).unwrap(),
         ..Default::default()
@@ -99,24 +95,40 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
 
 pub fn validate_valid_price(
     pyth_price: &pyth_client::Price,
-    oracle_confidence_factor: u64,
-) -> std::result::Result<u64, ScopeError> {
+    oracle_confidence_factor: u32,
+) -> std::result::Result<Price, ScopeError> {
+    let price = u64::try_from(pyth_price.price).unwrap();
+    let price_exp: u32 = pyth_price.expo.abs().try_into().unwrap();
+
     if cfg!(feature = "skip_price_validation") {
-        return Ok(u64::try_from(pyth_price.price).unwrap());
+        return Ok(Price {
+            value: price,
+            exp: price_exp.into(),
+        });
     }
 
-    let price = u64::try_from(pyth_price.price).unwrap();
     if price == 0 {
         msg!("Pyth price is 0");
         return Err(ScopeError::PriceNotValid);
     }
-    let conf: u64 = pyth_price.conf;
-    let conf_50x: u64 = conf.checked_mul(oracle_confidence_factor).unwrap();
-    if conf_50x > price {
-        msg!("Pyth price has a confidence interval too large: {}", conf);
-        return Err(ScopeError::PriceNotValid);
-    };
-    Ok(price)
+
+    let conf: u128 = pyth_price.conf.into();
+    check_confidence_interval(
+        price.into(),
+        price_exp,
+        conf,
+        price_exp,
+        oracle_confidence_factor,
+    )
+    .map_err(|e| {
+        msg!("Confidence interval check failed conf {conf}",);
+        e
+    })?;
+
+    Ok(Price {
+        value: price,
+        exp: price_exp.into(),
+    })
 }
 
 fn validate_pyth_price(pyth_price: &pyth_client::SolanaPriceAccount) -> Result<()> {

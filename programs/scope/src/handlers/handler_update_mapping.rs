@@ -1,10 +1,10 @@
-use crate::utils::pdas::seeds;
-use crate::utils::zero_copy_deserialize_mut;
+use anchor_lang::prelude::*;
+
 use crate::{
     oracles::{check_context, validate_oracle_cfg, OracleType},
+    utils::{pdas::seeds, zero_copy_deserialize_mut},
     OracleMappings, ScopeError,
 };
-use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 #[instruction(

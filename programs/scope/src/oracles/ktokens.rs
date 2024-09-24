@@ -1,11 +1,10 @@
 use std::ops::Deref;
 
 use anchor_lang::{prelude::*, Result};
-use decimal_wad::decimal::Decimal;
-use decimal_wad::rate::U128;
-use kamino::operations::vault_operations::common::underlying_unit;
+use decimal_wad::{decimal::Decimal, rate::U128};
 use kamino::{
     clmm::{orca_clmm::OrcaClmm, Clmm},
+    operations::vault_operations::common::underlying_unit,
     raydium_amm_v3::states::{PersonalPositionState as RaydiumPosition, PoolState as RaydiumPool},
     raydium_clmm::RaydiumClmm,
     state::{CollateralInfos, GlobalConfig, WhirlpoolStrategy},
@@ -24,10 +23,9 @@ use yvaults::{
     },
 };
 
-use crate::ScopeResult;
 use crate::{
     utils::{account_deserialize, zero_copy_deserialize},
-    DatedPrice, Price, ScopeError,
+    DatedPrice, Price, ScopeError, ScopeResult,
 };
 
 const SCALE_DECIMALS: u8 = 6;

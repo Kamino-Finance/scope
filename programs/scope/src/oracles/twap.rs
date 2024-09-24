@@ -1,11 +1,12 @@
 use std::cmp::Ordering;
 
-use crate::{DatedPrice, OracleMappings, OracleTwaps, Price, MAX_ENTRIES_U16};
-use crate::{ScopeError, ScopeResult};
 use anchor_lang::prelude::*;
 use intbits::Bits;
 
 use self::utils::{reset_ema_twap, update_ema_twap};
+use crate::{
+    DatedPrice, OracleMappings, OracleTwaps, Price, ScopeError, ScopeResult, MAX_ENTRIES_U16,
+};
 
 const EMA_1H_DURATION_SECONDS: u64 = 60 * 60;
 const MIN_SAMPLES_IN_PERIOD: u32 = 10;
@@ -84,9 +85,8 @@ pub fn get_price(
 mod utils {
     use decimal_wad::decimal::Decimal;
 
-    use crate::{EmaTwap, Price, ScopeResult};
-
     use super::*;
+    use crate::{EmaTwap, Price, ScopeResult};
 
     /// Get the adjusted smoothing factor (alpha) based on the time between the last two samples.
     ///

@@ -5,21 +5,18 @@ use yvaults::{
     self as kamino,
     clmm::Clmm,
     operations::vault_operations::common,
-    state::CollateralToken,
-    state::{CollateralInfos, GlobalConfig, WhirlpoolStrategy},
+    state::{CollateralInfos, CollateralToken, GlobalConfig, WhirlpoolStrategy},
     utils::{enums::LiquidityCalculationMode, price::TokenPrices},
 };
 
-use crate::ScopeResult;
+use super::ktokens::price_utils;
 use crate::{
     utils::{
         math::{price_of_lamports_to_price_of_tokens, u64_div_to_price},
         zero_copy_deserialize,
     },
-    DatedPrice, Price, ScopeError,
+    DatedPrice, Price, ScopeError, ScopeResult,
 };
-
-use super::ktokens::price_utils;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TokenTypes {

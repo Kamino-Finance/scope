@@ -14,8 +14,8 @@ pub mod pyth_pull_based;
 pub mod pyth_pull_based_ema;
 pub mod raydium_ammv3;
 pub mod spl_stake;
-pub mod switchboard_v2;
 pub mod switchboard_on_demand;
+pub mod switchboard_v2;
 pub mod twap;
 
 use std::ops::Deref;
@@ -25,10 +25,9 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::{DatedPrice, OracleMappings, OraclePrices, OracleTwaps, Price, ScopeError};
-
 #[cfg(feature = "yvaults")]
 use self::ktokens_token_x::TokenTypes;
+use crate::{DatedPrice, OracleMappings, OraclePrices, OracleTwaps, Price, ScopeError};
 
 pub fn check_context<T>(ctx: &Context<T>) -> Result<()> {
     //make sure there are no extra accounts
@@ -103,6 +102,8 @@ pub enum OracleType {
     PythPullBasedEMA = 22,
     /// Fixed price oracle
     FixedPrice = 23,
+    /// Switchboard on demand
+    SwitchboardOnDemand = 24,
 }
 
 impl OracleType {
@@ -118,6 +119,7 @@ impl OracleType {
             OracleType::PythPullBasedEMA => 20_000,
             OracleType::Pyth => 30_000,
             OracleType::SwitchboardV2 => 30_000,
+            OracleType::SwitchboardOnDemand => 30_000,
             OracleType::CToken => 130_000,
             OracleType::SplStake => 20_000,
             OracleType::KToken => 120_000,
@@ -164,7 +166,7 @@ where
         OracleType::PythPullBasedEMA => pyth_pull_based_ema::get_price(base_account, clock),
         OracleType::SwitchboardV2 => switchboard_v2::get_price(base_account).map_err(Into::into),
         OracleType::SwitchboardOnDemand => {
-            switchboard_on_demand::get_price(base_account, clock).map_err(Into::into)
+            switchboard_on_demand::get_price(base_account).map_err(Into::into)
         }
         OracleType::CToken => ctokens::get_price(base_account, clock),
         OracleType::SplStake => spl_stake::get_price(base_account, clock),
@@ -245,7 +247,6 @@ where
             clock,
             &oracle_prices.key(),
             oracle_prices.load()?.deref(),
-            oracle_mappings,
             extra_accounts,
         ),
         OracleType::FixedPrice => {
@@ -274,11 +275,19 @@ pub fn validate_oracle_cfg(
     twap_source: u16,
     generic_data: &[u8; 20],
 ) -> crate::Result<()> {
+    // when we remove something from the config there is no validation needed
+    if price_type == OracleType::Pyth && price_account.is_none() {
+        return Ok(());
+    }
+
     match price_type {
         OracleType::Pyth => pyth::validate_pyth_price_info(price_account),
         OracleType::PythPullBased => pyth_pull_based::validate_price_update_v2_info(price_account),
         OracleType::PythPullBasedEMA => {
             pyth_pull_based::validate_price_update_v2_info(price_account)
+        }
+        OracleType::SwitchboardOnDemand => {
+            switchboard_on_demand::validate_price_account(price_account)
         }
         OracleType::SwitchboardV2 => Ok(()), // TODO at least check account ownership?
         OracleType::CToken => Ok(()),        // TODO how shall we validate ctoken account?

@@ -12,6 +12,7 @@ use std::convert::TryInto;
 
 pub use anchor_lang;
 use anchor_lang::prelude::*;
+pub use handler_update_token_metadata::UpdateTokenMetadataMode;
 use handlers::*;
 pub use num_enum;
 use program_id::PROGRAM_ID;
@@ -19,10 +20,7 @@ pub use whirlpool;
 #[cfg(feature = "yvaults")]
 pub use yvaults;
 
-pub use crate::errors::*;
-pub use crate::states::*;
-pub use crate::utils::scope_chain;
-pub use handler_update_token_metadata::UpdateTokenMetadataMode;
+pub use crate::{errors::*, states::*, utils::scope_chain};
 
 declare_id!(PROGRAM_ID);
 

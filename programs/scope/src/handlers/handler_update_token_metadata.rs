@@ -1,7 +1,7 @@
-use crate::utils::pdas::seeds;
-use crate::ScopeError;
 use anchor_lang::prelude::*;
 use num_enum::TryFromPrimitive;
+
+use crate::{utils::pdas::seeds, ScopeError};
 #[derive(TryFromPrimitive, PartialEq, Eq, Clone, Copy, Debug)]
 #[repr(u64)]
 pub enum UpdateTokenMetadataMode {

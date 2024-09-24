@@ -1,5 +1,4 @@
-use anchor_lang::prelude::*;
-use anchor_lang::Discriminator;
+use anchor_lang::{prelude::*, Discriminator};
 use rust_decimal::{prelude::FromPrimitive, Decimal};
 
 #[account(zero_copy(unsafe))]

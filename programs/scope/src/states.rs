@@ -1,12 +1,12 @@
 use std::mem::size_of;
 
-use crate::utils::consts::*;
-use crate::{MAX_ENTRIES, MAX_ENTRIES_U16};
 use anchor_lang::prelude::*;
 use decimal_wad::decimal::Decimal;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+
+use crate::{utils::consts::*, MAX_ENTRIES, MAX_ENTRIES_U16};
 
 #[zero_copy]
 #[derive(Debug, Default, AnchorDeserialize, AnchorSerialize)]

@@ -1,5 +1,6 @@
-use crate::utils::pdas::seeds;
 use anchor_lang::prelude::*;
+
+use crate::utils::pdas::seeds;
 
 #[derive(Accounts)]
 #[instruction(feed_name: String)]
