@@ -49,7 +49,7 @@ pub fn get_price(
     // NOTE: This is the slot and timestamp of the selected sample,
     // not necessarily the most recent one.
     let last_updated_slot = feed.result.slot;
-    let unix_timestamp = feed.result.timestamp.try_into().unwrap();
+    let unix_timestamp = 0;
 
     Ok(DatedPrice {
         price,
@@ -128,8 +128,7 @@ pub mod switchboard {
         pub min_value: i128,
         /// The maximum value of the submissions needed for quorom size
         pub max_value: i128,
-        /// The timestamp at which this value was signed.
-        pub timestamp: i64,
+        pub padding1: [u8; 8],
         /// The slot at which this value was signed.
         pub slot: u64,
         /// The slot at which the first considered submission was made
@@ -162,8 +161,7 @@ pub mod switchboard {
         pub oracle: Pubkey,
         /// The slot at which this value was signed.
         pub slot: u64,
-        /// The timestamp at which this value was signed.
-        pub timestamp: i64,
+        padding1: [u8; 8],
         /// The value that was submitted.
         pub value: i128,
     }
