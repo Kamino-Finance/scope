@@ -35,5 +35,5 @@ yvaults = { path = "../yvaults_stub", package = "yvaults_stub", optional = true 
 - Build scope with the following command:
 
 ```sh
-anchor build -p scope -- --no-default-features --features mainnet
+cargo build-sbf --manifest-path=./programs/scope/Cargo.toml --no-default-features
 ```
