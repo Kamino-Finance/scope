@@ -49,7 +49,7 @@ pub fn get_price(
     // NOTE: This is the slot and timestamp of the selected sample,
     // not necessarily the most recent one.
     let last_updated_slot = feed.result.slot;
-    let unix_timestamp = feed.result.timestamp.try_into().unwrap();
+    let unix_timestamp = 0;
 
     Ok(DatedPrice {
         price,
@@ -128,8 +128,9 @@ pub mod switchboard {
         pub min_value: i128,
         /// The maximum value of the submissions needed for quorom size
         pub max_value: i128,
-        /// The timestamp at which this value was signed.
-        pub timestamp: i64,
+        /// The number of samples used to calculate this result
+        pub num_samples: u8,
+        pub padding1: [u8; 7],
         /// The slot at which this value was signed.
         pub slot: u64,
         /// The slot at which the first considered submission was made
@@ -162,8 +163,7 @@ pub mod switchboard {
         pub oracle: Pubkey,
         /// The slot at which this value was signed.
         pub slot: u64,
-        /// The timestamp at which this value was signed.
-        pub timestamp: i64,
+        padding1: [u8; 8],
         /// The value that was submitted.
         pub value: i128,
     }
@@ -189,17 +189,19 @@ pub mod switchboard {
         pub max_variance: u64,
         pub min_responses: u32,
         pub name: [u8; 32],
-        _padding1: [u8; 3],
-        pub sample_size: u8,
+        padding1: [u8; 2],
+        pub historical_result_idx: u8,
+        pub min_sample_size: u8,
         pub last_update_timestamp: i64,
         pub lut_slot: u64,
-        pub ipfs_hash: [u8; 32], // deprecated
+        _reserved1: [u8; 32],
         pub result: CurrentResult,
         pub max_staleness: u32,
-        _ebuf4: [u8; 20],
+        padding2: [u8; 12],
+        pub historical_results: [CompactResult; 32],
+        _ebuf4: [u8; 8],
         _ebuf3: [u8; 24],
         _ebuf2: [u8; 256],
-        _ebuf1: [u8; 512],
     }
 
     impl PullFeedAccountData {
@@ -238,5 +240,16 @@ pub mod switchboard {
                 &data[8..std::mem::size_of::<Self>() + 8],
             ))
         }
+    }
+
+    #[repr(C)]
+    #[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+    pub struct CompactResult {
+        /// The standard deviation of the submissions needed for quorom size
+        pub std_dev: f32,
+        /// The mean of the submissions needed for quorom size
+        pub mean: f32,
+        /// The slot at which this value was signed.
+        pub slot: u64,
     }
 }
