@@ -1,6 +1,7 @@
 use std::convert::TryInto;
 
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::clock::DEFAULT_MS_PER_SLOT;
 
 use self::switchboard::*;
 use super::switchboard_v2::validate_confidence;
@@ -10,6 +11,7 @@ const MAX_EXPONENT: u32 = 15;
 
 pub fn get_price(
     switchboard_feed_info: &AccountInfo,
+    clock: &Clock,
 ) -> std::result::Result<DatedPrice, ScopeError> {
     let feed_buffer = switchboard_feed_info
         .try_borrow_data()
@@ -49,7 +51,12 @@ pub fn get_price(
     // NOTE: This is the slot and timestamp of the selected sample,
     // not necessarily the most recent one.
     let last_updated_slot = feed.result.slot;
-    let unix_timestamp = 0;
+
+    // In absence of better option, we estimate the timestamp from the slot.
+    let elapsed_slots = clock.slot.saturating_sub(last_updated_slot);
+    let unix_timestamp = u64::try_from(clock.unix_timestamp)
+        .unwrap_or(0)
+        .saturating_sub(elapsed_slots * DEFAULT_MS_PER_SLOT / 1000);
 
     Ok(DatedPrice {
         price,
@@ -168,6 +175,7 @@ pub mod switchboard {
         pub value: i128,
     }
 
+    static_assertions::const_assert_eq!(3200, std::mem::size_of::<PullFeedAccountData>());
     /// A representation of the data in a pull feed account.
     #[repr(C)]
     #[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
@@ -241,7 +249,6 @@ pub mod switchboard {
             ))
         }
     }
-
     #[repr(C)]
     #[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
     pub struct CompactResult {
