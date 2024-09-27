@@ -3,9 +3,10 @@ use anchor_spl::token::spl_token::state::Mint;
 use solana_program::program_pack::Pack;
 use whirlpool::state::Whirlpool;
 
-use crate::utils::account_deserialize;
-use crate::utils::math::sqrt_price_to_price;
-use crate::{DatedPrice, Result, ScopeError};
+use crate::{
+    utils::{account_deserialize, math::sqrt_price_to_price},
+    DatedPrice, Result, ScopeError,
+};
 
 /// Gives the price of the given token pair in the given pool
 pub fn get_price<'a, 'b>(

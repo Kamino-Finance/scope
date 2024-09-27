@@ -1,9 +1,7 @@
-use crate::{ScopeError, ScopeResult};
-use decimal_wad::decimal::U192;
-use decimal_wad::rate::U128;
+use decimal_wad::{decimal::U192, rate::U128};
 use raydium_amm_v3::libraries::U256;
 
-use crate::Price;
+use crate::{Price, ScopeError, ScopeResult};
 
 /// Transform sqrt price to normal price scaled by 2^64
 fn sqrt_price_to_x64_price(sqrt_price: u128, decimals_a: u8, decimals_b: u8) -> U192 {
@@ -137,8 +135,9 @@ pub fn u64_div_to_price(numerator: u64, denominator: u64) -> Price {
     }
 }
 
-pub fn ten_pow(exponent: u8) -> u128 {
-    let value: u128 = match exponent {
+pub fn ten_pow(exponent: impl Into<u32>) -> u128 {
+    let expo = exponent.into();
+    let value: u128 = match expo {
         30 => 1_000_000_000_000_000_000_000_000_000_000,
         29 => 100_000_000_000_000_000_000_000_000_000,
         28 => 10_000_000_000_000_000_000_000_000_000,
@@ -170,8 +169,50 @@ pub fn ten_pow(exponent: u8) -> u128 {
         2 => 100,
         1 => 10,
         0 => 1,
-        _ => panic!("no support for exponent: {exponent}"),
+        _ => panic!("no support for exponent: {expo}"),
     };
 
     value
+}
+
+/// Convert a confidence in bps to a confidence factor
+/// the result can be used as [`check_price_deviation_tolerance`] input
+///
+/// For example 2% confidence (200 bps) will return a factor of 50.
+pub const fn confidence_bps_to_factor(confidence_bps: u32) -> u32 {
+    10_000 / confidence_bps
+}
+
+/// Check that `deviation` represent only a fraction of `price`
+///
+/// This function can be used to check that an absolute standard deviation
+/// or confidence interval is within a certain percentage of the price.
+///
+/// This function expect the tolerance to be provided as a factor
+/// and will verify that `price > deviation * tolerance`
+///
+/// You can use [`confidence_bps_to_factor`] to convert a confidence in bps to a factor.
+pub fn check_confidence_interval(
+    price_value: u128,
+    price_exp: u32,
+    deviation: u128,
+    deviation_exp: u32,
+    tolerance_factor: u32,
+) -> ScopeResult<()> {
+    // We return an error if price <= deviation * tolerance
+    // price_value / 10^price_exp <= deviation_value * tolerance / 10^deviation_exp
+    // price * 10^deviation_exp <= deviation * tolerance * 10^price_exp
+
+    // avoid useless overflows simplify the exponents
+    let common_exp = u32::min(price_exp, deviation_exp);
+
+    let price_scaled = price_value * ten_pow(deviation_exp - common_exp);
+    let deviation_scaled =
+        deviation * u128::from(tolerance_factor) * ten_pow(price_exp - common_exp);
+
+    if price_scaled <= deviation_scaled {
+        return Err(ScopeError::ConfidenceIntervalCheckFailed);
+    }
+
+    Ok(())
 }

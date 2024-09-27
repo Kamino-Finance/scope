@@ -9,15 +9,12 @@
 //! 2. Upon usage the current ema price state is checked in [`validate_valid_price`]
 //! 3. The confidence interval is also checked in this same function with [`ORACLE_CONFIDENCE_FACTOR`]
 
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 
 use anchor_lang::prelude::*;
 use pyth_sdk_solana::state as pyth_client;
 
-use crate::{DatedPrice, Price, Result, ScopeError};
-
-/// validate price confidence - confidence/price ratio should be less than 2%
-const ORACLE_CONFIDENCE_FACTOR: u64 = 50; // 100% / 2%
+use crate::{utils::consts::ORACLE_CONFIDENCE_FACTOR, DatedPrice, Result, ScopeError};
 
 /// Only update with prices not older than 10 minutes, users can still check actual price age
 const STALENESS_THRESHOLD: u64 = 10 * 60; // 10 minutes
@@ -56,7 +53,7 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
         return Err(ScopeError::PriceNotValid.into());
     }
 
-    let ema_price =
+    let price =
         crate::oracles::pyth::validate_valid_price(&pyth_ema_price, ORACLE_CONFIDENCE_FACTOR)
             .map_err(|e| {
                 msg!("Invalid EMA price on pyth account {}", price_info.key);
@@ -64,10 +61,7 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
             })?;
 
     Ok(DatedPrice {
-        price: Price {
-            value: ema_price,
-            exp: pyth_ema_price.expo.abs().try_into().unwrap(),
-        },
+        price,
         last_updated_slot: price_account.valid_slot,
         unix_timestamp: u64::try_from(price_account.timestamp).unwrap(),
         ..Default::default()

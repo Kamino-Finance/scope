@@ -3,20 +3,16 @@ use std::ops::Deref;
 use anchor_lang::prelude::*;
 use anchor_spl::token::spl_token::state::Mint;
 use decimal_wad::decimal::Decimal;
+pub use jup_perp_itf as perpetuals;
+pub use perpetuals::utils::{check_mint_pk, get_mint_pk};
 use perpetuals::Custody;
 use solana_program::program_pack::Pack;
 
-use crate::scope_chain::get_price_from_chain;
-use crate::utils::account_deserialize;
-use crate::utils::math::ten_pow;
-use crate::utils::price_impl::check_ref_price_difference;
 use crate::{
-    DatedPrice, MintToScopeChain, MintsToScopeChains, OracleMappings, OraclePrices, Price, Result,
-    ScopeError,
+    scope_chain::get_price_from_chain,
+    utils::{account_deserialize, math::ten_pow},
+    DatedPrice, MintToScopeChain, MintsToScopeChains, OraclePrices, Price, Result, ScopeError,
 };
-
-pub use jup_perp_itf as perpetuals;
-pub use perpetuals::utils::{check_mint_pk, get_mint_pk};
 pub const POOL_VALUE_SCALE_DECIMALS: u8 = 6;
 
 /// Gives the price of 1 JLP token in USD
@@ -177,7 +173,6 @@ pub fn get_price_recomputed_scope<'a, 'b>(
     clock: &Clock,
     oracle_prices_pk: &Pubkey,
     oracle_prices: &OraclePrices,
-    oracle_mappings: &OracleMappings,
     extra_accounts: &mut impl Iterator<Item = &'b AccountInfo<'a>>,
 ) -> Result<DatedPrice>
 where
@@ -255,10 +250,6 @@ where
                               _clock: &Clock|
      -> Result<CustodyAumResult> {
         let custody: Custody = account_deserialize(custody_acc)?;
-        require!(
-            custody.oracle.oracle_type == perpetuals::OracleType::Pyth,
-            ScopeError::UnexpectedJlpConfiguration
-        );
         require_keys_eq!(
             custody.mint,
             mint_to_chain.mint,
@@ -285,12 +276,6 @@ where
         );
         e
     })?;
-
-    if oracle_mappings.ref_price[entry_id] != u16::MAX {
-        let ref_price =
-            oracle_prices.prices[usize::from(oracle_mappings.ref_price[entry_id])].price;
-        check_ref_price_difference(price.price, ref_price)?;
-    }
 
     Ok(price)
 }

@@ -98,7 +98,10 @@ pub enum ScopeError {
     FixedPriceInvalid,
 
     #[msg("Switchboard On Demand price derive error")]
-    SbOnDemandError,
+    SwitchboardOnDemandError,
+
+    #[msg("Confidence interval check failed")]
+    ConfidenceIntervalCheckFailed,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

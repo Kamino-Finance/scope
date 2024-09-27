@@ -1,10 +1,8 @@
 use anchor_lang::prelude::*;
 use solana_program::borsh0_10::try_from_slice_unchecked;
 
-use crate::utils::SECONDS_PER_HOUR;
-use crate::{DatedPrice, Price, Result, ScopeError};
-
 use self::spl_stake_pool::StakePool;
+use crate::{utils::SECONDS_PER_HOUR, DatedPrice, Price, Result, ScopeError};
 
 const DECIMALS: u32 = 15u32;
 

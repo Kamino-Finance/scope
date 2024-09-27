@@ -6,8 +6,10 @@ use decimal_wad::decimal::U192;
 pub use lb_clmm_itf as lb_clmm;
 use solana_program::program_pack::Pack;
 
-use crate::utils::{math, zero_copy_deserialize};
-use crate::{DatedPrice, Result, ScopeError};
+use crate::{
+    utils::{math, zero_copy_deserialize},
+    DatedPrice, Result, ScopeError,
+};
 
 /// Gives the price of the given token pair in the given pool
 pub fn get_price<'a, 'b>(

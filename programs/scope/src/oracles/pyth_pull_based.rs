@@ -1,14 +1,13 @@
-use anchor_lang::prelude::*;
-use anchor_lang::solana_program::clock;
+use anchor_lang::{prelude::*, solana_program::clock};
 use pyth_solana_receiver_sdk::price_update::{self, PriceUpdateV2, VerificationLevel};
 
-use crate::{utils::account_deserialize, DatedPrice, Price, ScopeError};
+use crate::{utils::account_deserialize, DatedPrice, ScopeError};
 pub const MAXIMUM_AGE: u64 = 10 * 60; // Ten minutes
 use pyth_sdk_solana::state as pyth_client;
 
 use self::utils::get_last_updated_slot;
-
-use super::pyth::{validate_valid_price, ORACLE_CONFIDENCE_FACTOR};
+use super::pyth::validate_valid_price;
+use crate::utils::consts::ORACLE_CONFIDENCE_FACTOR;
 
 pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> {
     let price_account: PriceUpdateV2 = account_deserialize(price_info)?;
@@ -43,24 +42,18 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
         price,
         publish_time,
     };
-    let price_value =
-        validate_valid_price(&old_pyth_price, ORACLE_CONFIDENCE_FACTOR).map_err(|e| {
-            msg!(
-                "Confidence interval check failed on pyth account {}",
-                price_info.key
-            );
-            e
-        })?;
-
-    let final_price = Price {
-        value: price_value,
-        exp: exponent.abs().try_into().unwrap(),
-    };
+    let price = validate_valid_price(&old_pyth_price, ORACLE_CONFIDENCE_FACTOR).map_err(|e| {
+        msg!(
+            "Confidence interval check failed on pyth account {}",
+            price_info.key
+        );
+        e
+    })?;
 
     // todo: Discuss how we should handle the time jump that can happen when there is an outage?
     let last_updated_slot = get_last_updated_slot(clock, publish_time);
     Ok(DatedPrice {
-        price: final_price,
+        price,
         last_updated_slot,
         unix_timestamp: publish_time.try_into().unwrap(),
         ..Default::default()

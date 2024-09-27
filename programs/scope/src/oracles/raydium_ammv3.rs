@@ -1,9 +1,10 @@
 use anchor_lang::prelude::*;
-
-use crate::utils::account_deserialize;
-use crate::utils::math::sqrt_price_to_price;
-use crate::{DatedPrice, Result, ScopeError};
 use raydium_amm_v3::states::PoolState;
+
+use crate::{
+    utils::{account_deserialize, math::sqrt_price_to_price},
+    DatedPrice, Result, ScopeError,
+};
 
 /// Gives the price of the given token pair in the given pool
 pub fn get_price(a_to_b: bool, pool: &AccountInfo, clock: &Clock) -> Result<DatedPrice> {
