@@ -9,7 +9,7 @@ To use this dependency, simply change the scope Cargo.toml to use this package i
 ```toml
 [dependencies]
 # Comment out the git repo
-#yvaults = { git = "ssh://git@github.com/hubbleprotocol/yvault.git", features = ["no-entrypoint", "cpi"], optional = true }
+#yvaults = { git = "ssh://git@github.com/Kamino-Finance/yvaults.git", features = ["no-entrypoint", "cpi"], optional = true }
 
 # Add this line
 yvaults = { path = "../yvaults_stub", package = "yvaults_stub", optional = true }

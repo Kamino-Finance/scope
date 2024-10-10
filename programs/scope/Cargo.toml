@@ -1,7 +1,7 @@
 [package]
 name = "scope"
 version = "0.1.0"
-description = "Scope is Hubble's oracle aggregator"
+description = "Scope is Kamino's oracle aggregator"
 repository = "https://github.com/Kamino-Finance/scope"
 edition = "2021"
 license = "Apache-2.0"
@@ -36,14 +36,14 @@ bytemuck = { version = "1.4.0", features = ["min_const_generics", "derive"] }
 num_enum = "0.7.0"
 cfg-if = "1.0.0"
 serde = { version = "1.0.136", optional = true }
-strum = { git = "https://github.com/hubbleprotocol/strum", features = ["derive"], branch = "checked_arithmetics" }
+strum = { git = "https://github.com/Kamino-Finance/strum", features = ["derive"], branch = "checked_arithmetics" }
 pyth-sdk-solana = "0.10.1"
 switchboard-program = "0.2.0"
 arrayref = "0.3.6"
 decimal-wad = "0.1.7"
 rust_decimal = "1.18.0"
 # Comment out the line below if you do not have access to the yvaults repo
-yvaults = { git = "ssh://git@github.com/hubbleprotocol/yvaults.git", branch = "scope-public-compat", features = [
+yvaults = { git = "ssh://git@github.com/Kamino-Finance/yvaults.git", branch = "scope-public-compat", features = [
     "no-entrypoint",
     "cpi",
     "mainnet",
@@ -51,15 +51,15 @@ yvaults = { git = "ssh://git@github.com/hubbleprotocol/yvaults.git", branch = "s
 # Uncomment the line below if you do not have access to the yvaults repo
 #yvaults = { path = "../yvaults_stub", package = "yvaults_stub", optional = true }
 sha2 = "0.10.0"
-whirlpool = { git = "https://github.com/hubbleprotocol/whirlpools", branch = "anchor/0.28.0", features = [
+whirlpool = { git = "https://github.com/Kamino-Finance/whirlpools", branch = "anchor/0.28.0", features = [
     "no-entrypoint",
     "cpi",
 ] }
 raydium-amm-v3 = { git = "https://github.com/raydium-io/raydium-clmm", features = ["no-entrypoint", "cpi"] }
 jup-perp-itf = { path = "../jup-perp-itf", features = ["cpi"] }
 lb-clmm-itf = { path = "../lb-clmm-itf", features = ["no-entrypoint"] }
+sbod-itf = { path = "../sbod-itf" }
 intbits = "0.2.0"
 pyth-solana-receiver-sdk = "0.1.0"
 static_assertions = "1.1.0"
-switchboard-on-demand = "0.1.14"
 
