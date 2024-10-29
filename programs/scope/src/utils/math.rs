@@ -1,5 +1,6 @@
 use decimal_wad::{decimal::U192, rate::U128};
 use raydium_amm_v3::libraries::U256;
+use yvaults::utils::FULL_BPS;
 
 use crate::{Price, ScopeError, ScopeResult};
 
@@ -215,4 +216,10 @@ pub fn check_confidence_interval(
     }
 
     Ok(())
+}
+
+pub fn mul_bps(amount: impl Into<u128>, bps: impl Into<u128>) -> u128 {
+    let a = amount.into();
+    let b = bps.into();
+    a * b / u128::from(FULL_BPS)
 }

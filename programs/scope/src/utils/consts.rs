@@ -8,3 +8,5 @@ pub const TOKEN_METADATA_SIZE: usize = 86016;
 /// Used when calling [`crate::utils::math::check_confidence_interval`]
 /// for pyth prices (confidence interval check) and switchboard prices (standard deviation check)
 pub const ORACLE_CONFIDENCE_FACTOR: u32 = super::math::confidence_bps_to_factor(200); // 2%
+
+pub const FULL_BPS: u16 = 10_000;
