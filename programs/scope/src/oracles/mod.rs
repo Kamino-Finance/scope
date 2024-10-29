@@ -4,6 +4,7 @@ pub mod ktokens;
 #[cfg(feature = "yvaults")]
 pub mod ktokens_token_x;
 
+pub mod jito_restaking;
 pub mod jupiter_lp;
 pub mod meteora_dlmm;
 pub mod msol_stake;
@@ -104,6 +105,8 @@ pub enum OracleType {
     FixedPrice = 23,
     /// Switchboard on demand
     SwitchboardOnDemand = 24,
+    /// Jito restaking tokens
+    JitoRestaking = 25, // TODO adjust if we merge ALP first
 }
 
 impl OracleType {
@@ -134,6 +137,7 @@ impl OracleType {
             | OracleType::RaydiumAmmV3BtoA => 25_000,
             OracleType::MeteoraDlmmAtoB | OracleType::MeteoraDlmmBtoA => 30_000,
             OracleType::JupiterLpCompute | OracleType::JupiterLpScope => 120_000,
+            OracleType::JitoRestaking => 25_000,
             OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
                 panic!("DeprecatedPlaceholder is not a valid oracle type")
             }
@@ -259,6 +263,9 @@ where
                 ..Default::default()
             })
         }
+        OracleType::JitoRestaking => {
+            jito_restaking::get_price(base_account, clock).map_err(Into::into)
+        }
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
@@ -320,6 +327,7 @@ pub fn validate_oracle_cfg(
                 .map_err(|_| error!(ScopeError::FixedPriceInvalid))?;
             Ok(())
         }
+        OracleType::JitoRestaking => jito_restaking::validate_account(price_account),
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
