@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{utils::consts::*, MAX_ENTRIES, MAX_ENTRIES_U16};
 
+pub const MAX_SOURCES: usize = 3;
+
 #[zero_copy]
 #[derive(Debug, Default, AnchorDeserialize, AnchorSerialize)]
 pub struct Price {
@@ -115,17 +117,22 @@ pub struct OraclePrices {
     pub prices: [DatedPrice; MAX_ENTRIES],
 }
 
+// Maximum number of sources per token
+pub const MAX_SOURCES: usize = 3;
+
 static_assertions::const_assert_eq!(ORACLE_MAPPING_SIZE, std::mem::size_of::<OracleMappings>());
 static_assertions::const_assert_eq!(0, std::mem::size_of::<OracleMappings>() % 8);
+
 #[account(zero_copy)]
 #[derive(Debug, AnchorDeserialize)]
 pub struct OracleMappings {
-    pub price_info_accounts: [Pubkey; MAX_ENTRIES],
-    pub price_types: [u8; MAX_ENTRIES],
-    pub twap_source: [u16; MAX_ENTRIES], // meaningful only if type == TWAP; the index of where we find the TWAP
-    pub twap_enabled: [u8; MAX_ENTRIES], // true or false
+    // Each token can have up to MAX_SOURCES sources
+    pub price_info_accounts: [[Pubkey; MAX_SOURCES]; MAX_ENTRIES],
+    pub price_types: [[u8; MAX_SOURCES]; MAX_ENTRIES],
+    pub twap_source: [[u16; MAX_SOURCES]; MAX_ENTRIES], // meaningful only if type == TWAP; the index of where we find the TWAP
+    pub twap_enabled: [[u8; MAX_SOURCES]; MAX_ENTRIES], // true or false
     pub ref_price: [u16; MAX_ENTRIES], // reference price against which we check confidence within 5%
-    pub generic: [[u8; 20]; MAX_ENTRIES], // generic data parsed depending on oracle type
+    pub generic: [[[u8; 20]; MAX_SOURCES]; MAX_ENTRIES], // generic data parsed depending on oracle type
 }
 
 impl OracleMappings {
@@ -153,8 +160,11 @@ pub struct TokenMetadata {
     pub _reserved: [u64; 16],
 }
 
-static_assertions::const_assert_eq!(CONFIGURATION_SIZE, std::mem::size_of::<Configuration>());
-static_assertions::const_assert_eq!(0, std::mem::size_of::<Configuration>() % 8);
+pub const ORACLE_MAPPING_SIZE: usize = size_of::<OracleMappings>();
+
+static_assertions::const_assert_eq!(ORACLE_MAPPING_SIZE, std::mem::size_of::<OracleMappings>());
+static_assertions::const_assert_eq!(0, std::mem::size_of::<OracleMappings>() % 8);
+
 // Configuration account of the program
 #[account(zero_copy)]
 pub struct Configuration {
