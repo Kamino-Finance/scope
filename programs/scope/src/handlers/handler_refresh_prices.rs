@@ -12,7 +12,7 @@ use solana_program::{
 use crate::{
     oracles::{get_price, OracleType},
     utils::{price_impl::check_ref_price_difference, zero_copy_deserialize},
-    OracleMappings, ScopeError,
+    OracleMappings, ScopeError, MAX_SOURCES,
 };
 
 const COMPUTE_BUDGET_ID: Pubkey = pubkey!("ComputeBudget111111111111111111111111111111");
@@ -64,98 +64,119 @@ pub fn refresh_price_list<'info>(
 
     for &token_nb in tokens.iter() {
         let token_idx: usize = token_nb.into();
-        let oracle_mapping = oracle_mappings
-            .price_info_accounts
-            .get(token_idx)
-            .ok_or(ScopeError::BadTokenNb)?;
-        let price_type: OracleType = oracle_mappings.price_types[token_idx]
-            .try_into()
-            .map_err(|_| ScopeError::BadTokenType)?;
-        let received_account = accounts_iter
-            .next()
-            .ok_or(ScopeError::AccountsAndTokenMismatch)?;
-        // Ignore unset mapping accounts
-        if zero_pk == *oracle_mapping {
-            msg!("Skipping token {} as no mapping is set", token_idx);
-            continue;
-        }
-        // Check that the provided oracle accounts are the one referenced in oracleMapping
-        if oracle_mappings.price_info_accounts[token_idx] != received_account.key() {
-            msg!(
-                "Invalid price account: {}, expected: {}",
-                received_account.key(),
-                oracle_mappings.price_info_accounts[token_idx]
-            );
-            return err!(ScopeError::UnexpectedAccount);
-        }
-        let clock = Clock::get()?;
-        let price_res = get_price(
-            price_type,
-            received_account,
-            &mut accounts_iter,
-            &clock,
-            &oracle_twaps,
-            oracle_mappings,
-            &ctx.accounts.oracle_prices,
-            token_nb.into(),
-        );
-        let price = if fail_tx_on_error {
-            price_res?
-        } else {
-            match price_res {
-                Ok(price) => price,
-                Err(_) => {
-                    msg!(
-                        "Price skipped as validation failed (token {token_idx}, type {price_type:?})",
-                    );
-                    continue;
-                }
+        let mut price_found = false;
+
+        for source_idx in 0..MAX_SOURCES {
+            let oracle_mapping = oracle_mappings.price_info_accounts[token_idx][source_idx];
+            let price_type_u8 = oracle_mappings.price_types[token_idx][source_idx];
+            if zero_pk == oracle_mapping {
+                continue; // Skip if no mapping is set
             }
-        };
+            let price_type: OracleType = price_type_u8
+                .try_into()
+                .map_err(|_| ScopeError::BadTokenType)?;
 
-        if oracle_mappings.is_twap_enabled(token_idx) {
-            let _ = crate::oracles::twap::update_twap(&mut oracle_twaps, token_idx, &price)
-                .map_err(|_| msg!("Twap not found for token {}", token_idx));
-        };
+            let received_account = accounts_iter
+                .next()
+                .ok_or(ScopeError::AccountsAndTokenMismatch)?;
 
-        // Only temporary load as mut to allow prices to be computed based on a scope chain
-        // from the price feed that is currently updated
-
-        let mut oracle_prices = ctx.accounts.oracle_prices.load_mut()?;
-
-        // check that the price is close enough to the ref price is there is a ref price
-        if oracle_mappings.ref_price[token_idx] != u16::MAX {
-            let ref_price =
-                oracle_prices.prices[usize::from(oracle_mappings.ref_price[token_idx])].price;
-            if let Err(diff_err) = check_ref_price_difference(price.price, ref_price) {
-                if fail_tx_on_error {
-                    return Err(diff_err);
-                } else {
-                    msg!(
-                    "Price skipped as ref price check failed (token {token_idx}, type {price_type:?})",
+            // Check that the provided oracle accounts are the one referenced in oracleMapping
+            if oracle_mapping != received_account.key() {
+                msg!(
+                    "Invalid price account: {}, expected: {}",
+                    received_account.key(),
+                    oracle_mapping
                 );
-                    continue;
+                continue; // Try next source
+            }
+
+            let clock = Clock::get()?;
+            let price_res = get_price(
+                price_type,
+                received_account,
+                &mut accounts_iter,
+                &clock,
+                &oracle_twaps,
+                oracle_mappings,
+                &ctx.accounts.oracle_prices,
+                token_nb.into(),
+            );
+            let price = if fail_tx_on_error {
+                price_res?
+            } else {
+                match price_res {
+                    Ok(price) => price,
+                    Err(_) => {
+                        msg!(
+                            "Price skipped as validation failed (token {}, source {}, type {:?})",
+                            token_idx,
+                            source_idx,
+                            price_type
+                        );
+                        continue; // Try next source
+                    }
+                }
+            };
+
+            if oracle_mappings.is_twap_enabled(token_idx, source_idx) {
+                let _ = crate::oracles::twap::update_twap(&mut oracle_twaps, token_idx, &price)
+                    .map_err(|_| msg!("Twap not found for token {}", token_idx));
+            }
+
+            // Only temporary load as mut to allow prices to be computed based on a scope chain
+            // from the price feed that is currently updated
+
+            let mut oracle_prices = ctx.accounts.oracle_prices.load_mut()?;
+
+            // check that the price is close enough to the ref price if there is a ref price
+            if oracle_mappings.ref_price[token_idx] != u16::MAX {
+                let ref_price_index = oracle_mappings.ref_price[token_idx];
+                let ref_price = oracle_prices.prices[usize::from(ref_price_index)].price;
+                if let Err(diff_err) = check_ref_price_difference(price.price, ref_price) {
+                    if fail_tx_on_error {
+                        return Err(diff_err);
+                    } else {
+                        msg!(
+                            "Price skipped as ref price check failed (token {}, source {}, type {:?})",
+                            token_idx,
+                            source_idx,
+                            price_type
+                        );
+                        continue; // Try next source
+                    }
                 }
             }
+
+            let to_update = oracle_prices
+                .prices
+                .get_mut(token_idx)
+                .ok_or(ScopeError::BadTokenNb)?;
+
+            msg!(
+                "tk {}, source {}, {:?}: {:?} to {:?} | prev_slot: {:?}, new_slot: {:?}, crt_slot: {:?}",
+                token_idx,
+                source_idx,
+                price_type,
+                to_update.price.value,
+                price.price.value,
+                to_update.last_updated_slot,
+                price.last_updated_slot,
+                clock.slot,
+            );
+
+            *to_update = price;
+            to_update.index = token_nb;
+
+            price_found = true;
+            break; // Exit the source loop since we found a valid price
         }
-        let to_update = oracle_prices
-            .prices
-            .get_mut(token_idx)
-            .ok_or(ScopeError::BadTokenNb)?;
 
-        msg!(
-            "tk {}, {:?}: {:?} to {:?} | prev_slot: {:?}, new_slot: {:?}, crt_slot: {:?}",
-            token_idx,
-            price_type,
-            to_update.price.value,
-            price.price.value,
-            to_update.last_updated_slot,
-            price.last_updated_slot,
-            clock.slot,
-        );
-
-        *to_update = price;
-        to_update.index = token_nb;
+        if !price_found {
+            msg!("No valid price found for token {}", token_idx);
+            if fail_tx_on_error {
+                return err!(ScopeError::PriceNotValid);
+            }
+        }
     }
 
     Ok(())
