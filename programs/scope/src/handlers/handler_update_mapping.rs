@@ -15,10 +15,16 @@ use crate::{
     ref_price_index: u16,
     feed_name: String,
     generic_data: [u8; 20],
+    source_index: u8,
 )]
 pub struct UpdateOracleMapping<'info> {
     pub admin: Signer<'info>,
-    #[account(seeds = [seeds::CONFIG, feed_name.as_bytes()], bump, has_one = admin, has_one = oracle_mappings)]
+    #[account(
+        seeds = [seeds::CONFIG, feed_name.as_bytes()],
+        bump,
+        has_one = admin,
+        has_one = oracle_mappings
+    )]
     pub configuration: AccountLoader<'info, crate::Configuration>,
 
     /// CHECK: checked above + on deserialize
@@ -36,12 +42,16 @@ pub fn process(
     twap_source: u16,
     ref_price_index: u16,
     generic_data: &[u8; 20],
+    source_index: usize,
 ) -> Result<()> {
     check_context(&ctx)?;
 
+    require!(source_index < MAX_SOURCES, ScopeError::InvalidSourceIndex);
+
     msg!(
-        "UpdateOracleMapping, token: {}, price_type: {}, twap_enabled: {}, twap_source: {}, ref_price_index: {}",
+        "UpdateOracleMapping, token: {}, source_index: {}, price_type: {}, twap_enabled: {}, twap_source: {}, ref_price_index: {}",
         entry_id,
+        source_index,
         price_type,
         twap_enabled,
         twap_source,
@@ -53,7 +63,10 @@ pub fn process(
     let price_pubkey = oracle_mappings
         .price_info_accounts
         .get_mut(entry_id)
-        .ok_or(ScopeError::BadTokenNb)?;
+        .ok_or(ScopeError::BadTokenNb)?
+        .get_mut(source_index)
+        .ok_or(ScopeError::InvalidSourceIndex)?;
+
     let price_type: OracleType = price_type
         .try_into()
         .map_err(|_| ScopeError::BadTokenType)?;
@@ -73,8 +86,9 @@ pub fn process(
         }
         None => {
             match price_type {
-                OracleType::ScopeTwap | OracleType::FixedPrice => *price_pubkey = crate::id(),
-
+                OracleType::ScopeTwap | OracleType::FixedPrice => {
+                    *price_pubkey = crate::id();
+                }
                 _ => {
                     // if no price_info account is passed, it means that the mapping has to be removed so it is set to Pubkey::default
                     *price_pubkey = Pubkey::default();
@@ -83,11 +97,11 @@ pub fn process(
         }
     }
 
-    oracle_mappings.price_types[entry_id] = price_type.into();
-    oracle_mappings.twap_enabled[entry_id] = u8::from(twap_enabled);
-    oracle_mappings.twap_source[entry_id] = twap_source;
+    oracle_mappings.price_types[entry_id][source_index] = price_type.into();
+    oracle_mappings.twap_enabled[entry_id][source_index] = u8::from(twap_enabled);
+    oracle_mappings.twap_source[entry_id][source_index] = twap_source;
     oracle_mappings.ref_price[entry_id] = ref_price_index;
-    oracle_mappings.generic[entry_id].copy_from_slice(generic_data);
+    oracle_mappings.generic[entry_id][source_index].copy_from_slice(generic_data);
 
     Ok(())
 }
