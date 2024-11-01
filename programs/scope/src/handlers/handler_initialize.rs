@@ -13,7 +13,14 @@ pub struct Initialize<'info> {
 
     // Set space to max size here
     // The ability to create multiple feeds is mostly useful for tests
-    #[account(init, seeds = [seeds::CONFIG, feed_name.as_bytes()], bump, payer = admin, space = 8 + std::mem::size_of::<crate::Configuration>())]
+    #[account(
+        init,
+        seeds = [seeds::ORACLE_MAPPINGS, feed_name.as_bytes()],
+        bump,
+        payer = admin,
+        space = 8 + ORACLE_MAPPING_SIZE,
+    )]
+    pub oracle_mappings: AccountLoader<'info, crate::OracleMappings>,
     pub configuration: AccountLoader<'info, crate::Configuration>,
 
     #[account(zero)]

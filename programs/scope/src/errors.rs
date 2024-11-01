@@ -102,6 +102,18 @@ pub enum ScopeError {
 
     #[msg("Confidence interval check failed")]
     ConfidenceIntervalCheckFailed,
+
+    #[msg("Invalid source index")]
+    InvalidSourceIndex,
+
+    #[msg("Price data is stale")]
+    PriceStale,
+
+    #[msg("Unauthorized access")]
+    Unauthorized,
+
+    #[msg("Invalid token metadata value")]
+    InvalidTokenMetadataValue,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError
