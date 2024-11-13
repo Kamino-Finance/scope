@@ -66,7 +66,7 @@ where
     let q64x64_price = if a_to_b {
         U192::from(q64x64_price)
     } else {
-        // Invert price
+        // Invert price - safe, since `lb_clmm::get_x64_price_from_id` never returns 0.
         (U192::one() << 128) / q64x64_price
     };
 

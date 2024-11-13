@@ -151,7 +151,7 @@ impl OracleType {
 /// If needed the `extra_accounts` will be extracted from the provided iterator and checked
 /// with the data contained in the `base_account`
 #[allow(clippy::too_many_arguments)]
-pub fn get_price<'a, 'b>(
+pub fn get_non_zero_price<'a, 'b>(
     price_type: OracleType,
     base_account: &AccountInfo<'a>,
     extra_accounts: &mut impl Iterator<Item = &'b AccountInfo<'a>>,
@@ -164,7 +164,7 @@ pub fn get_price<'a, 'b>(
 where
     'a: 'b,
 {
-    match price_type {
+    let price = match price_type {
         OracleType::Pyth => pyth::get_price(base_account, clock),
         OracleType::PythPullBased => pyth_pull_based::get_price(base_account, clock),
         OracleType::PythPullBasedEMA => pyth_pull_based_ema::get_price(base_account, clock),
@@ -269,7 +269,14 @@ where
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
+    }?;
+    // The price providers above are performing their type-specific validations, but are still free
+    // to return 0, which we can only tolerate in case of explicit fixed price:
+    if price.price.value == 0 && price_type != OracleType::FixedPrice {
+        msg!("Price is 0 (token {index}, type {price_type:?}): {price:?}",);
+        return err!(ScopeError::PriceNotValid);
     }
+    Ok(price)
 }
 
 /// Validate the given account as being an appropriate price account for the

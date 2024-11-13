@@ -7,6 +7,7 @@ use crate::{utils::pdas::seeds, ScopeError};
 pub enum UpdateTokenMetadataMode {
     Name = 0,
     MaxPriceAgeSlots = 1,
+    GroupIds = 2,
 }
 
 impl UpdateTokenMetadataMode {
@@ -18,6 +19,7 @@ impl UpdateTokenMetadataMode {
         match self {
             UpdateTokenMetadataMode::Name => 0,
             UpdateTokenMetadataMode::MaxPriceAgeSlots => 1,
+            UpdateTokenMetadataMode::GroupIds => 2,
         }
     }
 }
@@ -70,7 +72,33 @@ pub fn process(
             let str_name = std::str::from_utf8(&token_metadata.name).unwrap();
             msg!("Setting token name for index {} to {}", index, str_name);
         }
+        UpdateTokenMetadataMode::GroupIds => {
+            let value = u64::from_le_bytes(value[..8].try_into().unwrap());
+            msg!(
+                "Setting token group IDs for index {} to: raw {} == binary {:#b} == positions {:?}",
+                index,
+                value,
+                value,
+                list_set_bit_positions(value),
+            );
+            token_metadata.group_ids_bitset = value;
+        }
     }
 
     Ok(())
+}
+
+/// Lists the bit positions (where LSB == 0) of all the set bits (i.e. `1`s) in the given number's
+/// binary representation.
+/// NOTE: This is a non-critical helper used only for logging of the update operation; should *not*
+/// be needed by business logic. The implementation is a compressed version of a crate
+/// https://docs.rs/bit-iter/1.2.0/src/bit_iter/lib.rs.html.
+fn list_set_bit_positions(mut bits: u64) -> Vec<u8> {
+    let mut positions = Vec::with_capacity(usize::try_from(bits.count_ones()).unwrap());
+    while bits != 0 {
+        let position = u8::try_from(bits.trailing_zeros()).unwrap();
+        positions.push(position);
+        bits &= bits.wrapping_sub(1);
+    }
+    positions
 }

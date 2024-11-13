@@ -1,9 +1,10 @@
 use anchor_lang::prelude::*;
 use decimal_wad::decimal::Decimal;
 
-use crate::utils::consts::FULL_BPS;
-use crate::utils::{math, zero_copy_deserialize};
-use crate::{DatedPrice, Price};
+use crate::{
+    utils::{consts::FULL_BPS, math, zero_copy_deserialize},
+    DatedPrice, Price,
+};
 
 /// Jito restaking price oracle gives the amount of JitoSOL per VRT token on withdrawal
 /// WARNING: Assumes both tokens have the same decimals (9)
@@ -46,9 +47,10 @@ pub fn validate_account(vault: &Option<AccountInfo>) -> Result<()> {
 }
 
 pub mod jito_vault_core {
-    use super::*;
     use anchor_lang::Discriminator;
     use bytemuck::{Pod, Zeroable};
+
+    use super::*;
 
     #[derive(Clone, Copy, PartialEq, Eq, Pod, Zeroable)]
     #[repr(C)]

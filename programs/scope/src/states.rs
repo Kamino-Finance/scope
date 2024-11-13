@@ -150,7 +150,8 @@ pub struct TokenMetadatas {
 pub struct TokenMetadata {
     pub name: [u8; 32],
     pub max_age_price_slots: u64,
-    pub _reserved: [u64; 16],
+    pub group_ids_bitset: u64, // a bitset of group IDs in range [0, 64).
+    pub _reserved: [u64; 15],
 }
 
 static_assertions::const_assert_eq!(CONFIGURATION_SIZE, std::mem::size_of::<Configuration>());

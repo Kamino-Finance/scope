@@ -139,15 +139,17 @@ pub struct TokensMetadata {
 #[derive(Debug, PartialEq, Eq, Default)]
 pub struct TokenMetadata {
     pub name: [u8; 32],
-    pub max_age_price_seconds: u64,
-    pub _reserved: [u64; 16],
+    pub max_age_price_slots: u64,
+    pub group_ids_bitset: u64, // a bitset of group IDs in range [0, 64).
+    pub _reserved: [u64; 15],
 }
 
 #[derive(TryFromPrimitive, PartialEq, Eq, Clone, Copy, Debug)]
 #[repr(u64)]
 pub enum UpdateTokenMetadataMode {
     Name = 0,
-    MaxPriceAgeSeconds = 1,
+    MaxPriceAgeSlots = 1,
+    GroupIds = 2,
 }
 
 #[error_code]
