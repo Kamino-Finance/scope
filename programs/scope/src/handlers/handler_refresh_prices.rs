@@ -10,7 +10,7 @@ use solana_program::{
 };
 
 use crate::{
-    oracles::{get_price, OracleType},
+    oracles::{get_non_zero_price, OracleType},
     utils::{price_impl::check_ref_price_difference, zero_copy_deserialize},
     OracleMappings, ScopeError,
 };
@@ -89,7 +89,7 @@ pub fn refresh_price_list<'info>(
             return err!(ScopeError::UnexpectedAccount);
         }
         let clock = Clock::get()?;
-        let price_res = get_price(
+        let price_res = get_non_zero_price(
             price_type,
             received_account,
             &mut accounts_iter,
@@ -97,7 +97,7 @@ pub fn refresh_price_list<'info>(
             &oracle_twaps,
             oracle_mappings,
             &ctx.accounts.oracle_prices,
-            token_nb.into(),
+            token_idx,
         );
         let price = if fail_tx_on_error {
             price_res?

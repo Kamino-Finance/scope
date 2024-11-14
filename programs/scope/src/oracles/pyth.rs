@@ -107,11 +107,6 @@ pub fn validate_valid_price(
         });
     }
 
-    if price == 0 {
-        msg!("Pyth price is 0");
-        return Err(ScopeError::PriceNotValid);
-    }
-
     let conf: u128 = pyth_price.conf.into();
     check_confidence_interval(
         price.into(),
