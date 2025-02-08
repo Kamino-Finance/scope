@@ -18,6 +18,7 @@ pub mod spl_stake;
 pub mod switchboard_on_demand;
 pub mod switchboard_v2;
 pub mod twap;
+pub mod ratex;
 
 use std::ops::Deref;
 
@@ -107,6 +108,7 @@ pub enum OracleType {
     SwitchboardOnDemand = 24,
     /// Jito restaking tokens
     JitoRestaking = 25, // TODO adjust if we merge ALP first
+    RateX = 26,
 }
 
 impl OracleType {
@@ -140,7 +142,8 @@ impl OracleType {
             OracleType::JitoRestaking => 25_000,
             OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
                 panic!("DeprecatedPlaceholder is not a valid oracle type")
-            }
+            },
+            OracleType::RateX => 80_000
         }
     }
 }
@@ -269,6 +272,7 @@ where
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
+        OracleType::RateX => ratex::get_price(base_account,extra_accounts, clock),
     }?;
     // The price providers above are performing their type-specific validations, but are still free
     // to return 0, which we can only tolerate in case of explicit fixed price:
@@ -338,5 +342,6 @@ pub fn validate_oracle_cfg(
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
+        OracleType::RateX => ratex::validate_account(price_account)
     }
 }
