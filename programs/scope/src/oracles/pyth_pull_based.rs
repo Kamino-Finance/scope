@@ -1,4 +1,4 @@
-use anchor_lang::{prelude::*, solana_program::clock};
+use anchor_lang::prelude::*;
 use pyth_solana_receiver_sdk::price_update::{self, PriceUpdateV2, VerificationLevel};
 
 use crate::{utils::account_deserialize, DatedPrice, ScopeError};
@@ -7,7 +7,7 @@ use pyth_sdk_solana::state as pyth_client;
 
 use self::utils::get_last_updated_slot;
 use super::pyth::validate_valid_price;
-use crate::utils::consts::ORACLE_CONFIDENCE_FACTOR;
+use crate::{utils::consts::ORACLE_CONFIDENCE_FACTOR, warn};
 
 pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> {
     let price_account: PriceUpdateV2 = account_deserialize(price_info)?;
@@ -27,7 +27,7 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
     } = price;
 
     if exponent > 0 {
-        msg!(
+        warn!(
             "Pyth price account provided has a negative price exponent: {}",
             exponent
         );
@@ -43,7 +43,7 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
         publish_time,
     };
     let price = validate_valid_price(&old_pyth_price, ORACLE_CONFIDENCE_FACTOR).map_err(|e| {
-        msg!(
+        warn!(
             "Confidence interval check failed on pyth account {}",
             price_info.key
         );
@@ -65,7 +65,7 @@ pub fn validate_price_update_v2_info(price_info: &Option<AccountInfo>) -> Result
         return Ok(());
     }
     let Some(price_info) = price_info else {
-        msg!("No pyth pull price account provided");
+        warn!("No pyth pull price account provided");
         return err!(ScopeError::PriceNotValid);
     };
     let _: PriceUpdateV2 = account_deserialize(price_info)?;
@@ -74,12 +74,13 @@ pub fn validate_price_update_v2_info(price_info: &Option<AccountInfo>) -> Result
 
 pub mod utils {
     use super::*;
+    use crate::utils::math::saturating_secs_to_slots;
 
     pub fn get_last_updated_slot(clock: &Clock, publish_time: i64) -> u64 {
         let elapsed_time_s = u64::try_from(clock.unix_timestamp)
             .unwrap()
             .saturating_sub(u64::try_from(publish_time).unwrap());
-        let elapsed_slot_estimate = elapsed_time_s * 1000 / clock::DEFAULT_MS_PER_SLOT;
+        let elapsed_slot_estimate = saturating_secs_to_slots(elapsed_time_s);
         clock.slot.saturating_sub(elapsed_slot_estimate)
     }
 }

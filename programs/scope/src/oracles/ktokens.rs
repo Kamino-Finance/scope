@@ -25,7 +25,7 @@ use yvaults::{
 
 use crate::{
     utils::{account_deserialize, zero_copy_deserialize},
-    DatedPrice, Price, ScopeError, ScopeResult,
+    warn, DatedPrice, Price, ScopeError, ScopeResult,
 };
 
 const SCALE_DECIMALS: u8 = 6;
@@ -80,11 +80,9 @@ where
     let account_check = |account: &AccountInfo, expected, name| {
         let pk = account.key();
         if pk != expected {
-            msg!(
+            warn!(
                 "Ktoken received account {} for {} is not the one expected ({})",
-                pk,
-                name,
-                expected
+                pk, name, expected
             );
             Err(ScopeError::UnexpectedAccount)
         } else {
@@ -151,7 +149,7 @@ where
         &strategy_account_ref,
     )
     .map_err(|e| {
-        msg!("Error getting component price last update: {:?}", e);
+        warn!("Error getting component price last update: {:?}", e);
         e
     })?;
 
@@ -278,7 +276,7 @@ pub fn holdings(
         strategy.token_b_mint_decimals,
     )
     .map_err(|e| {
-        msg!("Error calculating sqrt price: {:?}", e);
+        warn!("Error calculating sqrt price: {:?}", e);
         ScopeError::ConversionFailure
     })?;
 
@@ -294,11 +292,11 @@ pub fn holdings(
             strategy.token_b_mint_decimals,
         );
         let diff = (w - o).abs() / w;
-        msg!("o: {} w: {} d: {}%", w, o, diff * 100.0);
+        warn!("o: {} w: {} d: {}%", w, o, diff * 100.0);
     }
 
     holdings_no_rewards(strategy, clmm, prices, pool_sqrt_price).map_err(|e| {
-        msg!("Error calculating holdings: {:?}", e);
+        warn!("Error calculating holdings: {:?}", e);
         ScopeError::KTokenHoldingsCalculationError
     })
 }

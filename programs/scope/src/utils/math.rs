@@ -1,5 +1,6 @@
 use decimal_wad::{decimal::U192, rate::U128};
 use raydium_amm_v3::libraries::U256;
+use solana_program::clock;
 use yvaults::utils::FULL_BPS;
 
 use crate::{Price, ScopeError, ScopeResult};
@@ -222,4 +223,14 @@ pub fn mul_bps(amount: impl Into<u128>, bps: impl Into<u128>) -> u128 {
     let a = amount.into();
     let b = bps.into();
     a * b / u128::from(FULL_BPS)
+}
+
+pub fn slots_to_secs(slots: u64) -> u64 {
+    let secs = u128::from(slots) * u128::from(clock::DEFAULT_MS_PER_SLOT) / 1000;
+    u64::try_from(secs).expect("seconds must fit if slots fit")
+}
+
+pub fn saturating_secs_to_slots(secs: u64) -> u64 {
+    let slots = u128::from(secs) * 1000 / u128::from(clock::DEFAULT_MS_PER_SLOT);
+    u64::try_from(slots).unwrap_or(u64::MAX) // there is no `saturating_cast()` in std
 }

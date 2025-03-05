@@ -3,9 +3,9 @@ use std::cmp::Ordering;
 use anchor_lang::prelude::*;
 use intbits::Bits;
 
-use self::utils::{reset_ema_twap, update_ema_twap};
+use self::utils::update_ema_twap;
 use crate::{
-    DatedPrice, OracleMappings, OracleTwaps, Price, ScopeError, ScopeResult, MAX_ENTRIES_U16,
+    debug, DatedPrice, OracleMappings, OracleTwaps, ScopeError, ScopeResult, MAX_ENTRIES_U16,
 };
 
 const EMA_1H_DURATION_SECONDS: u64 = 60 * 60;
@@ -47,18 +47,12 @@ pub fn update_twap(
     Ok(())
 }
 
-pub fn reset_twap(
-    oracle_twaps: &mut OracleTwaps,
-    entry_id: usize,
-    price: Price,
-    price_ts: u64,
-    price_slot: u64,
-) -> Result<()> {
-    let twap = oracle_twaps
+pub fn reset_twap(oracle_twaps: &mut OracleTwaps, entry_id: usize) -> Result<()> {
+    oracle_twaps
         .twaps
         .get_mut(entry_id)
-        .ok_or(ScopeError::TwapSourceIndexOutOfRange)?;
-    reset_ema_twap(twap, price, price_ts, price_slot);
+        .ok_or(ScopeError::TwapSourceIndexOutOfRange)?
+        .reset();
     Ok(())
 }
 
@@ -69,7 +63,7 @@ pub fn get_price(
     clock: &Clock,
 ) -> ScopeResult<DatedPrice> {
     let source_index = usize::from(oracle_mappings.twap_source[entry_id]);
-    msg!("Get twap price at index {source_index} for tk {entry_id}",);
+    debug!("Get twap price at index {source_index} for tk {entry_id}",);
 
     let twap = oracle_twaps
         .twaps
@@ -86,7 +80,7 @@ mod utils {
     use decimal_wad::decimal::Decimal;
 
     use super::*;
-    use crate::{EmaTwap, Price, ScopeResult};
+    use crate::{warn, EmaTwap, Price, ScopeResult};
 
     /// Get the adjusted smoothing factor (alpha) based on the time between the last two samples.
     ///
@@ -160,14 +154,11 @@ mod utils {
         Ok(())
     }
 
-    pub(super) fn reset_ema_twap(twap: &mut EmaTwap, price: Price, price_ts: u64, price_slot: u64) {
-        twap.current_ema_1h = Decimal::from(price).to_scaled_val().unwrap();
-        twap.last_update_slot = price_slot;
-        twap.last_update_unix_timestamp = price_ts;
-        twap.updates_tracker_1h = 0;
-    }
-
     pub(super) fn validate_ema(twap: &EmaTwap, current_ts: u64) -> ScopeResult<()> {
+        if current_ts < twap.last_update_unix_timestamp {
+            warn!("Current timestamp is older than the last update timestamp");
+            return Err(ScopeError::BadTimestamp);
+        }
         let mut tracker: EmaTracker = twap.updates_tracker_1h.into();
         tracker.erase_old_samples(
             EMA_1H_DURATION_SECONDS,

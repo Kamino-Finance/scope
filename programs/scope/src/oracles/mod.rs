@@ -28,7 +28,7 @@ use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "yvaults")]
 use self::ktokens_token_x::TokenTypes;
-use crate::{DatedPrice, OracleMappings, OraclePrices, OracleTwaps, Price, ScopeError};
+use crate::{warn, DatedPrice, OracleMappings, OraclePrices, OracleTwaps, Price, ScopeError};
 
 pub fn check_context<T>(ctx: &Context<T>) -> Result<()> {
     //make sure there are no extra accounts
@@ -182,7 +182,7 @@ where
         #[cfg(feature = "yvaults")]
         OracleType::KToken => {
             ktokens::get_price(base_account, clock, extra_accounts).map_err(|e| {
-                msg!("Error getting KToken price: {:?}", e);
+                warn!("Error getting KToken price: {:?}", e);
                 e.into()
             })
         }
@@ -194,7 +194,7 @@ where
             TokenTypes::TokenA,
         )
         .map_err(|e| {
-            msg!("Error getting KToken share ratio: {:?}", e);
+            warn!("Error getting KToken share ratio: {:?}", e);
             e.into()
         }),
         #[cfg(feature = "yvaults")]
@@ -205,7 +205,7 @@ where
             TokenTypes::TokenB,
         )
         .map_err(|e| {
-            msg!("Error getting KToken share ratio: {:?}", e);
+            warn!("Error getting KToken share ratio: {:?}", e);
             e.into()
         }),
         #[cfg(not(feature = "yvaults"))]
@@ -219,13 +219,13 @@ where
         OracleType::MsolStake => msol_stake::get_price(base_account, clock).map_err(Into::into),
         OracleType::JupiterLpFetch => {
             jupiter_lp::get_price_no_recompute(base_account, clock, extra_accounts).map_err(|e| {
-                msg!("Error getting Jupiter LP price: {:?}", e);
+                warn!("Error getting Jupiter LP price: {:?}", e);
                 e
             })
         }
         OracleType::ScopeTwap => twap::get_price(oracle_mappings, oracle_twaps, index, clock)
             .map_err(|e| {
-                msg!("Error getting Scope TWAP price: {:?}", e);
+                warn!("Error getting Scope TWAP price: {:?}", e);
                 e.into()
             }),
         OracleType::OrcaWhirlpoolAtoB => {
@@ -273,7 +273,7 @@ where
     // The price providers above are performing their type-specific validations, but are still free
     // to return 0, which we can only tolerate in case of explicit fixed price:
     if price.price.value == 0 && price_type != OracleType::FixedPrice {
-        msg!("Price is 0 (token {index}, type {price_type:?}): {price:?}",);
+        warn!("Price is 0 (token {index}, type {price_type:?}): {price:?}",);
         return err!(ScopeError::PriceNotValid);
     }
     Ok(price)
@@ -326,7 +326,7 @@ pub fn validate_oracle_cfg(
         }
         OracleType::FixedPrice => {
             if price_account.is_some() {
-                msg!("No account is expected with a fixed price oracle");
+                warn!("No account is expected with a fixed price oracle");
                 return err!(ScopeError::PriceNotValid);
             }
             let mut price_data: &[u8] = generic_data;

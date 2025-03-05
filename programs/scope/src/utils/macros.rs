@@ -43,3 +43,51 @@ macro_rules! assert_fuzzy_price_eq {
         }
     };
 }
+
+#[cfg(any(target_os = "solana", not(feature = "tracing")))]
+#[macro_export]
+macro_rules! debug {
+    ($($t:tt)*) => {
+        solana_program::msg!($($t)*);
+    };
+}
+
+#[cfg(any(target_os = "solana", not(feature = "tracing")))]
+#[macro_export]
+macro_rules! info {
+    ($($t:tt)*) => {
+        solana_program::msg!($($t)*);
+    };
+}
+
+#[cfg(any(target_os = "solana", not(feature = "tracing")))]
+#[macro_export]
+macro_rules! warn {
+    ($($t:tt)*) => {
+        solana_program::msg!($($t)*);
+    };
+}
+
+#[cfg(all(not(target_os = "solana"), feature = "tracing"))]
+#[macro_export]
+macro_rules! debug {
+    ($($t:tt)*) => {
+        tracing::debug!($($t)*);
+    };
+}
+
+#[cfg(all(not(target_os = "solana"), feature = "tracing"))]
+#[macro_export]
+macro_rules! info {
+    ($($t:tt)*) => {
+        tracing::info!($($t)*);
+    };
+}
+
+#[cfg(all(not(target_os = "solana"), feature = "tracing"))]
+#[macro_export]
+macro_rules! warn {
+    ($($t:tt)*) => {
+        tracing::warn!($($t)*);
+    };
+}

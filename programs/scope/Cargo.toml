@@ -17,6 +17,7 @@ cpi = ["no-entrypoint"]
 skip_price_validation = []
 test-bpf = []
 debug = []
+tracing = ["dep:tracing"]
 
 # If none of the following is set, one will be selected based on env $CLUSTER variable
 # If $CLUSTER is not set either, default will be mainnet
@@ -62,4 +63,5 @@ sbod-itf = { path = "../sbod-itf" }
 intbits = "0.2.0"
 pyth-solana-receiver-sdk = "0.1.0"
 static_assertions = "1.1.0"
+tracing = { version = "0.1.10", optional = true }
 

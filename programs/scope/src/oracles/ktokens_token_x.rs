@@ -15,7 +15,7 @@ use crate::{
         math::{price_of_lamports_to_price_of_tokens, u64_div_to_price},
         zero_copy_deserialize,
     },
-    DatedPrice, Price, ScopeError, ScopeResult,
+    warn, DatedPrice, Price, ScopeError, ScopeResult,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -70,11 +70,9 @@ where
     let account_check = |account: &AccountInfo, expected, name| {
         let pk = account.key();
         if pk != expected {
-            msg!(
+            warn!(
                 "Ktoken token per share: received account {} for {} is not the one expected ({})",
-                pk,
-                name,
-                expected
+                pk, name, expected
             );
             Err(ScopeError::UnexpectedAccount)
         } else {
@@ -129,7 +127,7 @@ where
     let num_token_x =
         holdings_of_token_x(&strategy_account_ref, clmm.as_ref(), &token_prices, token).map_err(
             |e| {
-                msg!("Error while computing the Ktoken pool holdings: {:?}", e);
+                warn!("Error while computing the Ktoken pool holdings: {:?}", e);
                 ScopeError::KTokenHoldingsCalculationError
             },
         )?;
@@ -193,7 +191,7 @@ pub fn holdings_of_token_x(
 
     let pool_sqrt_price = clmm.get_current_sqrt_price();
 
-    msg!("[KToken to Token X] pool_sqrt_price: {pool_sqrt_price} vs sqrt_price_from_oracle_prices: {pool_sqrt_price_from_oracle_prices}",);
+    warn!("[KToken to Token X] pool_sqrt_price: {pool_sqrt_price} vs sqrt_price_from_oracle_prices: {pool_sqrt_price_from_oracle_prices}",);
 
     let (available, invested, fees) = common::underlying_inventory(
         strategy,

@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use solana_program::borsh0_10::try_from_slice_unchecked;
 
 use self::msol_stake_pool::State;
-use crate::{DatedPrice, Price, ScopeError, ScopeResult};
+use crate::{warn, DatedPrice, Price, ScopeError, ScopeResult};
 
 const DECIMALS: u32 = 15u32;
 
@@ -13,12 +13,12 @@ pub fn get_price(
 ) -> ScopeResult<DatedPrice> {
     let stake_pool = try_from_slice_unchecked::<State>(&msol_pool_account_info.data.borrow()[8..])
         .map_err(|_| {
-            msg!("Provided pubkey is not a valid MSOL Stake account");
+            warn!("Provided pubkey is not a valid MSOL Stake account");
             ScopeError::UnexpectedAccount
         })?;
 
     let value = scaled_rate(&stake_pool).map_err(|e| {
-        msg!("Error while calculating the scaled rate: {:?}", e);
+        warn!("Error while calculating the scaled rate: {:?}", e);
         e
     })?;
 

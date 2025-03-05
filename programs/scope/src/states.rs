@@ -94,6 +94,13 @@ impl EmaTwap {
             index,
         }
     }
+
+    pub fn reset(&mut self) {
+        self.current_ema_1h = 0;
+        self.last_update_slot = 0;
+        self.last_update_unix_timestamp = 0;
+        self.updates_tracker_1h = 0;
+    }
 }
 
 static_assertions::const_assert_eq!(ORACLE_TWAPS_SIZE, std::mem::size_of::<OracleTwaps>());
