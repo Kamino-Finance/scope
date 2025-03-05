@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::spl_token::state::Mint;
+use anchor_spl::token_2022::spl_token_2022::state::Mint;
 use solana_program::program_pack::Pack;
 use whirlpool::state::Whirlpool;
 
@@ -45,12 +45,12 @@ where
     // Load extra accounts
     let mint_a_decimals = {
         let mint_borrow = mint_token_a_account_info.data.borrow();
-        Mint::unpack(&mint_borrow)?.decimals
+        Mint::unpack_from_slice(&mint_borrow[..Mint::LEN])?.decimals
     };
 
     let mint_b_decimals = {
         let mint_borrow = mint_token_b_account_info.data.borrow();
-        Mint::unpack(&mint_borrow)?.decimals
+        Mint::unpack_from_slice(&mint_borrow[..Mint::LEN])?.decimals
     };
 
     // Compute price
