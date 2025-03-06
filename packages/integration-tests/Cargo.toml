@@ -1,0 +1,21 @@
+[package]
+name = "ratex-integration-tests"
+version = "0.1.0"
+description = "Ratex price integration tests"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dev-dependencies]
+anchor-lang = { version = "=0.28.0", features = ["init-if-needed"] }
+arrayref = "0.3.6"
+num_enum = "0.7.3"
+proptest = "1.4.0"
+bincode = "^1.3.3"
+anchor-client = { version = "0.28.0", features = ["async"] }
+solana-program-test = "1.16.18"
+scope = { path = "../../programs/scope", default-features = false }
+solana-program = ">1.16.18"
+rust_decimal = { version = "1.35", features = ["maths"] }
+rust_decimal_macros = "1.35"
