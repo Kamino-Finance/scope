@@ -1,13 +1,15 @@
-use anchor_lang::{prelude::*, solana_program::clock};
+use anchor_lang::prelude::*;
 use pyth_solana_receiver_sdk::price_update::{self, PriceUpdateV2, VerificationLevel};
 
-use crate::{utils::account_deserialize, DatedPrice, ScopeError};
+use crate::{
+    utils::{account_deserialize, math::estimate_slot_update_from_ts},
+    DatedPrice, ScopeError,
+};
 pub const MAXIMUM_AGE: u64 = 10 * 60; // Ten minutes
 use pyth_sdk_solana::state as pyth_client;
 
-use self::utils::get_last_updated_slot;
 use super::pyth::validate_valid_price;
-use crate::utils::consts::ORACLE_CONFIDENCE_FACTOR;
+use crate::{utils::consts::ORACLE_CONFIDENCE_FACTOR, warn};
 
 pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> {
     let price_account: PriceUpdateV2 = account_deserialize(price_info)?;
@@ -27,7 +29,7 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
     } = price;
 
     if exponent > 0 {
-        msg!(
+        warn!(
             "Pyth price account provided has a negative price exponent: {}",
             exponent
         );
@@ -43,7 +45,7 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
         publish_time,
     };
     let price = validate_valid_price(&old_pyth_price, ORACLE_CONFIDENCE_FACTOR).map_err(|e| {
-        msg!(
+        warn!(
             "Confidence interval check failed on pyth account {}",
             price_info.key
         );
@@ -51,7 +53,7 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
     })?;
 
     // todo: Discuss how we should handle the time jump that can happen when there is an outage?
-    let last_updated_slot = get_last_updated_slot(clock, publish_time);
+    let last_updated_slot = estimate_slot_update_from_ts(clock, publish_time.try_into().unwrap());
     Ok(DatedPrice {
         price,
         last_updated_slot,
@@ -65,21 +67,9 @@ pub fn validate_price_update_v2_info(price_info: &Option<AccountInfo>) -> Result
         return Ok(());
     }
     let Some(price_info) = price_info else {
-        msg!("No pyth pull price account provided");
+        warn!("No pyth pull price account provided");
         return err!(ScopeError::PriceNotValid);
     };
     let _: PriceUpdateV2 = account_deserialize(price_info)?;
     Ok(())
-}
-
-pub mod utils {
-    use super::*;
-
-    pub fn get_last_updated_slot(clock: &Clock, publish_time: i64) -> u64 {
-        let elapsed_time_s = u64::try_from(clock.unix_timestamp)
-            .unwrap()
-            .saturating_sub(u64::try_from(publish_time).unwrap());
-        let elapsed_slot_estimate = elapsed_time_s * 1000 / clock::DEFAULT_MS_PER_SLOT;
-        clock.slot.saturating_sub(elapsed_slot_estimate)
-    }
 }

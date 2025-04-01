@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use solana_program::borsh0_10::try_from_slice_unchecked;
 
 use self::spl_stake_pool::StakePool;
-use crate::{utils::SECONDS_PER_HOUR, DatedPrice, Price, Result, ScopeError};
+use crate::{utils::SECONDS_PER_HOUR, warn, DatedPrice, Price, Result, ScopeError};
 
 const DECIMALS: u32 = 15u32;
 
@@ -19,7 +19,7 @@ pub fn get_price(
 ) -> Result<DatedPrice> {
     let stake_pool = try_from_slice_unchecked::<StakePool>(&stake_pool_account_info.data.borrow())
         .map_err(|_| {
-            msg!("Provided pubkey is not a SPL Stake account");
+            warn!("Provided pubkey is not a SPL Stake account");
             ScopeError::UnexpectedAccount
         })?;
 
@@ -35,19 +35,19 @@ pub fn get_price(
             // The price has not been refreshed this epoch and it's been 1 hour
             // We allow 1 hour of delay because stake account are never refreshed very quickly on a new epoch and we don't want to block the price usage.
             // This is an accepted tradeoff as this price type is only used as reference and not to compute the value of the token.
-            msg!("SPL Stake account has not been refreshed in current epoch");
+            warn!("SPL Stake account has not been refreshed in current epoch");
             #[cfg(not(feature = "localnet"))]
             return Err(ScopeError::PriceNotValid.into());
         }
     }
 
     check_fees(&stake_pool).map_err(|e| {
-        msg!("Stake pool fees are too high: {}", e);
+        warn!("Stake pool fees are too high: {}", e);
         e
     })?;
 
     let value = scaled_rate(&stake_pool).map_err(|e| {
-        msg!("Overflow while scaling stake rate");
+        warn!("Overflow while scaling stake rate");
         e
     })?;
 

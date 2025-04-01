@@ -1,17 +1,14 @@
-use anchor_lang::{
-    prelude::*,
-    solana_program::{clock, program_pack::Pack},
-};
+use anchor_lang::{prelude::*, solana_program::program_pack::Pack};
 
 use self::solend::Reserve;
-use crate::{DatedPrice, Price, Result, ScopeResult};
+use crate::{utils::math::slots_to_secs, warn, DatedPrice, Price, Result, ScopeResult};
 
 const DECIMALS: u32 = 15u32;
 
 // Gives the price of 1 cToken in the collateral token
 pub fn get_price(solend_reserve_account: &AccountInfo, clock: &Clock) -> Result<DatedPrice> {
     let mut reserve = Reserve::unpack(&solend_reserve_account.data.borrow()).map_err(|e| {
-        msg!(
+        warn!(
             "Error unpacking CToken account {}",
             solend_reserve_account.key()
         );
@@ -25,19 +22,17 @@ pub fn get_price(solend_reserve_account: &AccountInfo, clock: &Clock) -> Result<
     } else {
         // This should never happen but on simulations when the current slot is not valid
         // yet we have a default value
+        let slots_since_last_update = clock.slot.saturating_sub(reserve.last_update.slot);
         (
             reserve.last_update.slot,
-            u64::try_from(clock.unix_timestamp).unwrap().saturating_sub(
-                clock
-                    .slot
-                    .saturating_sub(reserve.last_update.slot)
-                    .saturating_mul(clock::DEFAULT_MS_PER_SLOT),
-            ),
+            u64::try_from(clock.unix_timestamp)
+                .unwrap()
+                .saturating_sub(slots_to_secs(slots_since_last_update)),
         )
     };
 
     let value = scaled_rate(&reserve).map_err(|e| {
-        msg!(
+        warn!(
             "Error getting scaled rate for CToken account {}: {e:?}",
             solend_reserve_account.key()
         );
@@ -388,7 +383,7 @@ pub mod solend {
 
             let version = u8::from_le_bytes(*version);
             if version > PROGRAM_VERSION {
-                msg!("Reserve version does not match lending program version");
+                warn!("Reserve version does not match lending program version");
                 return Err(ProgramError::InvalidAccountData);
             }
 
@@ -672,7 +667,7 @@ pub mod solend {
             0 => Ok(false),
             1 => Ok(true),
             _ => {
-                msg!("Boolean cannot be unpacked");
+                warn!("Boolean cannot be unpacked");
                 Err(ProgramError::InvalidAccountData)
             }
         }

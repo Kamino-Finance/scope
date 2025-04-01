@@ -4,6 +4,8 @@ pub mod ktokens;
 #[cfg(feature = "yvaults")]
 pub mod ktokens_token_x;
 
+pub mod chainlink;
+pub mod discount_to_maturity;
 pub mod jito_restaking;
 pub mod jupiter_lp;
 pub mod meteora_dlmm;
@@ -28,7 +30,7 @@ use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "yvaults")]
 use self::ktokens_token_x::TokenTypes;
-use crate::{DatedPrice, OracleMappings, OraclePrices, OracleTwaps, Price, ScopeError};
+use crate::{warn, DatedPrice, OracleMappings, OraclePrices, OracleTwaps, Price, ScopeError};
 
 pub fn check_context<T>(ctx: &Context<T>) -> Result<()> {
     //make sure there are no extra accounts
@@ -39,10 +41,11 @@ pub fn check_context<T>(ctx: &Context<T>) -> Result<()> {
     Ok(())
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive, Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Default, IntoPrimitive, TryFromPrimitive, Clone, Copy, PartialEq, Eq, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[repr(u8)]
 pub enum OracleType {
+    #[default]
     Pyth = 0,
     /// Deprecated (formerly SwitchboardV1)
     // Do not remove - breaks the typescript idl codegen
@@ -106,7 +109,12 @@ pub enum OracleType {
     /// Switchboard on demand
     SwitchboardOnDemand = 24,
     /// Jito restaking tokens
-    JitoRestaking = 25, // TODO adjust if we merge ALP first
+    JitoRestaking = 25,
+    /// Chainlink oracles
+    Chainlink = 26,
+    /// Discount oracle, compute the price with a linear discount rate until a maturity date
+    /// After maturity date the price is set to 1
+    DiscountToMaturity = 27,
 }
 
 impl OracleType {
@@ -138,6 +146,9 @@ impl OracleType {
             OracleType::MeteoraDlmmAtoB | OracleType::MeteoraDlmmBtoA => 30_000,
             OracleType::JupiterLpCompute | OracleType::JupiterLpScope => 120_000,
             OracleType::JitoRestaking => 25_000,
+            OracleType::DiscountToMaturity => 30_000,
+            // Chainlink oracles are not updated through normal refresh ixs
+            OracleType::Chainlink => 0,
             OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
                 panic!("DeprecatedPlaceholder is not a valid oracle type")
             }
@@ -182,7 +193,7 @@ where
         #[cfg(feature = "yvaults")]
         OracleType::KToken => {
             ktokens::get_price(base_account, clock, extra_accounts).map_err(|e| {
-                msg!("Error getting KToken price: {:?}", e);
+                warn!("Error getting KToken price: {:?}", e);
                 e.into()
             })
         }
@@ -194,7 +205,7 @@ where
             TokenTypes::TokenA,
         )
         .map_err(|e| {
-            msg!("Error getting KToken share ratio: {:?}", e);
+            warn!("Error getting KToken share ratio: {:?}", e);
             e.into()
         }),
         #[cfg(feature = "yvaults")]
@@ -205,7 +216,7 @@ where
             TokenTypes::TokenB,
         )
         .map_err(|e| {
-            msg!("Error getting KToken share ratio: {:?}", e);
+            warn!("Error getting KToken share ratio: {:?}", e);
             e.into()
         }),
         #[cfg(not(feature = "yvaults"))]
@@ -219,13 +230,13 @@ where
         OracleType::MsolStake => msol_stake::get_price(base_account, clock).map_err(Into::into),
         OracleType::JupiterLpFetch => {
             jupiter_lp::get_price_no_recompute(base_account, clock, extra_accounts).map_err(|e| {
-                msg!("Error getting Jupiter LP price: {:?}", e);
+                warn!("Error getting Jupiter LP price: {:?}", e);
                 e
             })
         }
         OracleType::ScopeTwap => twap::get_price(oracle_mappings, oracle_twaps, index, clock)
             .map_err(|e| {
-                msg!("Error getting Scope TWAP price: {:?}", e);
+                warn!("Error getting Scope TWAP price: {:?}", e);
                 e.into()
             }),
         OracleType::OrcaWhirlpoolAtoB => {
@@ -266,6 +277,13 @@ where
         OracleType::JitoRestaking => {
             jito_restaking::get_price(base_account, clock).map_err(Into::into)
         }
+        OracleType::Chainlink => {
+            msg!("Chainlink oracle type cannot be refreshed directly");
+            return err!(ScopeError::PriceNotValid);
+        }
+        OracleType::DiscountToMaturity => {
+            discount_to_maturity::get_price(&oracle_mappings.generic[index], clock)
+        }
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
@@ -273,7 +291,7 @@ where
     // The price providers above are performing their type-specific validations, but are still free
     // to return 0, which we can only tolerate in case of explicit fixed price:
     if price.price.value == 0 && price_type != OracleType::FixedPrice {
-        msg!("Price is 0 (token {index}, type {price_type:?}): {price:?}",);
+        warn!("Price is 0 (token {index}, type {price_type:?}): {price:?}",);
         return err!(ScopeError::PriceNotValid);
     }
     Ok(price)
@@ -288,6 +306,7 @@ pub fn validate_oracle_cfg(
     price_account: &Option<AccountInfo>,
     twap_source: u16,
     generic_data: &[u8; 20],
+    clock: &Clock,
 ) -> crate::Result<()> {
     // when we remove something from the config there is no validation needed
     if price_type == OracleType::Pyth && price_account.is_none() {
@@ -326,7 +345,7 @@ pub fn validate_oracle_cfg(
         }
         OracleType::FixedPrice => {
             if price_account.is_some() {
-                msg!("No account is expected with a fixed price oracle");
+                warn!("No account is expected with a fixed price oracle");
                 return err!(ScopeError::PriceNotValid);
             }
             let mut price_data: &[u8] = generic_data;
@@ -337,6 +356,13 @@ pub fn validate_oracle_cfg(
         OracleType::JitoRestaking => jito_restaking::validate_account(price_account),
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
+        }
+        OracleType::Chainlink => {
+            chainlink::validate_mapping(price_account, generic_data).map_err(Into::into)
+        }
+        OracleType::DiscountToMaturity => {
+            discount_to_maturity::validate_mapping_cfg(price_account, generic_data, clock)
+                .map_err(Into::into)
         }
     }
 }

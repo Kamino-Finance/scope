@@ -9,12 +9,12 @@ use std::cell::{Ref, RefMut};
 
 use anchor_lang::{
     __private::bytemuck,
-    prelude::{msg, AccountDeserialize, AccountInfo},
+    prelude::{AccountDeserialize, AccountInfo},
     Discriminator, Key,
 };
 pub use decimal_wad;
 
-use crate::{ScopeError, ScopeResult};
+use crate::{warn, ScopeError, ScopeResult};
 
 pub const SECONDS_PER_HOUR: i64 = 60 * 60;
 
@@ -23,14 +23,14 @@ pub fn account_deserialize<T: AccountDeserialize + Discriminator>(
 ) -> ScopeResult<T> {
     let data = account.clone().data.borrow().to_owned();
     let discriminator = data.get(..8).ok_or_else(|| {
-        msg!(
+        warn!(
             "Account {:?} does not have enough bytes to be deserialized",
             account.key()
         );
         ScopeError::UnableToDeserializeAccount
     })?;
     if discriminator != T::discriminator() {
-        msg!(
+        warn!(
             "Expected discriminator for account {:?} ({:?}) is different from received {:?}",
             account.key(),
             T::discriminator(),
@@ -41,7 +41,7 @@ pub fn account_deserialize<T: AccountDeserialize + Discriminator>(
 
     let mut data: &[u8] = &data;
     let user: T = T::try_deserialize(&mut data).map_err(|_| {
-        msg!("Account {:?} deserialization failed", account.key());
+        warn!("Account {:?} deserialization failed", account.key());
         ScopeError::UnableToDeserializeAccount
     })?;
 
@@ -54,14 +54,14 @@ pub fn zero_copy_deserialize<'info, T: bytemuck::AnyBitPattern + Discriminator>(
     let data = account.data.try_borrow().unwrap();
 
     let disc_bytes = data.get(..8).ok_or_else(|| {
-        msg!(
+        warn!(
             "Account {:?} does not have enough bytes to be deserialized",
             account.key()
         );
         ScopeError::UnableToDeserializeAccount
     })?;
     if disc_bytes != T::discriminator() {
-        msg!(
+        warn!(
             "Expected discriminator for account {:?} ({:?}) is different from received {:?}",
             account.key(),
             T::discriminator(),
@@ -79,14 +79,14 @@ pub fn zero_copy_deserialize_mut<'info, T: bytemuck::Pod + Discriminator>(
     let data = account.data.try_borrow_mut().unwrap();
 
     let disc_bytes = data.get(..8).ok_or_else(|| {
-        msg!(
+        warn!(
             "Account {:?} does not have enough bytes to be deserialized",
             account.key()
         );
         ScopeError::UnableToDeserializeAccount
     })?;
     if disc_bytes != T::discriminator() {
-        msg!(
+        warn!(
             "Expected discriminator for account {:?} ({:?}) is different from received {:?}",
             account.key(),
             T::discriminator(),

@@ -11,7 +11,8 @@ use solana_program::program_pack::Pack;
 use crate::{
     scope_chain::get_price_from_chain,
     utils::{account_deserialize, math::ten_pow},
-    DatedPrice, MintToScopeChain, MintsToScopeChains, OraclePrices, Price, Result, ScopeError,
+    warn, DatedPrice, MintToScopeChain, MintsToScopeChains, OraclePrices, Price, Result,
+    ScopeError,
 };
 pub const POOL_VALUE_SCALE_DECIMALS: u8 = 6;
 
@@ -62,7 +63,7 @@ where
 
 pub fn validate_jlp_pool(account: &Option<AccountInfo>) -> Result<()> {
     let Some(account) = account else {
-        msg!("No jlp pool account provided");
+        warn!("No jlp pool account provided");
         return err!(ScopeError::PriceNotValid);
     };
     let _jlp_pool: perpetuals::Pool = account_deserialize(account)?;
@@ -111,7 +112,7 @@ where
 
     // 2. Check accounts
     check_accounts(jup_pool_pk, &jup_pool, mint_acc, &custodies_accs).map_err(|e| {
-        msg!("Error while checking accounts: {:?}", e);
+        warn!("Error while checking accounts: {:?}", e);
         e
     })?;
     // Check of oracles will be done in the next step while deserializing custodies
@@ -120,7 +121,7 @@ where
     // 3. Get mint supply
 
     let lp_token_supply = get_lp_token_supply(mint_acc).map_err(|e| {
-        msg!("Error while getting mint supply: {:?}", e);
+        warn!("Error while getting mint supply: {:?}", e);
         e
     })?;
 
@@ -151,7 +152,7 @@ where
         aum_and_age_getter,
     )
     .map_err(|e| {
-        msg!(
+        warn!(
             "Error while computing price from custodies and prices: {:?}",
             e
         );
@@ -210,7 +211,7 @@ where
 
     // 2. Check accounts
     check_accounts(jup_pool_pk, &jup_pool, mint_acc, &custodies_accs).map_err(|e| {
-        msg!("Error while checking accounts: {:?}", e);
+        warn!("Error while checking accounts: {:?}", e);
         e
     })?;
 
@@ -237,7 +238,7 @@ where
     // 3. Get mint supply
 
     let lp_token_supply = get_lp_token_supply(mint_acc).map_err(|e| {
-        msg!("Error while getting mint supply: {:?}", e);
+        warn!("Error while getting mint supply: {:?}", e);
         e
     })?;
 
@@ -257,7 +258,7 @@ where
         );
         let dated_price =
             get_price_from_chain(oracle_prices, &mint_to_chain.scope_chain).map_err(|e| {
-                msg!("Error while getting price from scope chain: {:?}", e);
+                warn!("Error while getting price from scope chain: {:?}", e);
                 ScopeError::BadScopeChainOrPrices
             })?;
         compute_custody_aum(&custody, &dated_price)
@@ -270,7 +271,7 @@ where
         aum_and_age_getter,
     )
     .map_err(|e| {
-        msg!(
+        warn!(
             "Error while computing price from custodies and prices: {:?}",
             e
         );

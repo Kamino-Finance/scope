@@ -3,7 +3,7 @@ use decimal_wad::decimal::Decimal;
 
 use crate::{
     utils::{consts::FULL_BPS, math, zero_copy_deserialize},
-    DatedPrice, Price,
+    warn, DatedPrice, Price,
 };
 
 /// Jito restaking price oracle gives the amount of JitoSOL per VRT token on withdrawal
@@ -39,7 +39,7 @@ fn get_price_int(vault: &jito_vault_core::Vault) -> Price {
 
 pub fn validate_account(vault: &Option<AccountInfo>) -> Result<()> {
     let Some(vault) = vault else {
-        msg!("No vault account provided");
+        warn!("No vault account provided");
         return err!(crate::ScopeError::UnexpectedAccount);
     };
     let _ = zero_copy_deserialize::<jito_vault_core::Vault>(vault)?;

@@ -1,10 +1,13 @@
 use std::convert::TryInto;
 
-use anchor_lang::{prelude::*, solana_program::clock::DEFAULT_MS_PER_SLOT};
+use anchor_lang::prelude::*;
 use sbod_itf::accounts::PullFeedAccountData;
 
 use super::switchboard_v2::validate_confidence;
-use crate::{utils::zero_copy_deserialize, DatedPrice, Price, ScopeError};
+use crate::{
+    utils::{math::slots_to_secs, zero_copy_deserialize},
+    warn, DatedPrice, Price, ScopeError,
+};
 
 const MAX_EXPONENT: u32 = 15;
 
@@ -33,7 +36,7 @@ pub fn get_price(
         )
         .is_err()
         {
-            msg!(
+            warn!(
                     "Validation of confidence interval for SB On-Demand feed {} failed. Price: {:?}, stdev_mantissa: {:?}, stdev_scale: {:?}",
                     switchboard_feed_info.key(),
                     price,
@@ -52,7 +55,7 @@ pub fn get_price(
     let elapsed_slots = clock.slot.saturating_sub(last_updated_slot);
     let unix_timestamp = u64::try_from(clock.unix_timestamp)
         .unwrap_or(0)
-        .saturating_sub(elapsed_slots * DEFAULT_MS_PER_SLOT / 1000);
+        .saturating_sub(slots_to_secs(elapsed_slots));
 
     Ok(DatedPrice {
         price,
@@ -67,7 +70,7 @@ pub fn validate_price_account(switchboard_feed_info: &Option<AccountInfo>) -> Re
         return Ok(());
     }
     let Some(switchboard_feed_info) = switchboard_feed_info else {
-        msg!("No pyth pull price account provided");
+        warn!("No pyth pull price account provided");
         return err!(ScopeError::PriceNotValid);
     };
     zero_copy_deserialize::<PullFeedAccountData>(switchboard_feed_info)?;
@@ -79,7 +82,7 @@ impl TryFrom<rust_decimal::Decimal> for Price {
 
     fn try_from(sb_decimal: rust_decimal::Decimal) -> std::result::Result<Self, Self::Error> {
         if sb_decimal.mantissa() < 0 {
-            msg!("Switchboard v2 oracle price feed is negative");
+            warn!("Switchboard v2 oracle price feed is negative");
             return Err(ScopeError::PriceNotValid);
         }
         let (exp, value) = if sb_decimal.scale() > MAX_EXPONENT {

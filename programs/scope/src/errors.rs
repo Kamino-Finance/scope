@@ -102,6 +102,15 @@ pub enum ScopeError {
 
     #[msg("Confidence interval check failed")]
     ConfidenceIntervalCheckFailed,
+
+    #[msg("Invalid generic data")]
+    InvalidGenericData,
+
+    #[msg("No valid Chainlink report data found")]
+    NoChainlinkReportData,
+
+    #[msg("Invalid Chainlink report data format")]
+    InvalidChainlinkReportData,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

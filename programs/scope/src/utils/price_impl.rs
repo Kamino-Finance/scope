@@ -1,9 +1,8 @@
 use anchor_lang::prelude::*;
 use decimal_wad::{common::PERCENT_SCALER, decimal::Decimal};
-use solana_program::msg;
 
 use super::math::ten_pow;
-use crate::{Price, ScopeError};
+use crate::{warn, Price, ScopeError};
 
 pub const MAX_REF_RATIO_TOLERANCE_PCT: u64 = 5;
 pub const MAX_REF_RATIO_TOLERANCE_SCALED: u64 = MAX_REF_RATIO_TOLERANCE_PCT * PERCENT_SCALER;
@@ -39,7 +38,7 @@ pub fn check_ref_price_difference(curr_price: Price, ref_price: Price) -> Result
     };
 
     if absolute_diff * 100 > ref_price_decimal * MAX_REF_RATIO_TOLERANCE_PCT {
-        msg!(
+        warn!(
             "Price diff is too high: absolute_diff {}, tolerance = {}",
             absolute_diff,
             ref_price_decimal * Decimal::from_percent(MAX_REF_RATIO_TOLERANCE_PCT)

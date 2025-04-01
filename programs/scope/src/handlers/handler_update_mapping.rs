@@ -63,6 +63,7 @@ pub fn process(
         &ctx.accounts.price_info,
         twap_source,
         generic_data,
+        &Clock::get()?,
     )?;
 
     match &ctx.accounts.price_info {
@@ -73,7 +74,9 @@ pub fn process(
         }
         None => {
             match price_type {
-                OracleType::ScopeTwap | OracleType::FixedPrice => *price_pubkey = crate::id(),
+                OracleType::ScopeTwap | OracleType::FixedPrice | OracleType::DiscountToMaturity => {
+                    *price_pubkey = crate::id()
+                }
 
                 _ => {
                     // if no price_info account is passed, it means that the mapping has to be removed so it is set to Pubkey::default
