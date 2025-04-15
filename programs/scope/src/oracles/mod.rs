@@ -13,8 +13,8 @@ pub mod msol_stake;
 pub mod orca_whirlpool;
 pub mod pyth;
 pub mod pyth_ema;
-pub mod pyth_pull_based;
-pub mod pyth_pull_based_ema;
+pub mod pyth_pull;
+pub mod pyth_pull_ema;
 pub mod raydium_ammv3;
 pub mod spl_stake;
 pub mod switchboard_on_demand;
@@ -100,10 +100,10 @@ pub enum OracleType {
     MeteoraDlmmBtoA = 19,
     /// Jupiter's perpetual LP tokens computed from scope prices
     JupiterLpScope = 20,
-    /// Pyth Pull based oracles
-    PythPullBased = 21,
-    // Pyth Pull based oracles EMA
-    PythPullBasedEMA = 22,
+    /// Pyth Pull oracles
+    PythPull = 21,
+    /// Pyth Pull oracles EMA
+    PythPullEMA = 22,
     /// Fixed price oracle
     FixedPrice = 23,
     /// Switchboard on demand
@@ -126,8 +126,8 @@ impl OracleType {
     pub fn get_update_cu_budget(&self) -> u32 {
         match self {
             OracleType::FixedPrice => 10_000,
-            OracleType::PythPullBased => 20_000,
-            OracleType::PythPullBasedEMA => 20_000,
+            OracleType::PythPull => 20_000,
+            OracleType::PythPullEMA => 20_000,
             OracleType::Pyth => 30_000,
             OracleType::SwitchboardV2 => 30_000,
             OracleType::SwitchboardOnDemand => 30_000,
@@ -177,8 +177,8 @@ where
 {
     let price = match price_type {
         OracleType::Pyth => pyth::get_price(base_account, clock),
-        OracleType::PythPullBased => pyth_pull_based::get_price(base_account, clock),
-        OracleType::PythPullBasedEMA => pyth_pull_based_ema::get_price(base_account, clock),
+        OracleType::PythPull => pyth_pull::get_price(base_account, clock),
+        OracleType::PythPullEMA => pyth_pull_ema::get_price(base_account, clock),
         OracleType::SwitchboardV2 => switchboard_v2::get_price(base_account).map_err(Into::into),
         OracleType::SwitchboardOnDemand => {
             switchboard_on_demand::get_price(base_account, clock).map_err(Into::into)
@@ -315,10 +315,8 @@ pub fn validate_oracle_cfg(
 
     match price_type {
         OracleType::Pyth => pyth::validate_pyth_price_info(price_account),
-        OracleType::PythPullBased => pyth_pull_based::validate_price_update_v2_info(price_account),
-        OracleType::PythPullBasedEMA => {
-            pyth_pull_based::validate_price_update_v2_info(price_account)
-        }
+        OracleType::PythPull => pyth_pull::validate_price_update_v2_info(price_account),
+        OracleType::PythPullEMA => pyth_pull::validate_price_update_v2_info(price_account),
         OracleType::SwitchboardOnDemand => {
             switchboard_on_demand::validate_price_account(price_account)
         }

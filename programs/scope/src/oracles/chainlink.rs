@@ -60,7 +60,7 @@ pub fn update_price(
     let last_updated_slot = estimate_slot_update_from_ts(clock, price_ts);
     let unix_timestamp = price_ts;
     let mut generic_data = [0u8; 24];
-    generic_data[..8].copy_from_slice(&price_ts.to_le_bytes());
+    generic_data[..8].copy_from_slice(&chainlink_ts.to_le_bytes());
 
     *dated_price = DatedPrice {
         price,
