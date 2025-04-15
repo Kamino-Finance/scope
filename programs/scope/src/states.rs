@@ -6,7 +6,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::{utils::consts::*, MAX_ENTRIES, MAX_ENTRIES_U16};
+use crate::{utils::consts::*, MAX_ENTRIES};
 
 #[zero_copy]
 #[derive(Debug, Default, AnchorDeserialize, AnchorSerialize)]
@@ -26,28 +26,12 @@ pub struct Price {
 }
 
 #[zero_copy]
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Default)]
 pub struct DatedPrice {
     pub price: Price,
     pub last_updated_slot: u64,
     pub unix_timestamp: u64,
-    pub _reserved: [u64; 2],
-    pub _reserved2: [u16; 3],
-    // Current index of the dated price.
-    pub index: u16,
-}
-
-impl Default for DatedPrice {
-    fn default() -> Self {
-        Self {
-            price: Default::default(),
-            last_updated_slot: Default::default(),
-            unix_timestamp: Default::default(),
-            _reserved: Default::default(),
-            _reserved2: Default::default(),
-            index: MAX_ENTRIES_U16,
-        }
-    }
+    pub generic_data: [u8; 24],
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromPrimitive, IntoPrimitive)]
@@ -84,15 +68,20 @@ impl Default for EmaTwap {
 }
 
 impl EmaTwap {
-    pub fn as_dated_price(&self, index: u16) -> DatedPrice {
+    pub fn as_dated_price(&self) -> DatedPrice {
         DatedPrice {
             price: Decimal::from_scaled_val(self.current_ema_1h).into(),
             last_updated_slot: self.last_update_slot,
             unix_timestamp: self.last_update_unix_timestamp,
-            _reserved: [0; 2],
-            _reserved2: [0; 3],
-            index,
+            generic_data: Default::default(),
         }
+    }
+
+    pub fn reset(&mut self) {
+        self.current_ema_1h = 0;
+        self.last_update_slot = 0;
+        self.last_update_unix_timestamp = 0;
+        self.updates_tracker_1h = 0;
     }
 }
 

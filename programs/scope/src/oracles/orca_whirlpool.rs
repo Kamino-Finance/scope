@@ -5,7 +5,7 @@ use whirlpool::state::Whirlpool;
 
 use crate::{
     utils::{account_deserialize, math::sqrt_price_to_price},
-    DatedPrice, Result, ScopeError,
+    warn, DatedPrice, Result, ScopeError,
 };
 
 /// Gives the price of the given token pair in the given pool
@@ -61,7 +61,7 @@ where
         mint_b_decimals,
     )
     .map_err(|e| {
-        msg!("Error while computing the price of the tokens in the pool: {e:?}",);
+        warn!("Error while computing the price of the tokens in the pool: {e:?}",);
         e
     })?;
 
@@ -76,7 +76,7 @@ where
 
 pub fn validate_pool_account(pool: &Option<AccountInfo>) -> Result<()> {
     let Some(pool) = pool else {
-        msg!("No pool account provided");
+        warn!("No pool account provided");
         return err!(ScopeError::PriceNotValid);
     };
     let _: Whirlpool = account_deserialize(pool)?;

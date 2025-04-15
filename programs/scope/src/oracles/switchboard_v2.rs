@@ -5,7 +5,7 @@ use anchor_lang::prelude::*;
 use self::switchboard::*;
 use crate::{
     utils::{consts::ORACLE_CONFIDENCE_FACTOR, math::check_confidence_interval},
-    DatedPrice, Price, Result, ScopeError,
+    warn, DatedPrice, Price, Result, ScopeError,
 };
 
 const MAX_EXPONENT: u32 = 10;
@@ -17,7 +17,7 @@ pub fn get_price(
         .map_err(|_| ScopeError::SwitchboardV2Error)?;
 
     let price_switchboard_desc = feed.get_result().map_err(|_| {
-        msg!(
+        warn!(
             "Switchboard v2 get result from feed {} failed",
             switchboard_feed_info.key()
         );
@@ -37,7 +37,7 @@ pub fn get_price(
         )
         .is_err()
         {
-            msg!(
+            warn!(
                     "Validation of confidence interval for switchboard v2 feed {} failed. Price: {:?}, stdev_mantissa: {:?}, stdev_scale: {:?}",
                     switchboard_feed_info.key(),
                     price,
@@ -84,7 +84,7 @@ impl TryFrom<SwitchboardDecimal> for Price {
 
     fn try_from(sb_decimal: SwitchboardDecimal) -> std::result::Result<Self, Self::Error> {
         if sb_decimal.mantissa < 0 {
-            msg!("Switchboard v2 oracle price feed is negative");
+            warn!("Switchboard v2 oracle price feed is negative");
             return Err(ScopeError::PriceNotValid);
         }
         let (exp, value) = if sb_decimal.scale > MAX_EXPONENT {
@@ -184,7 +184,7 @@ mod switchboard {
             let mut disc_bytes = [0u8; 8];
             disc_bytes.copy_from_slice(&data[..8]);
             if disc_bytes != AggregatorAccountData::discriminator() {
-                msg!(
+                warn!(
                     "Switchboard aggregator account has an invalid discriminator: {:?}",
                     disc_bytes
                 );
@@ -199,7 +199,7 @@ mod switchboard {
             let latest_confirmed_round_success = self.latest_confirmed_round.num_success;
             let min_oracle_results = self.min_oracle_results;
             if min_oracle_results > latest_confirmed_round_success {
-                msg!("Switchboard price is invalid: min_oracle_results: {min_oracle_results} > latest_confirmed_round.num_success: {latest_confirmed_round_success}",);
+                warn!("Switchboard price is invalid: min_oracle_results: {min_oracle_results} > latest_confirmed_round.num_success: {latest_confirmed_round_success}",);
                 Err(ScopeError::SwitchboardV2Error)
             } else {
                 Ok(self.latest_confirmed_round.result)

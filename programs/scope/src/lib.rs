@@ -46,6 +46,18 @@ pub mod scope {
         handler_refresh_prices::refresh_price_list(ctx, &tokens)
     }
 
+    pub fn refresh_chainlink_price<'info>(
+        ctx: Context<'_, '_, '_, 'info, RefreshChainlinkPrice<'info>>,
+        token: u16,
+        serialized_chainlink_report: Vec<u8>,
+    ) -> Result<()> {
+        handler_refresh_chainlink_price::refresh_chainlink_price(
+            ctx,
+            token,
+            serialized_chainlink_report,
+        )
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn update_mapping(
         ctx: Context<UpdateOracleMapping>,

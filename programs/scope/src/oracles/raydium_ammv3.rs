@@ -3,7 +3,7 @@ use raydium_amm_v3::states::PoolState;
 
 use crate::{
     utils::{account_deserialize, math::sqrt_price_to_price},
-    DatedPrice, Result, ScopeError,
+    warn, DatedPrice, Result, ScopeError,
 };
 
 /// Gives the price of the given token pair in the given pool
@@ -19,7 +19,7 @@ pub fn get_price(a_to_b: bool, pool: &AccountInfo, clock: &Clock) -> Result<Date
         pool_data.mint_decimals_1,
     )
     .map_err(|e| {
-        msg!("Error while computing the price of the tokens in the pool: {e:?}",);
+        warn!("Error while computing the price of the tokens in the pool: {e:?}",);
         e
     })?;
 
@@ -34,7 +34,7 @@ pub fn get_price(a_to_b: bool, pool: &AccountInfo, clock: &Clock) -> Result<Date
 
 pub fn validate_pool_account(pool: &Option<AccountInfo>) -> Result<()> {
     let Some(pool) = pool else {
-        msg!("No pool account provided");
+        warn!("No pool account provided");
         return err!(ScopeError::PriceNotValid);
     };
     let _: PoolState = account_deserialize(pool)?;

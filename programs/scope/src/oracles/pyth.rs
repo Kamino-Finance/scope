@@ -17,7 +17,7 @@ use pyth_sdk_solana::state as pyth_client;
 
 use crate::{
     utils::{consts::ORACLE_CONFIDENCE_FACTOR, math::check_confidence_interval},
-    DatedPrice, Price, ScopeError,
+    warn, DatedPrice, Price, ScopeError,
 };
 
 /// Only update with prices not older than 10 minutes, users can still check actual price age
@@ -27,7 +27,7 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
     let data = price_info.try_borrow_data()?;
     let price_account: &pyth_client::SolanaPriceAccount =
         pyth_client::load_price_account(data.as_ref()).map_err(|e| {
-            msg!("Error loading pyth account {}: {:?}", price_info.key, e);
+            warn!("Error loading pyth account {}: {:?}", price_info.key, e);
             ScopeError::PriceNotValid
         })?;
 
@@ -61,7 +61,7 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
             price_account.prev_timestamp,
         )
     } else {
-        msg!(
+        warn!(
             "Price in pyth account {} is older than 10 minutes",
             price_info.key
         );
@@ -69,16 +69,15 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
     };
 
     if pyth_price.expo > 0 {
-        msg!(
+        warn!(
             "Pyth price account {} provided has a negative price exponent: {}",
-            price_info.key,
-            pyth_price.expo
+            price_info.key, pyth_price.expo
         );
         return Err(ScopeError::PriceNotValid.into());
     }
 
     let price = validate_valid_price(&pyth_price, ORACLE_CONFIDENCE_FACTOR).map_err(|e| {
-        msg!(
+        warn!(
             "Price validity check failed on pyth account {}",
             price_info.key
         );
@@ -116,7 +115,7 @@ pub fn validate_valid_price(
         oracle_confidence_factor,
     )
     .map_err(|e| {
-        msg!("Confidence interval check failed conf {conf}",);
+        warn!("Confidence interval check failed conf {conf}",);
         e
     })?;
 
@@ -128,19 +127,19 @@ pub fn validate_valid_price(
 
 fn validate_pyth_price(pyth_price: &pyth_client::SolanaPriceAccount) -> Result<()> {
     if pyth_price.magic != pyth_client::MAGIC {
-        msg!("Pyth price account provided is not a valid Pyth account");
+        warn!("Pyth price account provided is not a valid Pyth account");
         return err!(ScopeError::PriceNotValid);
     }
     if !matches!(pyth_price.ptype, PriceType::Price) {
-        msg!("Pyth price account provided has invalid price type");
+        warn!("Pyth price account provided has invalid price type");
         return err!(ScopeError::PriceNotValid);
     }
     if pyth_price.ver != pyth_client::VERSION_2 {
-        msg!("Pyth price account provided has a different version than the Pyth client");
+        warn!("Pyth price account provided has a different version than the Pyth client");
         return err!(ScopeError::PriceNotValid);
     }
     if !matches!(pyth_price.agg.status, pyth_client::PriceStatus::Trading) {
-        msg!("Pyth price account provided is not active");
+        warn!("Pyth price account provided is not active");
         return err!(ScopeError::PriceNotValid);
     }
     Ok(())
@@ -151,7 +150,7 @@ pub fn validate_pyth_price_info(pyth_price_info: &Option<AccountInfo>) -> Result
         return Ok(());
     }
     let Some(pyth_price_info) = pyth_price_info else {
-        msg!("No pyth price account provided");
+        warn!("No pyth price account provided");
         return err!(ScopeError::PriceNotValid);
     };
     let pyth_price_data = pyth_price_info.try_borrow_data()?;

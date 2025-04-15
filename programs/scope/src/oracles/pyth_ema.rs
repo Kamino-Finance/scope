@@ -14,7 +14,7 @@ use std::convert::TryFrom;
 use anchor_lang::prelude::*;
 use pyth_sdk_solana::state as pyth_client;
 
-use crate::{utils::consts::ORACLE_CONFIDENCE_FACTOR, DatedPrice, Result, ScopeError};
+use crate::{utils::consts::ORACLE_CONFIDENCE_FACTOR, warn, DatedPrice, Result, ScopeError};
 
 /// Only update with prices not older than 10 minutes, users can still check actual price age
 const STALENESS_THRESHOLD: u64 = 10 * 60; // 10 minutes
@@ -23,7 +23,7 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
     let data = price_info.try_borrow_data()?;
     let price_account: &pyth_client::SolanaPriceAccount =
         pyth_client::load_price_account(data.as_ref()).map_err(|_| {
-            msg!("Loading pyth price account failed {}", price_info.key);
+            warn!("Loading pyth price account failed {}", price_info.key);
             ScopeError::PriceNotValid
         })?;
 
@@ -37,7 +37,7 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
     {
         pyth_ema_price
     } else {
-        msg!(
+        warn!(
             "No recent (10 minutes) EMA price in pyth account {}",
             price_info.key
         );
@@ -45,10 +45,9 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
     };
 
     if pyth_ema_price.expo > 0 {
-        msg!(
+        warn!(
             "Pyth price account {} provided has a negative EMA price exponent: {}",
-            price_info.key,
-            pyth_ema_price.expo,
+            price_info.key, pyth_ema_price.expo,
         );
         return Err(ScopeError::PriceNotValid.into());
     }
@@ -56,7 +55,7 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
     let price =
         crate::oracles::pyth::validate_valid_price(&pyth_ema_price, ORACLE_CONFIDENCE_FACTOR)
             .map_err(|e| {
-                msg!("Invalid EMA price on pyth account {}", price_info.key);
+                warn!("Invalid EMA price on pyth account {}", price_info.key);
                 e
             })?;
 

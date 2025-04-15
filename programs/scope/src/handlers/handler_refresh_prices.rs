@@ -155,7 +155,6 @@ pub fn refresh_price_list<'info>(
         );
 
         *to_update = price;
-        to_update.index = token_nb;
     }
 
     Ok(())

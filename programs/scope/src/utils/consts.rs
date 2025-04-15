@@ -10,3 +10,5 @@ pub const TOKEN_METADATA_SIZE: usize = 86016;
 pub const ORACLE_CONFIDENCE_FACTOR: u32 = super::math::confidence_bps_to_factor(200); // 2%
 
 pub const FULL_BPS: u16 = 10_000;
+
+pub const SECONDS_PER_YEAR: u64 = 365 * 24 * 60 * 60;

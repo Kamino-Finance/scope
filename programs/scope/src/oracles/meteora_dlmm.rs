@@ -8,7 +8,7 @@ use solana_program::program_pack::Pack;
 
 use crate::{
     utils::{math, zero_copy_deserialize},
-    DatedPrice, Result, ScopeError,
+    warn, DatedPrice, Result, ScopeError,
 };
 
 /// Gives the price of the given token pair in the given pool
@@ -60,7 +60,7 @@ where
     let q64x64_price =
         lb_clmm::get_x64_price_from_id(lb_pair_state.active_id, lb_pair_state.bin_step)
             .ok_or_else(|| {
-                msg!("Math overflow when calculating dlmm price");
+                warn!("Math overflow when calculating dlmm price");
                 ScopeError::MathOverflow
             })?;
     let q64x64_price = if a_to_b {
@@ -71,7 +71,7 @@ where
     };
 
     let lamport_price = math::q64x64_price_to_price(q64x64_price).map_err(|e| {
-        msg!("Error while computing the price of the tokens in the pool: {e:?}",);
+        warn!("Error while computing the price of the tokens in the pool: {e:?}",);
         e
     })?;
     let (src_token_decimals, dst_token_decimals) = if a_to_b {
@@ -96,7 +96,7 @@ where
 
 pub fn validate_pool_account(pool: &Option<AccountInfo>) -> Result<()> {
     let Some(pool) = pool else {
-        msg!("No pool account provided");
+        warn!("No pool account provided");
         return err!(ScopeError::PriceNotValid);
     };
     let _: Ref<'_, lb_clmm::LbPair> = zero_copy_deserialize(pool)?;
