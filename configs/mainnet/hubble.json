@@ -2750,5 +2750,15 @@
     "oracle_type": "ScopeTwap",
     "twap_source": 499,
     "max_age": 220
+  },
+  "501": {
+    "label": "RedStone ETH/USD",
+    "oracle_type": "RedStone",
+    "oracle_mapping": "AJ1C3CpVrWgQFNmxgfvSM81XqzE738BagvXz6hBPWVHL",
+  },
+  "502": {
+    "label": "RedStone BTC/USD",
+    "oracle_type": "RedStone",
+    "oracle_mapping": "AJ1C3CpVrWgQFNmxgfvSM81XqzE738BagvXz6hBPWVHL",
   }
 }

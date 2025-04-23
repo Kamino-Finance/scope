@@ -72,12 +72,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "alloc-traits"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b2d54853319fd101b8dd81de382bcbf3e03410a64d8928bbee85a3e7dcde483"
-
-[[package]]
 name = "anchor-attribute-access-control"
 version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -210,8 +204,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78f860599da1c2354e7234c768783049eb42e2f54509ecfc942d2e0076a2da7b"
 dependencies = [
  "anchor-lang",
- "mpl-token-metadata 1.13.2",
- "serum_dex",
  "solana-program",
  "spl-associated-token-account 1.1.3",
  "spl-token 3.5.0",
@@ -265,7 +257,7 @@ dependencies = [
  "ark-std",
  "derivative",
  "hashbrown 0.13.2",
- "itertools 0.10.5",
+ "itertools",
  "num-traits",
  "zeroize",
 ]
@@ -282,7 +274,7 @@ dependencies = [
  "ark-std",
  "derivative",
  "digest 0.10.7",
- "itertools 0.10.5",
+ "itertools",
  "num-bigint",
  "num-traits",
  "paste",
@@ -903,7 +895,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3cc2736e4f7d82be485e49c721a7031f30e1f57b433bb346d7a6af4c377fd0f"
 dependencies = [
- "uint 0.9.5",
+ "uint",
 ]
 
 [[package]]
@@ -991,26 +983,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a26ae43d7bcc3b814de94796a5e736d4029efb0ee900c12e2d54c993ad1a1e07"
 
 [[package]]
-name = "enumflags2"
-version = "0.6.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83c8d82922337cd23a15f88b70d8e4ef5f11da38dd7cdb55e84dd5de99695da0"
-dependencies = [
- "enumflags2_derive",
-]
-
-[[package]]
-name = "enumflags2_derive"
-version = "0.6.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "946ee94e3dbf58fdd324f9ce245c7b238d46a66f00e86a020b71996349e46cce"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "env_logger"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1043,16 +1015,6 @@ name = "feature-probe"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "835a3dc7d1ec9e75e2b5fb4ba75396837112d2060b03f7d43bc1897c7f7211da"
-
-[[package]]
-name = "field-offset"
-version = "0.3.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38e2275cc4e4fc009b0669731a1e5ab7ebf11f469eaede2bab9309a5b4d6057f"
-dependencies = [
- "memoffset",
- "rustc_version",
-]
 
 [[package]]
 name = "fnv"
@@ -1251,15 +1213,6 @@ checksum = "5170c2c8ecda29c1bccb9d95ccbe107bc75fa084dc0c9c6087e719f9d46330e5"
 
 [[package]]
 name = "itertools"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "284f18f85651fe11e8a991b2adb42cb078325c996ed026d994719efcfca1d54b"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
@@ -1322,22 +1275,6 @@ dependencies = [
  "anchor-lang",
  "bytemuck",
  "decimal-wad",
-]
-
-[[package]]
-name = "lb_clmm"
-version = "0.5.0"
-source = "git+ssh://git@github.com/hubbleprotocol/lb-clmm.git#0eabb9945419a1f0f51837823a3505864c7636d3"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "bytemuck",
- "mpl-token-metadata 3.2.3",
- "num-integer",
- "num-traits",
- "ruint",
- "solana-program",
- "uint 0.8.5",
 ]
 
 [[package]]
@@ -1482,19 +1419,6 @@ dependencies = [
  "solana-program",
  "spl-associated-token-account 2.2.0",
  "spl-token 4.0.0",
- "thiserror",
-]
-
-[[package]]
-name = "mpl-token-metadata"
-version = "3.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba8ee05284d79b367ae8966d558e1a305a781fc80c9df51f37775169117ba64f"
-dependencies = [
- "borsh 0.10.3",
- "num-derive 0.3.3",
- "num-traits",
- "solana-program",
  "thiserror",
 ]
 
@@ -1937,15 +1861,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "quick-protobuf"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ca6639207ac869e31cca06b8adbc7676278f22b321e51115766009b4f192dbb"
-dependencies = [
- "byteorder",
-]
-
-[[package]]
 name = "quote"
 version = "1.0.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2049,10 +1964,10 @@ dependencies = [
  "anchor-spl",
  "arrayref",
  "bytemuck",
- "mpl-token-metadata 1.13.2",
+ "mpl-token-metadata",
  "solana-program",
  "spl-memo 4.0.0",
- "uint 0.9.5",
+ "uint",
 ]
 
 [[package]]
@@ -2173,22 +2088,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ruint"
-version = "1.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77e1574d439643c8962edf612a888e7cc5581bcdf36cb64e6bc88466b03b2daa"
-dependencies = [
- "ruint-macro",
- "thiserror",
-]
-
-[[package]]
-name = "ruint-macro"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e666a5496a0b2186dbcd0ff6106e29e093c15591bde62c20d3842007c6978a09"
-
-[[package]]
 name = "rust_decimal"
 version = "1.36.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2205,26 +2104,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust_decimal_macros"
-version = "1.32.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86444b802de0b10ac5e563b5ddb43b541b9705de4e01a50e82194d2b183c1835"
-dependencies = [
- "quote",
- "rust_decimal",
-]
-
-[[package]]
 name = "rustc-hash"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
-
-[[package]]
-name = "rustc-hex"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e75f6a532d0fd9f7f13144f392b6ad56a32696bfcd9c78f797f16bbb6f072d6"
 
 [[package]]
 name = "rustc_version"
@@ -2246,12 +2129,6 @@ name = "ryu"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ad4cc8da4ef723ed60bced201181d83791ad433213d8c24efffda1eec85d741"
-
-[[package]]
-name = "safe-transmute"
-version = "0.11.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98a01dab6acf992653be49205bdd549f32f17cb2803e8eacf1560bf97259aae8"
 
 [[package]]
 name = "sbod-itf"
@@ -2313,28 +2190,15 @@ dependencies = [
  "sha2 0.10.8",
  "solana-program",
  "static_assertions",
- "strum 0.24.0 (git+https://github.com/Kamino-Finance/strum?branch=checked_arithmetics)",
- "switchboard-program",
+ "strum",
  "tracing",
- "whirlpool 0.2.0 (git+https://github.com/Kamino-Finance/whirlpools?branch=anchor/0.28.0)",
- "yvaults",
+ "whirlpool",
+ "yvaults_stub",
 ]
 
 [[package]]
 name = "scope-types"
 version = "1.0.0"
-dependencies = [
- "anchor-lang",
- "bytemuck",
- "cfg-if",
- "num_enum 0.7.1",
- "solana-program",
-]
-
-[[package]]
-name = "scope-types"
-version = "1.0.0"
-source = "git+https://github.com/Kamino-Finance/scope#d5801f596ce18a167afde2f8e68f814ec78d5165"
 dependencies = [
  "anchor-lang",
  "bytemuck",
@@ -2432,30 +2296,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.60",
-]
-
-[[package]]
-name = "serum_dex"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02705854bae4622e552346c8edd43ab90c7425da35d63d2c689f39238f8d8b25"
-dependencies = [
- "arrayref",
- "bincode",
- "bytemuck",
- "byteorder",
- "enumflags2",
- "field-offset",
- "itertools 0.9.0",
- "num-traits",
- "num_enum 0.5.11",
- "safe-transmute",
- "serde",
- "solana-program",
- "spl-token 3.5.0",
- "static_assertions",
- "thiserror",
- "without-alloc",
 ]
 
 [[package]]
@@ -2662,7 +2502,7 @@ dependencies = [
  "console_log",
  "curve25519-dalek",
  "getrandom 0.2.10",
- "itertools 0.10.5",
+ "itertools",
  "js-sys",
  "lazy_static",
  "libc",
@@ -2713,7 +2553,7 @@ dependencies = [
  "ed25519-dalek-bip32",
  "generic-array",
  "hmac 0.12.1",
- "itertools 0.10.5",
+ "itertools",
  "js-sys",
  "lazy_static",
  "libsecp256k1",
@@ -2759,12 +2599,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "solana-security-txt"
-version = "1.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "468aa43b7edb1f9b7b7b686d5c3aeb6630dc1708e86e31343499dd5c4d775183"
-
-[[package]]
 name = "solana-zk-token-sdk"
 version = "1.16.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2777,7 +2611,7 @@ dependencies = [
  "byteorder",
  "curve25519-dalek",
  "getrandom 0.1.16",
- "itertools 0.10.5",
+ "itertools",
  "lazy_static",
  "merlin",
  "num-derive 0.3.3",
@@ -3044,18 +2878,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "static-pubkey"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0547d5945c93f55e1b18bf2a67d1a3d0548561f2687645b22c1c1d4fbb9a8e90"
-dependencies = [
- "bs58 0.4.0",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3070,29 +2892,9 @@ checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 [[package]]
 name = "strum"
 version = "0.24.0"
-source = "git+https://github.com/hubbleprotocol/strum?branch=checked_arithmetics#95f44367da40546bc94f4ff565268f45fb68ed5e"
-dependencies = [
- "strum_macros 0.24.0 (git+https://github.com/hubbleprotocol/strum?branch=checked_arithmetics)",
-]
-
-[[package]]
-name = "strum"
-version = "0.24.0"
 source = "git+https://github.com/Kamino-Finance/strum?branch=checked_arithmetics#95f44367da40546bc94f4ff565268f45fb68ed5e"
 dependencies = [
- "strum_macros 0.24.0 (git+https://github.com/Kamino-Finance/strum?branch=checked_arithmetics)",
-]
-
-[[package]]
-name = "strum_macros"
-version = "0.24.0"
-source = "git+https://github.com/hubbleprotocol/strum?branch=checked_arithmetics#95f44367da40546bc94f4ff565268f45fb68ed5e"
-dependencies = [
- "heck 0.4.1",
- "proc-macro2",
- "quote",
- "rustversion",
- "syn 1.0.109",
+ "strum_macros",
 ]
 
 [[package]]
@@ -3120,51 +2922,6 @@ dependencies = [
  "anchor-lang",
  "bytemuck",
  "rust_decimal",
-]
-
-[[package]]
-name = "switchboard-program"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "534d4b2d45907427fc8d2cd151465cfaee3709c4742491734bc34e5a458ebd09"
-dependencies = [
- "bincode",
- "borsh 0.9.3",
- "bytemuck",
- "byteorder",
- "quick-protobuf",
- "solana-program",
- "switchboard-protos",
- "switchboard-utils",
-]
-
-[[package]]
-name = "switchboard-protos"
-version = "0.1.60"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e2d89875ff72d12ea7918d6ccd82d1ac5eab54b3a9d1bd7356fa6905801aa72"
-dependencies = [
- "bincode",
- "borsh 0.9.3",
- "byteorder",
- "quick-protobuf",
-]
-
-[[package]]
-name = "switchboard-utils"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ac1d68193aa1669e34d16087db0f96e6597d2f78868378aabc1387b8b29172e"
-dependencies = [
- "bincode",
- "borsh 0.9.3",
- "bytemuck",
- "byteorder",
- "quick-protobuf",
- "rust_decimal",
- "rust_decimal_macros",
- "solana-program",
- "switchboard-protos",
 ]
 
 [[package]]
@@ -3357,18 +3114,6 @@ checksum = "42ff0bf0c66b8238c6f3b578df37d0b7848e55df8577b3f74f92a69acceeb825"
 
 [[package]]
 name = "uint"
-version = "0.8.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9db035e67dfaf7edd9aebfe8676afcd63eed53c8a4044fed514c8cccf1835177"
-dependencies = [
- "byteorder",
- "crunchy",
- "rustc-hex",
- "static_assertions",
-]
-
-[[package]]
-name = "uint"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "76f64bba2c53b04fcab63c01a7d7427eadc821e3bc48c34dc9ba29c501164b52"
@@ -3408,15 +3153,6 @@ checksum = "9f214e8f697e925001e66ec2c6e37a4ef93f0f78c2eed7814394e10c62025b05"
 dependencies = [
  "generic-array",
  "subtle",
-]
-
-[[package]]
-name = "unsize"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fa7a7a734c1a5664a662ddcea0b6c9472a21da8888c957c7f1eaa09dba7a939"
-dependencies = [
- "autocfg",
 ]
 
 [[package]]
@@ -3520,33 +3256,17 @@ dependencies = [
 [[package]]
 name = "whirlpool"
 version = "0.2.0"
-source = "git+https://github.com/hubbleprotocol/whirlpools?branch=anchor/0.28.0#c77e1e4c87dde54bfdaaaae3b806c9b660cefdc3"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "borsh 0.9.3",
- "bytemuck",
- "mpl-token-metadata 1.13.2",
- "solana-program",
- "spl-token 3.5.0",
- "thiserror",
- "uint 0.9.5",
-]
-
-[[package]]
-name = "whirlpool"
-version = "0.2.0"
 source = "git+https://github.com/Kamino-Finance/whirlpools?branch=anchor/0.28.0#c77e1e4c87dde54bfdaaaae3b806c9b660cefdc3"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "borsh 0.9.3",
  "bytemuck",
- "mpl-token-metadata 1.13.2",
+ "mpl-token-metadata",
  "solana-program",
  "spl-token 3.5.0",
  "thiserror",
- "uint 0.9.5",
+ "uint",
 ]
 
 [[package]]
@@ -3647,49 +3367,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "without-alloc"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "375db0478b203b950ef10d1cce23cdbe5f30c2454fd9e7673ff56656df23adbb"
-dependencies = [
- "alloc-traits",
- "unsize",
-]
-
-[[package]]
 name = "wyz"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "05f360fc0b24296329c78fda852a1e9ae82de9cf7b27dae4b7f62f118f77b9ed"
 dependencies = [
  "tap",
-]
-
-[[package]]
-name = "yvaults"
-version = "0.1.0"
-source = "git+ssh://git@github.com/Kamino-Finance/yvaults.git?branch=scope-public-compat#096fe93b90007118980085ba3b6707f252ef1136"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "bytemuck",
- "decimal-wad",
- "lb_clmm",
- "mpl-token-metadata 1.13.2",
- "num",
- "num-derive 0.4.1",
- "num-traits",
- "num_enum 0.7.1",
- "raydium-amm-v3",
- "rust_decimal",
- "scope-types 1.0.0 (git+https://github.com/Kamino-Finance/scope)",
- "sha2 0.10.8",
- "solana-security-txt",
- "spl-token 3.5.0",
- "static-pubkey",
- "strum 0.24.0 (git+https://github.com/hubbleprotocol/strum?branch=checked_arithmetics)",
- "uint 0.9.5",
- "whirlpool 0.2.0 (git+https://github.com/hubbleprotocol/whirlpools?branch=anchor/0.28.0)",
 ]
 
 [[package]]

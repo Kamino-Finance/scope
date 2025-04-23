@@ -17,6 +17,7 @@ pub mod pyth_ema;
 pub mod pyth_pull;
 pub mod pyth_pull_ema;
 pub mod raydium_ammv3;
+pub mod redstone;
 pub mod spl_stake;
 pub mod switchboard_on_demand;
 pub mod switchboard_v2;
@@ -119,6 +120,8 @@ pub enum OracleType {
     /// Keeps track of a few prices and makes sure they are recent enough and they are in sync,
     /// ie. they don't diverge more than a specified limit
     MostRecentOf = 28,
+    /// RedStone oracles
+    RedStone = 29,
 }
 
 impl OracleType {
@@ -144,9 +147,9 @@ impl OracleType {
             OracleType::JupiterLpFetch => 40_000,
             OracleType::ScopeTwap => 30_000,
             OracleType::OrcaWhirlpoolAtoB
-            | OracleType::OrcaWhirlpoolBtoA
-            | OracleType::RaydiumAmmV3AtoB
-            | OracleType::RaydiumAmmV3BtoA => 25_000,
+                    | OracleType::OrcaWhirlpoolBtoA
+                    | OracleType::RaydiumAmmV3AtoB
+                    | OracleType::RaydiumAmmV3BtoA => 25_000,
             OracleType::MeteoraDlmmAtoB | OracleType::MeteoraDlmmBtoA => 30_000,
             OracleType::JupiterLpCompute | OracleType::JupiterLpScope => 120_000,
             OracleType::JitoRestaking => 25_000,
@@ -154,6 +157,7 @@ impl OracleType {
             // Chainlink oracles are not updated through normal refresh ixs
             OracleType::Chainlink => 0,
             OracleType::MostRecentOf => 35_000,
+            OracleType::RedStone => 25_000,
             OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
                 panic!("DeprecatedPlaceholder is not a valid oracle type")
             }
@@ -295,6 +299,7 @@ where
             clock,
         )
         .map_err(|e| e.into()),
+        OracleType::RedStone => todo!(),
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
@@ -373,6 +378,7 @@ pub fn validate_oracle_cfg(
         OracleType::MostRecentOf => {
             most_recent_of::validate_mapping_cfg(price_account, generic_data).map_err(Into::into)
         }
+        OracleType::RedStone => redstone::validate_account(price_account),
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }

@@ -1,6 +1,6 @@
 ## yvaults_stub
 
-This is a stub dependency for yvaults. 
+This is a stub dependency for yvaults.
 
 It is only required when compiling scope without having access to the yvaults repo.
 
