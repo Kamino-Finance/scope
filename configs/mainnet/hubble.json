@@ -2754,11 +2754,11 @@
   "501": {
     "label": "RedStone ETH/USD",
     "oracle_type": "RedStone",
-    "oracle_mapping": "AJ1C3CpVrWgQFNmxgfvSM81XqzE738BagvXz6hBPWVHL",
+    "oracle_mapping": "HPmPoq3eUTPePsDB5U4G6msu5RpeZHhMemc5VnqxQ9Lx",
   },
   "502": {
     "label": "RedStone BTC/USD",
     "oracle_type": "RedStone",
-    "oracle_mapping": "AJ1C3CpVrWgQFNmxgfvSM81XqzE738BagvXz6hBPWVHL",
+    "oracle_mapping": "74o5fhuMC33HgfUqvv2TdpYiKvEWfcRTS1E8zxK6ESjN",
   }
 }
