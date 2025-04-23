@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use anchor_lang::prelude::*;
 use decimal_wad::{common::PERCENT_SCALER, decimal::Decimal};
 
@@ -6,6 +8,7 @@ use crate::{warn, Price, ScopeError};
 
 pub const MAX_REF_RATIO_TOLERANCE_PCT: u64 = 5;
 pub const MAX_REF_RATIO_TOLERANCE_SCALED: u64 = MAX_REF_RATIO_TOLERANCE_PCT * PERCENT_SCALER;
+pub const MAX_SAFE_EXP_DIFF: u64 = 19;
 
 #[cfg(not(target_os = "solana"))]
 impl From<Price> for f64 {
@@ -101,6 +104,9 @@ impl From<Price> for Decimal {
 #[cfg(not(target_os = "solana"))]
 impl From<f64> for Price {
     fn from(val: f64) -> Self {
+        if val == 0.0 {
+            return Price { value: 0, exp: 0 };
+        }
         let number_of_integer_digits = val.log10() as i64;
         let exp = if number_of_integer_digits >= 0 {
             12_u8.saturating_sub(number_of_integer_digits as u8)
@@ -117,20 +123,47 @@ impl From<f64> for Price {
 
 impl PartialEq for Price {
     fn eq(&self, other: &Self) -> bool {
+        self.cmp(other) == Ordering::Equal
+    }
+}
+
+impl Eq for Price {}
+
+impl Ord for Price {
+    fn cmp(&self, other: &Self) -> Ordering {
         match self.exp.cmp(&other.exp) {
-            std::cmp::Ordering::Equal => self.value == other.value,
-            std::cmp::Ordering::Greater => {
+            Ordering::Equal => self.value.cmp(&other.value),
+            Ordering::Greater => {
                 let diff = self.exp - other.exp;
-                let other_value = other.value * 10u64.pow(diff as u32);
-                self.value == other_value
+                // When the diff in exponents is larger, the power of ten below doesn't fit in a `u64`
+                // thus we can tell that `self` is less than `other`
+                if diff > MAX_SAFE_EXP_DIFF {
+                    return Ordering::Less;
+                }
+                // When the multiplication overflows, `self` is less than `other`
+                if let Some(other_value) = other.value.checked_mul(10u64.pow(diff as u32)) {
+                    self.value.cmp(&other_value)
+                } else {
+                    Ordering::Less
+                }
             }
-            std::cmp::Ordering::Less => {
+            Ordering::Less => {
                 let diff = other.exp - self.exp;
-                let self_value = self.value * 10u64.pow(diff as u32);
-                self_value == other.value
+                if diff > MAX_SAFE_EXP_DIFF {
+                    return Ordering::Greater;
+                }
+                if let Some(value) = self.value.checked_mul(10u64.pow(diff as u32)) {
+                    value.cmp(&other.value)
+                } else {
+                    Ordering::Greater
+                }
             }
         }
     }
 }
 
-impl Eq for Price {}
+impl PartialOrd for Price {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}

@@ -111,6 +111,21 @@ pub enum ScopeError {
 
     #[msg("Invalid Chainlink report data format")]
     InvalidChainlinkReportData,
+
+    #[msg("MostRecentOf config must contain at least two valid indices")]
+    MostRecentOfInvalidSourceIndices,
+
+    #[msg("Invalid max divergence (bps) for MostRecentOf oracle")]
+    MostRecentOfInvalidMaxDivergence,
+
+    #[msg("Invalid max age (s) for MostRecentOf oracle")]
+    MostRecentOfInvalidMaxAge,
+
+    #[msg("Max age diff constraint violated for MostRecentOf oracle")]
+    MostRecentOfMaxAgeViolated,
+
+    #[msg("Max divergence bps constraint violated for MostRecentOf oracle")]
+    MostRecentOfMaxDivergenceBpsViolated,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

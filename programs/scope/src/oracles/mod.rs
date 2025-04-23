@@ -9,6 +9,7 @@ pub mod discount_to_maturity;
 pub mod jito_restaking;
 pub mod jupiter_lp;
 pub mod meteora_dlmm;
+pub mod most_recent_of;
 pub mod msol_stake;
 pub mod orca_whirlpool;
 pub mod pyth;
@@ -115,6 +116,9 @@ pub enum OracleType {
     /// Discount oracle, compute the price with a linear discount rate until a maturity date
     /// After maturity date the price is set to 1
     DiscountToMaturity = 27,
+    /// Keeps track of a few prices and makes sure they are recent enough and they are in sync,
+    /// ie. they don't diverge more than a specified limit
+    MostRecentOf = 28,
 }
 
 impl OracleType {
@@ -149,6 +153,7 @@ impl OracleType {
             OracleType::DiscountToMaturity => 30_000,
             // Chainlink oracles are not updated through normal refresh ixs
             OracleType::Chainlink => 0,
+            OracleType::MostRecentOf => 35_000,
             OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
                 panic!("DeprecatedPlaceholder is not a valid oracle type")
             }
@@ -284,6 +289,12 @@ where
         OracleType::DiscountToMaturity => {
             discount_to_maturity::get_price(&oracle_mappings.generic[index], clock)
         }
+        OracleType::MostRecentOf => most_recent_of::get_price(
+            oracle_prices.load()?.deref(),
+            &oracle_mappings.generic[index],
+            clock,
+        )
+        .map_err(|e| e.into()),
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
@@ -352,15 +363,18 @@ pub fn validate_oracle_cfg(
             Ok(())
         }
         OracleType::JitoRestaking => jito_restaking::validate_account(price_account),
-        OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
-            panic!("DeprecatedPlaceholder is not a valid oracle type")
-        }
         OracleType::Chainlink => {
             chainlink::validate_mapping(price_account, generic_data).map_err(Into::into)
         }
         OracleType::DiscountToMaturity => {
             discount_to_maturity::validate_mapping_cfg(price_account, generic_data, clock)
                 .map_err(Into::into)
+        }
+        OracleType::MostRecentOf => {
+            most_recent_of::validate_mapping_cfg(price_account, generic_data).map_err(Into::into)
+        }
+        OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
+            panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
     }
 }

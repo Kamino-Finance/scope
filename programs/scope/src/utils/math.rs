@@ -185,7 +185,7 @@ pub fn ten_pow(exponent: impl Into<u32>) -> u128 {
 ///
 /// For example 2% confidence (200 bps) will return a factor of 50.
 pub const fn confidence_bps_to_factor(confidence_bps: u32) -> u32 {
-    10_000 / confidence_bps
+    (FULL_BPS as u32) / confidence_bps
 }
 
 /// Check that `deviation` represent only a fraction of `price`
@@ -228,6 +228,20 @@ pub fn check_confidence_interval_decimal(
     tolerance_factor: u32,
 ) -> ScopeResult<()> {
     if price <= deviation * tolerance_factor {
+        Err(ScopeError::ConfidenceIntervalCheckFailed)
+    } else {
+        Ok(())
+    }
+}
+
+/// Checks that that `deviation` represents only a fraction of `price` but takes the tolerance
+/// as a confidence bps instead of a factor
+pub fn check_confidence_interval_decimal_bps(
+    price: Decimal,
+    deviation: Decimal,
+    confidence_bps: u32,
+) -> ScopeResult<()> {
+    if price * confidence_bps <= deviation * FULL_BPS {
         Err(ScopeError::ConfidenceIntervalCheckFailed)
     } else {
         Ok(())
