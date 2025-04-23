@@ -74,9 +74,10 @@ pub fn process(
         }
         None => {
             match price_type {
-                OracleType::ScopeTwap | OracleType::FixedPrice | OracleType::DiscountToMaturity => {
-                    *price_pubkey = crate::id()
-                }
+                OracleType::ScopeTwap
+                | OracleType::FixedPrice
+                | OracleType::DiscountToMaturity
+                | OracleType::MostRecentOf => *price_pubkey = crate::id(),
 
                 _ => {
                     // if no price_info account is passed, it means that the mapping has to be removed so it is set to Pubkey::default

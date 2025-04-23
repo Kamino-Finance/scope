@@ -123,7 +123,7 @@ pub fn refresh_price_list<'info>(
 
         let mut oracle_prices = ctx.accounts.oracle_prices.load_mut()?;
 
-        // check that the price is close enough to the ref price is there is a ref price
+        // check that the price is close enough to the ref price if there is a ref price
         if oracle_mappings.ref_price[token_idx] != u16::MAX {
             let ref_price =
                 oracle_prices.prices[usize::from(oracle_mappings.ref_price[token_idx])].price;
@@ -132,8 +132,8 @@ pub fn refresh_price_list<'info>(
                     return Err(diff_err);
                 } else {
                     msg!(
-                    "Price skipped as ref price check failed (token {token_idx}, type {price_type:?})",
-                );
+                        "Price skipped as ref price check failed (token {token_idx}, type {price_type:?})",
+                    );
                     continue;
                 }
             }
