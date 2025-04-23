@@ -147,9 +147,9 @@ impl OracleType {
             OracleType::JupiterLpFetch => 40_000,
             OracleType::ScopeTwap => 30_000,
             OracleType::OrcaWhirlpoolAtoB
-                    | OracleType::OrcaWhirlpoolBtoA
-                    | OracleType::RaydiumAmmV3AtoB
-                    | OracleType::RaydiumAmmV3BtoA => 25_000,
+            | OracleType::OrcaWhirlpoolBtoA
+            | OracleType::RaydiumAmmV3AtoB
+            | OracleType::RaydiumAmmV3BtoA => 25_000,
             OracleType::MeteoraDlmmAtoB | OracleType::MeteoraDlmmBtoA => 30_000,
             OracleType::JupiterLpCompute | OracleType::JupiterLpScope => 120_000,
             OracleType::JitoRestaking => 25_000,
