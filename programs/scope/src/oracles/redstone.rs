@@ -5,7 +5,9 @@ use crate::{utils::account_deserialize, warn, DatedPrice, Price, ScopeError};
 const REDSTONE_DECIMAL: u64 = 8;
 
 #[cfg(not(feature = "skip_price_validation"))]
-const VALID_PRICE_LIFE_TIME: i64 = crate::utils::SECONDS_PER_HOUR;
+/// Price is kept in 0.05% deviation threshold all the time.
+/// At least one update a day will happen.
+const VALID_PRICE_LIFE_TIME: i64 = 24 * crate::utils::SECONDS_PER_HOUR;
 
 #[account]
 pub struct PriceData {

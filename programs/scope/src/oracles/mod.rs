@@ -299,7 +299,7 @@ where
             clock,
         )
         .map_err(|e| e.into()),
-        OracleType::RedStone => todo!(),
+        OracleType::RedStone => redstone::get_price(base_account, clock),
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
