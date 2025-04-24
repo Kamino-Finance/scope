@@ -65,7 +65,10 @@ pub fn get_price(price_info: &AccountInfo, _clock: &Clock) -> Result<DatedPrice>
     Ok(DatedPrice {
         price,
         last_updated_slot: 0, // fix later
-        unix_timestamp: price_data.write_timestamp.unwrap(),
+        unix_timestamp: price_data
+            .write_timestamp
+            .expect("Checked in `check_price_life_time`")
+            / 1_000,
         generic_data: Default::default(),
     })
 }
