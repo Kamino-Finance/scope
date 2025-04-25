@@ -54,7 +54,7 @@ fn check_price_lifetime(timestamp_ms: Option<u64>, clock: &Clock) -> Result<()> 
         (clock.unix_timestamp * MS_PER_SECOND).checked_sub(timestamp_ms as i64);
 
     match ms_since_last_udpate {
-        Some(ms) if ms <= VALID_PRICE_LIFETIME_MS => Ok(()),
+        Some(ms) if ms <= VALID_PRICE_LIFETIME_MS && ms >= 0 => Ok(()),
         _ => {
             warn!(
                 "RedStone price feed account data has not been refreshed for more than: {:?}ms",
