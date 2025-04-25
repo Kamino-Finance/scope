@@ -49,7 +49,8 @@ fn check_price_lifetime(timestamp_ms: Option<u64>, clock: &Clock) -> Result<()> 
         }
     };
 
-    let ms_since_last_udpate = (clock.unix_timestamp * 1_000).checked_div(timestamp_ms as i64);
+    let ms_since_last_udpate =
+        (clock.unix_timestamp * MS_PER_SECONDS).checked_div(timestamp_ms as i64);
 
     match ms_since_last_udpate {
         Some(ms) if ms <= VALID_PRICE_LIFETIME => Ok(()),
@@ -76,7 +77,7 @@ pub fn get_price(price_info: &AccountInfo, _clock: &Clock) -> Result<DatedPrice>
         unix_timestamp: price_data
             .write_timestamp
             .expect("Checked in `check_price_life_time`")
-            / 1_000,
+            / MS_PER_SECONDS,
         generic_data: Default::default(),
     })
 }
