@@ -5,7 +5,7 @@ use anchor_lang::prelude::*;
 use crate::{utils::account_deserialize, warn, DatedPrice, Price, ScopeError};
 
 #[cfg(not(feature = "skip_price_validation"))]
-/// Price is kept in 0.2% or 0.05% deviation threshold, depending on the feed, all the time.
+/// Price is kept in 0.2% or 0.5% deviation threshold, depending on the feed, all the time.
 /// At least one update per 30h will happen.
 const VALID_PRICE_LIFETIME_MS: i64 = 30 * crate::utils::SECONDS_PER_HOUR * MS_PER_SECOND;
 

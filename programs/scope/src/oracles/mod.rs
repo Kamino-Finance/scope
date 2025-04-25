@@ -157,7 +157,7 @@ impl OracleType {
             // Chainlink oracles are not updated through normal refresh ixs
             OracleType::Chainlink => 0,
             OracleType::MostRecentOf => 35_000,
-            OracleType::RedStone => 25_000,
+            OracleType::RedStone => 15_000,
             OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
                 panic!("DeprecatedPlaceholder is not a valid oracle type")
             }
