@@ -2,22 +2,25 @@ use anchor_lang::prelude::*;
 
 use crate::{utils::account_deserialize, warn, DatedPrice, Price, ScopeError};
 
-const REDSTONE_DECIMAL: u64 = 8;
-
 #[cfg(not(feature = "skip_price_validation"))]
 /// Price is kept in 0.05% deviation threshold all the time.
-/// At least one update a day will happen.
-const VALID_PRICE_LIFE_TIME: i64 = 24 * crate::utils::SECONDS_PER_HOUR;
+/// At least one update per 30h will happen.
+const VALID_PRICE_LIFE_TIME: i64 = 30 * crate::utils::SECONDS_PER_HOUR;
+
+const RESERVED_BYTE_SIZE: usize = 64;
 
 #[account]
-pub struct PriceData {
+struct PriceData {
     pub feed_id: [u8; 32],
     pub value: [u8; 32],
     pub timestamp: u64,
     pub write_timestamp: Option<u64>,
+    pub write_slot_number: u64,
+    pub decimals: u8,
+    pub _reserved: [u8; RESERVED_BYTE_SIZE],
 }
 
-fn redstone_value_to_price(raw_be_value: [u8; 32]) -> Result<Price> {
+fn redstone_value_to_price(raw_be_value: [u8; 32], decimals: u8) -> Result<Price> {
     if !raw_be_value.iter().take(24).all(|&v| v == 0) {
         warn!("Price overflow u64");
         return Err(ScopeError::PriceNotValid.into());
@@ -27,7 +30,7 @@ fn redstone_value_to_price(raw_be_value: [u8; 32]) -> Result<Price> {
 
     Ok(Price {
         value,
-        exp: REDSTONE_DECIMAL,
+        exp: decimals as u64,
     })
 }
 
@@ -57,14 +60,14 @@ fn check_price_life_time(timestamp_ms: Option<u64>, clock: &Clock) -> Result<()>
 
 pub fn get_price(price_info: &AccountInfo, _clock: &Clock) -> Result<DatedPrice> {
     let price_data: PriceData = account_deserialize(price_info)?;
-    let price = redstone_value_to_price(price_data.value)?;
+    let price = redstone_value_to_price(price_data.value, price_data.decimals)?;
 
     #[cfg(not(feature = "skip_price_validation"))]
     check_price_life_time(price_data.write_timestamp, _clock)?;
 
     Ok(DatedPrice {
         price,
-        last_updated_slot: 0, // fix later
+        last_updated_slot: price_data.write_slot_number,
         unix_timestamp: price_data
             .write_timestamp
             .expect("Checked in `check_price_life_time`")

@@ -39,6 +39,7 @@ cfg-if = "1.0.0"
 serde = { version = "1.0.136", optional = true }
 strum = { git = "https://github.com/Kamino-Finance/strum", features = ["derive"], branch = "checked_arithmetics" }
 pyth-sdk-solana = "0.10.1"
+switchboard-program = "0.2.0"
 arrayref = "0.3.6"
 decimal-wad = "0.1.7"
 rust_decimal = "1.18.0"
