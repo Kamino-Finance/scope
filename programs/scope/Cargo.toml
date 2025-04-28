@@ -50,7 +50,7 @@ yvaults = { git = "ssh://git@github.com/Kamino-Finance/yvaults.git", branch = "s
     "mainnet",
 ], optional = true }
 # Uncomment the line below if you do not have access to the yvaults repo
-#yvaults = { path = "../yvaults_stub", package = "yvaults_stub", optional = true }
+# yvaults = { path = "../yvaults_stub", package = "yvaults_stub", optional = true }
 sha2 = "0.10.0"
 whirlpool = { git = "https://github.com/Kamino-Finance/whirlpools", branch = "anchor/0.28.0", features = [
     "no-entrypoint",
