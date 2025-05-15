@@ -126,6 +126,9 @@ pub enum ScopeError {
 
     #[msg("Max divergence bps constraint violated for MostRecentOf oracle")]
     MostRecentOfMaxDivergenceBpsViolated,
+
+    #[msg("Price account expected when updating mapping")]
+    ExpectedPriceAccount,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

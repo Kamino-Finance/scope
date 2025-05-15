@@ -17,6 +17,7 @@ pub mod pyth_ema;
 pub mod pyth_pull;
 pub mod pyth_pull_ema;
 pub mod raydium_ammv3;
+pub mod redstone;
 pub mod spl_stake;
 pub mod switchboard_on_demand;
 pub mod switchboard_v2;
@@ -119,6 +120,8 @@ pub enum OracleType {
     /// Keeps track of a few prices and makes sure they are recent enough and they are in sync,
     /// ie. they don't diverge more than a specified limit
     MostRecentOf = 28,
+    /// RedStone price oracle
+    RedStone = 30,
 }
 
 impl OracleType {
@@ -154,6 +157,7 @@ impl OracleType {
             // Chainlink oracles are not updated through normal refresh ixs
             OracleType::Chainlink => 0,
             OracleType::MostRecentOf => 35_000,
+            OracleType::RedStone => 20_000,
             OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
                 panic!("DeprecatedPlaceholder is not a valid oracle type")
             }
@@ -294,7 +298,8 @@ where
             &oracle_mappings.generic[index],
             clock,
         )
-        .map_err(|e| e.into()),
+        .map_err(Into::into),
+        OracleType::RedStone => redstone::get_price(base_account, clock).map_err(Into::into),
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
@@ -373,6 +378,7 @@ pub fn validate_oracle_cfg(
         OracleType::MostRecentOf => {
             most_recent_of::validate_mapping_cfg(price_account, generic_data).map_err(Into::into)
         }
+        OracleType::RedStone => redstone::validate_price_account(price_account).map_err(Into::into),
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
