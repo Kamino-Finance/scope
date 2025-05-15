@@ -112,7 +112,7 @@ pub enum ScopeError {
     #[msg("Invalid Chainlink report data format")]
     InvalidChainlinkReportData,
 
-    #[msg("MostRecentOf config must contain at least two valid indices")]
+    #[msg("MostRecentOf config must contain at least one valid source index")]
     MostRecentOfInvalidSourceIndices,
 
     #[msg("Invalid max divergence (bps) for MostRecentOf oracle")]
