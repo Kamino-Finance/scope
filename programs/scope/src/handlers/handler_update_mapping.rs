@@ -74,13 +74,18 @@ pub fn process(
         }
         None => {
             match price_type {
+                // These oracles don't need an oracle mapping, but we set the mapping to the scope program
+                // because setting it to the default pubkey would cause the prices to be filtered out
+                // in the scope CLI program
                 OracleType::ScopeTwap
                 | OracleType::FixedPrice
                 | OracleType::DiscountToMaturity
-                | OracleType::MostRecentOf => *price_pubkey = crate::id(),
+                | OracleType::MostRecentOf
+                | OracleType::PythLazer => *price_pubkey = crate::id(),
 
                 _ => {
-                    // if no price_info account is passed, it means that the mapping has to be removed so it is set to Pubkey::default
+                    // if no price_info account is passed, it means that the mapping has to be removed,
+                    // so it is set to Pubkey::default
                     *price_pubkey = Pubkey::default();
                 }
             }

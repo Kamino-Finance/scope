@@ -3,11 +3,12 @@ use std::{
     u64,
 };
 
+use anchor_lang::prelude::*;
+
 use crate::{
     utils::{consts::FULL_BPS, math},
     warn, DatedPrice, OraclePrices, Price, ScopeError, ScopeResult, MAX_ENTRIES_U16,
 };
-use anchor_lang::prelude::*;
 
 pub const MOST_RECENT_OF_CHAIN_SIZE: usize = 4;
 
@@ -15,7 +16,7 @@ pub const MOST_RECENT_OF_CHAIN_SIZE: usize = 4;
 pub struct MostRecentOfData {
     pub source_entries: [u16; MOST_RECENT_OF_CHAIN_SIZE],
     pub max_divergence_bps: u16,
-    pub sources_max_age: u16,
+    pub sources_max_age_s: u16,
 }
 
 impl MostRecentOfData {
@@ -43,7 +44,7 @@ pub fn get_price(
     let MostRecentOfData {
         source_entries,
         max_divergence_bps,
-        sources_max_age,
+        sources_max_age_s,
     } = MostRecentOfData::from_generic_data(generic_data)?;
 
     let now: u64 = clock
@@ -65,7 +66,7 @@ pub fn get_price(
         min_price = min(dated_price.price, min_price);
         max_price = max(dated_price.price, max_price);
 
-        if now.saturating_sub(dated_price.unix_timestamp) > u64::from(sources_max_age) {
+        if now.saturating_sub(dated_price.unix_timestamp) > u64::from(sources_max_age_s) {
             return Err(ScopeError::MostRecentOfMaxAgeViolated);
         }
 
@@ -102,10 +103,10 @@ pub fn validate_mapping_cfg(mapping: &Option<AccountInfo>, generic_data: &[u8]) 
     let MostRecentOfData {
         source_entries,
         max_divergence_bps,
-        sources_max_age,
+        sources_max_age_s,
     } = MostRecentOfData::from_generic_data(generic_data)?;
 
-    if source_entries[0] >= MAX_ENTRIES_U16 || source_entries[1] >= MAX_ENTRIES_U16 {
+    if source_entries[0] >= MAX_ENTRIES_U16 {
         return Err(ScopeError::MostRecentOfInvalidSourceIndices);
     }
 
@@ -113,7 +114,7 @@ pub fn validate_mapping_cfg(mapping: &Option<AccountInfo>, generic_data: &[u8]) 
         return Err(ScopeError::MostRecentOfInvalidMaxDivergence);
     }
 
-    if sources_max_age == 0 {
+    if sources_max_age_s == 0 {
         return Err(ScopeError::MostRecentOfInvalidMaxAge);
     }
 
