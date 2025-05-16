@@ -419,6 +419,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35636a1494ede3b646cc98f74f8e62c773a38a659ebc777a2cf26b9b74171df9"
 
 [[package]]
+name = "base64"
+version = "0.22.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
+
+[[package]]
 name = "bincode"
 version = "1.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -759,6 +765,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f7144d30dcf0fafbce74250a3963025d8d52177934239851c917d29f1df280c2"
 
 [[package]]
+name = "convert_case"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
+
+[[package]]
 name = "cpufeatures"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -921,6 +933,19 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "derive_more"
+version = "0.99.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6edb4b64a43d977b8e99788fe3a04d483834fba1215a7e02caa415b626497f7f"
+dependencies = [
+ "convert_case",
+ "proc-macro2",
+ "quote",
+ "rustc_version",
+ "syn 2.0.60",
 ]
 
 [[package]]
@@ -1263,6 +1288,15 @@ name = "itertools"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
 dependencies = [
  "either",
 ]
@@ -1846,6 +1880,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "protobuf"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ee4a7d8b91800c8f167a6268d1a1026607368e1adc84e98fe044aeb905302f7"
+dependencies = [
+ "once_cell",
+ "protobuf-support",
+ "thiserror",
+]
+
+[[package]]
+name = "protobuf-support"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ca157fe12fc7ee2e315f2f735e27df41b3d97cdd70ea112824dac1ffb08ee1c"
+dependencies = [
+ "thiserror",
+]
+
+[[package]]
 name = "ptr_meta"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1863,6 +1917,35 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "pyth-lazer-protocol"
+version = "0.7.2"
+source = "git+https://github.com/Kamino-Finance/pyth-crosschain.git?branch=lazer_on_anchor_0.29#f6df95018bced830fd369a75b62b93f8f23d9bcf"
+dependencies = [
+ "anyhow",
+ "base64 0.22.1",
+ "byteorder",
+ "derive_more",
+ "itertools 0.13.0",
+ "protobuf",
+ "rust_decimal",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "pyth-lazer-solana-contract"
+version = "0.4.2"
+source = "git+https://github.com/Kamino-Finance/pyth-crosschain.git?branch=lazer_on_anchor_0.29#f6df95018bced830fd369a75b62b93f8f23d9bcf"
+dependencies = [
+ "anchor-lang",
+ "bytemuck",
+ "byteorder",
+ "pyth-lazer-protocol",
+ "solana-program",
+ "thiserror",
 ]
 
 [[package]]
@@ -2304,6 +2387,8 @@ dependencies = [
  "lb-clmm-itf",
  "num-bigint",
  "num_enum 0.7.1",
+ "pyth-lazer-protocol",
+ "pyth-lazer-solana-contract",
  "pyth-sdk-solana",
  "pyth-solana-receiver-sdk",
  "raydium-amm-v3",

@@ -14,6 +14,7 @@ pub mod msol_stake;
 pub mod orca_whirlpool;
 pub mod pyth;
 pub mod pyth_ema;
+pub mod pyth_lazer;
 pub mod pyth_pull;
 pub mod pyth_pull_ema;
 pub mod raydium_ammv3;
@@ -119,6 +120,8 @@ pub enum OracleType {
     /// Keeps track of a few prices and makes sure they are recent enough and they are in sync,
     /// ie. they don't diverge more than a specified limit
     MostRecentOf = 28,
+    /// Pyth Lazer oracle
+    PythLazer = 29,
 }
 
 impl OracleType {
@@ -154,6 +157,8 @@ impl OracleType {
             // Chainlink oracles are not updated through normal refresh ixs
             OracleType::Chainlink => 0,
             OracleType::MostRecentOf => 35_000,
+            // PythLazer oracle is not updated through normal refresh ixs
+            OracleType::PythLazer => 0,
             OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
                 panic!("DeprecatedPlaceholder is not a valid oracle type")
             }
@@ -295,6 +300,10 @@ where
             clock,
         )
         .map_err(|e| e.into()),
+        OracleType::PythLazer => {
+            msg!("PythLazer oracle type cannot be refreshed directly");
+            return err!(ScopeError::PriceNotValid);
+        }
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
@@ -372,6 +381,9 @@ pub fn validate_oracle_cfg(
         }
         OracleType::MostRecentOf => {
             most_recent_of::validate_mapping_cfg(price_account, generic_data).map_err(Into::into)
+        }
+        OracleType::PythLazer => {
+            pyth_lazer::validate_mapping_cfg(price_account, generic_data).map_err(Into::into)
         }
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")

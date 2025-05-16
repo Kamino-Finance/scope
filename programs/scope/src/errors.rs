@@ -126,6 +126,42 @@ pub enum ScopeError {
 
     #[msg("Max divergence bps constraint violated for MostRecentOf oracle")]
     MostRecentOfMaxDivergenceBpsViolated,
+
+    #[msg("The invoked pyth lazer verify instruction failed")]
+    PythLazerVerifyIxFailed,
+
+    #[msg("Invalid feed id passed in to PythLazer oracle")]
+    PythLazerInvalidFeedID,
+
+    #[msg("Invalid exponent passed in to PythLazer oracle")]
+    PythLazerInvalidExponent,
+
+    #[msg("Invalid confidence factor passed in to PythLazer oracle")]
+    PythLazerInvalidConfidenceFactor,
+
+    #[msg("Received an invalid message payload in the PythLazer oracle when refreshing price")]
+    PythLazerInvalidMessagePayload,
+
+    #[msg("Received an invalid channel in the PythLazer payload when refreshing price")]
+    PythLazerInvalidChannel,
+
+    #[msg("Payload should have a single feed in the PythLazer payload when refreshing price")]
+    PythLazerInvalidFeedsLength,
+
+    #[msg("Invalid feed id in the PythLazer payload when refreshing price")]
+    PythLazerInvalidFeedId,
+
+    #[msg("Property fields in the feed of the PythLazer payload do not contain a price")]
+    PythLazerPriceNotPresent,
+
+    #[msg("Property fields in the feed of the PythLazer payload do not contain a best bid price")]
+    PythLazerBestBidPriceNotPresent,
+
+    #[msg("Property fields in the feed of the PythLazer payload do not contain a best ask price")]
+    PythLazerBestAskPriceNotPresent,
+
+    #[msg("Invalid ask/bid prices provided in the feed of the PythLazer payload")]
+    PythLazerInvalidAskBidPrices,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

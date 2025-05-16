@@ -58,6 +58,22 @@ pub mod scope {
         )
     }
 
+    /// IMPORTANT: we assume the tokens passed in to this ix are in the same order in which
+    /// they are found in the message payload. Thus, we rely on the client to do this work
+    pub fn refresh_pyth_lazer_price<'info>(
+        ctx: Context<'_, '_, '_, 'info, RefreshPythLazerPrice<'info>>,
+        tokens: Vec<u16>,
+        serialized_pyth_message: Vec<u8>,
+        ed25519_instruction_index: u16,
+    ) -> Result<()> {
+        handler_refresh_pyth_lazer_price::refresh_pyth_lazer_price(
+            ctx,
+            &tokens,
+            serialized_pyth_message,
+            ed25519_instruction_index,
+        )
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn update_mapping(
         ctx: Context<UpdateOracleMapping>,
