@@ -9,7 +9,7 @@ use crate::{
     warn, DatedPrice, Price, ScopeError, ScopeResult,
 };
 
-const PYTH_LAZER_MIN_EXPONENT: u8 = 5;
+const PYTH_LAZER_MIN_EXPONENT: u8 = 3;
 const PYTH_LAZER_MAX_EXPONENT: u8 = 12;
 
 #[derive(Debug, Default, AnchorDeserialize, AnchorSerialize, Clone, Copy)]

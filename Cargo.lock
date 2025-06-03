@@ -2168,6 +2168,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "redstone-itf"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+]
+
+[[package]]
 name = "regex"
 version = "1.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2392,6 +2399,7 @@ dependencies = [
  "pyth-sdk-solana",
  "pyth-solana-receiver-sdk",
  "raydium-amm-v3",
+ "redstone-itf",
  "rust_decimal",
  "sbod-itf",
  "serde",

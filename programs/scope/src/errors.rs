@@ -127,6 +127,9 @@ pub enum ScopeError {
     #[msg("Max divergence bps constraint violated for MostRecentOf oracle")]
     MostRecentOfMaxDivergenceBpsViolated,
 
+    #[msg("Price account expected when updating mapping")]
+    ExpectedPriceAccount,
+
     #[msg("The invoked pyth lazer verify instruction failed")]
     PythLazerVerifyIxFailed,
 
@@ -162,6 +165,9 @@ pub enum ScopeError {
 
     #[msg("Invalid ask/bid prices provided in the feed of the PythLazer payload")]
     PythLazerInvalidAskBidPrices,
+
+    #[msg("Provided account has a different owner than expected")]
+    WrongAccountOwner,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

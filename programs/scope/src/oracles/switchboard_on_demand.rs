@@ -70,8 +70,8 @@ pub fn validate_price_account(switchboard_feed_info: &Option<AccountInfo>) -> Re
         return Ok(());
     }
     let Some(switchboard_feed_info) = switchboard_feed_info else {
-        warn!("No pyth pull price account provided");
-        return err!(ScopeError::PriceNotValid);
+        warn!("No switchboard price account provided");
+        return err!(ScopeError::ExpectedPriceAccount);
     };
     zero_copy_deserialize::<PullFeedAccountData>(switchboard_feed_info)?;
     Ok(())
