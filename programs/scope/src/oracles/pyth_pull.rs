@@ -68,7 +68,7 @@ pub fn validate_price_update_v2_info(price_info: &Option<AccountInfo>) -> Result
     }
     let Some(price_info) = price_info else {
         warn!("No pyth pull price account provided");
-        return err!(ScopeError::PriceNotValid);
+        return err!(ScopeError::ExpectedPriceAccount);
     };
     let _: PriceUpdateV2 = account_deserialize(price_info)?;
     Ok(())

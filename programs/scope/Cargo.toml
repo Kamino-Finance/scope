@@ -60,7 +60,10 @@ raydium-amm-v3 = { git = "https://github.com/raydium-io/raydium-clmm", features 
 jup-perp-itf = { path = "../jup-perp-itf", features = ["cpi"] }
 lb-clmm-itf = { path = "../lb-clmm-itf", features = ["no-entrypoint"] }
 sbod-itf = { path = "../sbod-itf" }
-pyth-lazer-solana-contract = { git = "https://github.com/Kamino-Finance/pyth-crosschain.git", branch = "lazer_on_anchor_0.29", features = ["no-entrypoint"] }
+redstone-itf = { path = "../redstone-itf", features = ["no-entrypoint"] }
+pyth-lazer-solana-contract = { git = "https://github.com/Kamino-Finance/pyth-crosschain.git", branch = "lazer_on_anchor_0.29", features = [
+    "no-entrypoint",
+] }
 pyth-lazer-protocol = { git = "https://github.com/Kamino-Finance/pyth-crosschain.git", branch = "lazer_on_anchor_0.29" }
 intbits = "0.2.0"
 pyth-solana-receiver-sdk = "0.1.0"

@@ -162,6 +162,12 @@ pub enum ScopeError {
 
     #[msg("Invalid ask/bid prices provided in the feed of the PythLazer payload")]
     PythLazerInvalidAskBidPrices,
+
+    #[msg("Price account expected when updating mapping")]
+    ExpectedPriceAccount,
+
+    #[msg("Provided account has a different owner than expected")]
+    WrongAccountOwner,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

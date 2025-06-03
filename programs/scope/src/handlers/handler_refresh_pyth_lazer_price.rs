@@ -17,6 +17,7 @@ use crate::{
 #[derive(Accounts)]
 pub struct RefreshPythLazerPrice<'info> {
     /// The account that signs the transaction.
+    #[account(mut)]
     pub user: Signer<'info>,
 
     #[account(mut, has_one = oracle_mappings)]

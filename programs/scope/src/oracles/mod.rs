@@ -18,6 +18,7 @@ pub mod pyth_lazer;
 pub mod pyth_pull;
 pub mod pyth_pull_ema;
 pub mod raydium_ammv3;
+pub mod redstone;
 pub mod spl_stake;
 pub mod switchboard_on_demand;
 pub mod switchboard_v2;
@@ -122,6 +123,8 @@ pub enum OracleType {
     MostRecentOf = 28,
     /// Pyth Lazer oracle
     PythLazer = 29,
+    /// RedStone price oracle
+    RedStone = 30,
 }
 
 impl OracleType {
@@ -157,6 +160,7 @@ impl OracleType {
             // Chainlink oracles are not updated through normal refresh ixs
             OracleType::Chainlink => 0,
             OracleType::MostRecentOf => 35_000,
+            OracleType::RedStone => 20_000,
             // PythLazer oracle is not updated through normal refresh ixs
             OracleType::PythLazer => 0,
             OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
@@ -299,7 +303,12 @@ where
             &oracle_mappings.generic[index],
             clock,
         )
-        .map_err(|e| e.into()),
+        .map_err(Into::into),
+        OracleType::RedStone => {
+            let oracle_prices = oracle_prices.load()?;
+            let dated_price = oracle_prices.prices[index];
+            redstone::get_price(base_account, &dated_price, clock).map_err(Into::into)
+        }
         OracleType::PythLazer => {
             msg!("PythLazer oracle type cannot be refreshed directly");
             return err!(ScopeError::PriceNotValid);
@@ -382,6 +391,7 @@ pub fn validate_oracle_cfg(
         OracleType::MostRecentOf => {
             most_recent_of::validate_mapping_cfg(price_account, generic_data).map_err(Into::into)
         }
+        OracleType::RedStone => redstone::validate_price_account(price_account).map_err(Into::into),
         OracleType::PythLazer => {
             pyth_lazer::validate_mapping_cfg(price_account, generic_data).map_err(Into::into)
         }
