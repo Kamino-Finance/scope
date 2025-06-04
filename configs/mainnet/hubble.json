@@ -1771,6 +1771,24 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
+  "282": {
+    "label": "digitSOL/SOL",
+    "oracle_type": "SplStake",
+    "oracle_mapping": "4qYufFsPQETukkXd5z9fxDsdwm8AEaSqzYpuzmZzCJxR",
+    "group_ids": [ 1, 2 ]
+  },
+  "283": {
+    "label": "adraSOL/SOL",
+    "oracle_type": "SplStake",
+    "oracle_mapping": "2XhsHdwf4ZDpp2JhpTqPovoVy3L2Atfp1XkLqFMwGP4Y",
+    "group_ids": [ 1, 2 ]
+  },
+  "284": {
+    "label": "hayekSOL/SOL",
+    "oracle_type": "SplStake",
+    "oracle_mapping": "8un9sEAuriMS1UZhZ2dtf7EW2a5x2kRtFPcSbNyG7g6M",
+    "group_ids": [ 1, 2 ]
+  },
   "285": {
     "label": "Orca TFOXES/SOL",
     "oracle_type": "OrcaWhirlpoolBtoA",
@@ -1884,6 +1902,13 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
+  "301": {
+    "label": "Sbod PST/USDC",
+    "oracle_type": "SwitchboardOnDemand",
+    "oracle_mapping": "EcSxuQKGVQUTQJNsayW5X6CHcnZjbfYNkCSHbN7ndb22",
+    "max_age_slot": 4000,
+    "group_ids": [ 1, 2 ]
+  },
   "303": {
     "label": "Orca zippySOL/SOL",
     "oracle_type": "OrcaWhirlpoolBtoA",
@@ -1928,6 +1953,34 @@
     "twap_source": 307,
     "max_age_slot": 380,
     "group_ids": [ 2 ]
+  },
+  "309": {
+    "label": "Pyth Pull FX EUR/USD",
+    "oracle_mapping": "Fu76ChamBDjE8UuGLV6GP2AcPPSU6gjhkNhAyuoPm7ny",
+    "oracle_type": "PythPull",
+    "group_ids": [ 2 ]
+  },
+  "310": {
+    "label": "Pyth Pull EMA FX EUR/USD",
+    "oracle_mapping": "Fu76ChamBDjE8UuGLV6GP2AcPPSU6gjhkNhAyuoPm7ny",
+    "oracle_type": "PythPullEMA",
+    "group_ids": [ 2 ]
+  },
+  "311": {
+    "label": "Most recent EUR/USD",
+    "oracle_type": "MostRecentOf",
+    "max_age_slot": 165,
+    "sources_max_age_s": 172800,
+    "max_divergence_bps": 600,
+    "source_entries": [ 173, 309 ]
+  },
+  "312": {
+    "label": "Most recent TWAP EUR/USD",
+    "oracle_type": "MostRecentOf",
+    "max_age_slot": 165,
+    "sources_max_age_s": 172800,
+    "max_divergence_bps": 600,
+    "source_entries": [ 174, 310 ]
   },
   "313": {
     "label": "Orca GME/USDC",
@@ -1974,12 +2027,25 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
+  "319": {
+    "label": "pSOL/SOL",
+    "oracle_mapping": "pSPcvR8GmG9aKDUbn9nbKYjkxt9hxMS7kF1qqKJaPqJ",
+    "oracle_type": "SplStake",
+    "group_ids": [ 1 ]
+  },
   "320": {
     "label": "RedStone ACRED",
     "oracle_mapping": "6sK8czVw8Xy6T8YbH6VC8p5ovNZD2mXf5vUTv8sgnUJf",
     "oracle_type": "RedStone",
     "max_age_slot": 90000,
     "group_ids": [ 2 ]
+  },
+  "321": {
+    "label": "RateX PT-2508/FragSOL",
+    "oracle_type": "DiscountToMaturity",
+    "discount_per_year_bps": 2500,
+    "maturity_timestamp": 1756425600,
+    "group_ids": [ 1 ]
   },
   "345": {
     "label": "Orca JCO/SOL",

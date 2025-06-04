@@ -16,7 +16,7 @@ pub const MOST_RECENT_OF_CHAIN_SIZE: usize = 4;
 pub struct MostRecentOfData {
     pub source_entries: [u16; MOST_RECENT_OF_CHAIN_SIZE],
     pub max_divergence_bps: u16,
-    pub sources_max_age_s: u16,
+    pub sources_max_age_s: u64,
 }
 
 impl MostRecentOfData {
@@ -66,7 +66,7 @@ pub fn get_price(
         min_price = min(dated_price.price, min_price);
         max_price = max(dated_price.price, max_price);
 
-        if now.saturating_sub(dated_price.unix_timestamp) > u64::from(sources_max_age_s) {
+        if now.saturating_sub(dated_price.unix_timestamp) > sources_max_age_s {
             return Err(ScopeError::MostRecentOfMaxAgeViolated);
         }
 
