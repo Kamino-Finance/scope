@@ -1402,7 +1402,7 @@
     "max_age_slot": 165,
     "sources_max_age_s": 7200,
     "max_divergence_bps": 300,
-    "source_entries": [ 0, 228 ],
+    "source_entries": [ 0, 228, 270 ],
     "ref_price": 0
   },
   "233": {
@@ -1411,7 +1411,7 @@
     "max_age_slot": 165,
     "sources_max_age_s": 7200,
     "max_divergence_bps": 50,
-    "source_entries": [ 20, 230 ],
+    "source_entries": [ 20, 230, 302 ],
     "ref_price": 20
   },
   "234": {
@@ -1477,7 +1477,7 @@
     "max_age_slot": 165,
     "sources_max_age_s": 7200,
     "max_divergence_bps": 50,
-    "source_entries": [ 22, 236 ],
+    "source_entries": [ 22, 236, 323 ],
     "ref_price": 22
   },
   "243": {
@@ -1494,7 +1494,7 @@
     "max_age_slot": 165,
     "sources_max_age_s": 7200,
     "max_divergence_bps": 300,
-    "source_entries": [ 2, 238 ],
+    "source_entries": [ 2, 238, 277 ],
     "ref_price": 2
   },
   "245": {
@@ -1510,7 +1510,7 @@
     "max_age_slot": 165,
     "sources_max_age_s": 7200,
     "max_divergence_bps": 300,
-    "source_entries": [ 1, 240 ],
+    "source_entries": [ 1, 240, 322 ],
     "ref_price": 1
   },
   "247": {
@@ -1909,6 +1909,14 @@
     "max_age_slot": 4000,
     "group_ids": [ 1, 2 ]
   },
+  "302": {
+    "label": "PythLazer USDC/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 7,
+    "pyth_lazer_exponent": 8,
+    "confidence_factor": 100,
+    "group_ids": [ 1 ]
+  },
   "303": {
     "label": "Orca zippySOL/SOL",
     "oracle_type": "OrcaWhirlpoolBtoA",
@@ -2034,10 +2042,10 @@
     "group_ids": [ 1 ]
   },
   "320": {
-    "label": "RedStone ACRED",
+    "label": "RedStone ACRED/USD",
     "oracle_mapping": "6sK8czVw8Xy6T8YbH6VC8p5ovNZD2mXf5vUTv8sgnUJf",
     "oracle_type": "RedStone",
-    "max_age_slot": 90000,
+    "max_age_slot": 1510,
     "group_ids": [ 2 ]
   },
   "321": {
@@ -2046,6 +2054,37 @@
     "discount_per_year_bps": 2500,
     "maturity_timestamp": 1756425600,
     "group_ids": [ 1 ]
+  },
+  "322": {
+    "label": "PythLazer ETH/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 2,
+    "pyth_lazer_exponent": 8,
+    "confidence_factor": 50,
+    "group_ids": [ 1 ]
+  },
+  "323": {
+    "label": "PythLazer USDT/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 8,
+    "pyth_lazer_exponent": 8,
+    "confidence_factor": 100,
+    "group_ids": [ 1 ]
+  },
+  "324": {
+    "label": "Orca xBTC/USDG",
+    "oracle_mapping": "EbGwM46wxy7EYuwhYrLN1UQPpG15FoEamQvzdMPJLwP6",
+    "oracle_type": "OrcaWhirlpoolBtoA",
+    "twap_enabled": true,
+    "max_age_slot": 375,
+    "group_ids": [ 2 ]
+  },
+  "325": {
+    "label": "TWAP Orca xBTC/USDG",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 324,
+    "max_age_slot": 380,
+    "group_ids": [ 2 ]
   },
   "345": {
     "label": "Orca JCO/SOL",
