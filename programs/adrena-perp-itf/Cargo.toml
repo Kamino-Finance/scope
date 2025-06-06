@@ -1,0 +1,23 @@
+[package]
+name = "adrena-perp-itf"
+version = "0.1.0"
+description = "Interface to interact with Adrena Perpetual Protocol (partial)"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "adrena_perp_itf"
+
+[features]
+no-entrypoint = []
+cpi = ["no-entrypoint"]
+test-bpf = []
+debug = []
+
+[dependencies]
+anchor-lang = "0.28.0"
+anchor-spl = "0.28.0"
+solana-program = "~1.16.18"
+bytemuck = { version = "1.12", default-features = false, features = ["derive"] }
+num-traits = "0.2.15"
+num = "0.4.0"
