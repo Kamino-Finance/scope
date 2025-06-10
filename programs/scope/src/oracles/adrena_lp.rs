@@ -6,14 +6,19 @@ use crate::{
     warn, DatedPrice, Price, Result, ScopeError,
 };
 
-pub const POOL_VALUE_SCALE_DECIMALS: u8 = 6;
-
 pub fn validate_adrena_pool(account: &Option<AccountInfo>) -> Result<()> {
     let Some(account) = account else {
         warn!("No adrena pool account provided");
-        return err!(ScopeError::PriceNotValid);
+        return err!(ScopeError::ExpectedPriceAccount);
     };
-    let _adrena_pool = zero_copy_deserialize::<adrena::state::Pool>(account)?;
+
+    let adrena_pool = zero_copy_deserialize::<adrena::state::Pool>(account)?;
+
+    if adrena_pool.initialized != 1 {
+        warn!("Adrena pool account isn't initialized");
+        return err!(ScopeError::PriceNotValid);
+    }
+
     Ok(())
 }
 
@@ -25,20 +30,25 @@ where
     'a: 'b,
 {
     // 1. Get accounts
-    let pool_pk = pool_acc.key;
-    let pool = zero_copy_deserialize::<adrena::state::Pool>(pool_acc)?;
+    let adrena_pool = zero_copy_deserialize::<adrena::state::Pool>(pool_acc)?;
+
+    if adrena_pool.initialized != 1 {
+        warn!("Adrena pool account isn't initialized");
+        return err!(ScopeError::PriceNotValid);
+    }
 
     // 2. Check the price
     Ok(DatedPrice {
         price: Price {
-            value: pool.lp_token_price_usd,
-            exp: adrena::PRICE_DECIMALS as i8,
+            value: adrena_pool.lp_token_price_usd,
+            exp: adrena::PRICE_DECIMALS.into(),
         },
         last_updated_slot: estimate_slot_update_from_ts(
             clock,
-            pool.last_aum_and_lp_token_price_usd_update,
+            adrena_pool.last_aum_and_lp_token_price_usd_update,
         ),
-        unix_timestamp: u64::try_from(pool.last_aum_and_lp_token_price_usd_update).unwrap(),
+        unix_timestamp: u64::try_from(adrena_pool.last_aum_and_lp_token_price_usd_update)
+            .map_err(|_| ScopeError::PriceNotValid)?,
         generic_data: [0; 24], // Placeholder for generic data
     })
 }
