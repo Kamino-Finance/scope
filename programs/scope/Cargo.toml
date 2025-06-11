@@ -1,82 +1,72 @@
 [package]
+name = "scope"
+version = "0.1.0"
 description = "Scope is Kamino's oracle aggregator"
+repository = "https://github.com/Kamino-Finance/scope"
 edition = "2021"
 license = "Apache-2.0"
-name = "scope"
 publish = false
-repository = "https://github.com/Kamino-Finance/scope"
-version = "0.1.0"
 
 [lib]
 crate-type = ["cdylib", "lib"]
 name = "scope"
 
 [features]
-cpi = ["no-entrypoint"]
-debug = []
 no-entrypoint = []
+cpi = ["no-entrypoint"]
 skip_price_validation = []
 test-bpf = []
+debug = []
 tracing = ["dep:tracing"]
 
 # If none of the following is set, one will be selected based on env $CLUSTER variable
 # If $CLUSTER is not set either, default will be mainnet
 default = ["yvaults"]
+yvaults = ["dep:yvaults"]
 devnet = ["skip_price_validation"]
 localnet = []
 mainnet = []
-serde = ["dep:serde"]
 staging = []
-yvaults = ["dep:yvaults"]
+serde = ["dep:serde"]
 
 [dependencies]
 anchor-lang = "0.28.0"
 anchor-spl = "0.28.0"
-arrayref = "0.3.6"
-bytemuck = { version = "1.4.0", features = ["derive", "min_const_generics"] }
-cfg-if = "1.0.0"
-decimal-wad = "0.1.7"
-num_enum = "0.7.0"
-pyth-sdk-solana = "0.10.1"
-rust_decimal = "1.18.0"
-serde = { version = "1.0.136", optional = true }
 solana-program = ">1.16.18"
-strum = { git = "https://github.com/Kamino-Finance/strum", features = [
-    "derive",
-], branch = "checked_arithmetics" }
+bytemuck = { version = "1.4.0", features = ["min_const_generics", "derive"] }
+num_enum = "0.7.0"
+cfg-if = "1.0.0"
+serde = { version = "1.0.136", optional = true }
+strum = { git = "https://github.com/Kamino-Finance/strum", features = ["derive"], branch = "checked_arithmetics" }
+pyth-sdk-solana = "0.10.1"
 switchboard-program = "0.2.0"
+arrayref = "0.3.6"
+decimal-wad = "0.1.7"
+rust_decimal = "1.18.0"
 # Comment out the line below if you do not have access to the yvaults repo
-# yvaults = { git = "ssh://git@github.com/Kamino-Finance/yvaults.git", branch = "scope-public-compat", features = [
-#     "no-entrypoint",
-#     "cpi",
-#     "mainnet",
-# ], optional = true }
+yvaults = { git = "ssh://git@github.com/Kamino-Finance/yvaults.git", branch = "scope-public-compat", features = [
+    "no-entrypoint",
+    "cpi",
+    "mainnet",
+], optional = true }
 # Uncomment the line below if you do not have access to the yvaults repo
-intbits = "0.2.0"
+#yvaults = { path = "../yvaults_stub", package = "yvaults_stub", optional = true }
+sha2 = "0.10.0"
+whirlpool = { git = "https://github.com/Kamino-Finance/whirlpools", branch = "anchor/0.28.0", features = [
+    "no-entrypoint",
+    "cpi",
+] }
+raydium-amm-v3 = { git = "https://github.com/raydium-io/raydium-clmm", features = ["no-entrypoint", "cpi"] }
 jup-perp-itf = { path = "../jup-perp-itf", features = ["cpi"] }
 lb-clmm-itf = { path = "../lb-clmm-itf", features = ["no-entrypoint"] }
-pyth-lazer-protocol = { git = "https://github.com/Kamino-Finance/pyth-crosschain.git", branch = "lazer_on_anchor_0.29" }
-pyth-lazer-solana-contract = { git = "https://github.com/Kamino-Finance/pyth-crosschain.git", branch = "lazer_on_anchor_0.29", features = [
-    "no-entrypoint",
-] }
-pyth-solana-receiver-sdk = "0.1.0"
-raydium-amm-v3 = { git = "https://github.com/raydium-io/raydium-clmm", features = [
-    "cpi",
-    "no-entrypoint",
-] }
-redstone-itf = { path = "../redstone-itf", features = ["no-entrypoint"] }
 sbod-itf = { path = "../sbod-itf" }
-securitize-itf = { path = "../securitize-itf", features = ["no-entrypoint"] }
-sha2 = "0.10.0"
+intbits = "0.2.0"
+pyth-solana-receiver-sdk = "0.1.0"
 static_assertions = "1.1.0"
 tracing = { version = "0.1.10", optional = true }
-whirlpool = { git = "https://github.com/Kamino-Finance/whirlpools", branch = "anchor/0.28.0", features = [
-    "cpi",
-    "no-entrypoint",
-] }
-yvaults = { path = "../yvaults_stub", package = "yvaults_stub", optional = true }
 
 # Chainlink Streams
-chainlink-streams-report = { git = "https://github.com/smartcontractkit/data-streams-sdk.git", package = "chainlink-data-streams-report", branch = "main" }
-
+chainlink-streams-report = { git = "https://github.com/smartcontractkit/data-streams-sdk.git", package = "data-streams-report" }
 num-bigint = "0.4"
+
+securitize-itf = { path = "../securitize-itf", features = ["no-entrypoint"] }

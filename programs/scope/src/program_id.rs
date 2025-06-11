@@ -27,7 +27,7 @@ compile_error!("'skip_price_validation' and 'staging' features are mutually excl
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "mainnet")] {
-        pub const PROGRAM_ID:Pubkey = pubkey!("HFn8GnPADiny6XqUoWE8uRPPxb29ikn4yTuPa9MF2fWJ");
+        pub const PROGRAM_ID:Pubkey = pubkey!("secc5n6QPPhQWFDy71j4G4WcoHcxe6wZPYgZcxjkvRQ");
     }
     else if #[cfg(feature = "staging")] {
         pub const PROGRAM_ID:Pubkey = pubkey!("scpStzYvKzE7DHwsGMP5XLhcMTuLr3feoiC9mJ3yHr5");
@@ -35,7 +35,7 @@ cfg_if::cfg_if! {
     else if #[cfg(feature = "localnet")] {
         pub const PROGRAM_ID:Pubkey = pubkey!("2fU6YqiA2aj9Ct1tDagA8Tng7otgxHM5KwgnsUWsMFxM");
     } else if #[cfg(feature = "devnet")] {
-        pub const PROGRAM_ID:Pubkey = pubkey!("3Vw8Ngkh1MVJTPHthmUbmU2XKtFEkjYvJzMqrv2rh9yX");
+        pub const PROGRAM_ID:Pubkey = pubkey!("secc5n6QPPhQWFDy71j4G4WcoHcxe6wZPYgZcxjkvRQ");
     } else {
         compile_error!("At least one of 'mainnet', 'staging', 'localnet' or 'devnet' feature need to be set");
     }

@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
-#[derive(Debug, Default, InitSpace)]
 #[account]
+#[derive(Debug, Default, InitSpace)]
 pub struct VaultState {
     pub id: u64,
     pub admin: Pubkey,

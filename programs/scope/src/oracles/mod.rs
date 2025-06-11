@@ -320,7 +320,8 @@ where
         OracleType::Securitize => {
             let oracle_prices = oracle_prices.load()?;
             let dated_price = oracle_prices.prices[index];
-            redstone::get_price(base_account, &dated_price, clock).map_err(Into::into)
+            securitize::get_sacred_price(base_account, &dated_price, clock, extra_accounts)
+                .map_err(Into::into)
         }
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
