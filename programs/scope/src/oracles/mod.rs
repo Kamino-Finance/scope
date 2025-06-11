@@ -4,6 +4,7 @@ pub mod ktokens;
 #[cfg(feature = "yvaults")]
 pub mod ktokens_token_x;
 
+pub mod adrena_lp;
 pub mod chainlink;
 pub mod discount_to_maturity;
 pub mod jito_restaking;
@@ -126,8 +127,10 @@ pub enum OracleType {
     PythLazer = 29,
     /// RedStone price oracle
     RedStone = 30,
+    /// Adrena's perpetual LP token price
+    AdrenaLp = 31,
     /// Securitize sacred price oracle
-    Securitize = 31,
+    Securitize = 32,
 }
 
 impl OracleType {
@@ -170,6 +173,7 @@ impl OracleType {
                 panic!("DeprecatedPlaceholder is not a valid oracle type")
             }
             OracleType::Securitize => 30_000,
+            OracleType::AdrenaLp => 20_000,
         }
     }
 }
@@ -326,6 +330,7 @@ where
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
+        OracleType::AdrenaLp => adrena_lp::get_price(base_account, clock),
     }?;
     // The price providers above are performing their type-specific validations, but are still free
     // to return 0, which we can only tolerate in case of explicit fixed price:
@@ -409,5 +414,6 @@ pub fn validate_oracle_cfg(
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
+        OracleType::AdrenaLp => adrena_lp::validate_adrena_pool(price_account, clock),
     }
 }

@@ -3,6 +3,18 @@
 version = 3
 
 [[package]]
+name = "adrena-perp-itf"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "bytemuck",
+ "num",
+ "num-traits",
+ "solana-program",
+]
+
+[[package]]
 name = "aead"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -715,7 +727,7 @@ checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 [[package]]
 name = "chainlink-data-streams-report"
 version = "1.0.0"
-source = "git+https://github.com/smartcontractkit/data-streams-sdk.git?branch=main#a7efa823ccadc287313ac9e562c922830f03c54e"
+source = "git+https://github.com/smartcontractkit/data-streams-sdk.git#a7efa823ccadc287313ac9e562c922830f03c54e"
 dependencies = [
  "hex",
  "num-bigint",
@@ -2278,6 +2290,7 @@ dependencies = [
 name = "scope"
 version = "0.1.0"
 dependencies = [
+ "adrena-perp-itf",
  "anchor-lang",
  "anchor-spl",
  "arrayref",
