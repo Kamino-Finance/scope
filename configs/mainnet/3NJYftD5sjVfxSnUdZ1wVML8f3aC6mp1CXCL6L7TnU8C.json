@@ -2086,6 +2086,21 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
+  "326": {
+    "label": "Most recent ACRED/USD",
+    "oracle_type": "MostRecentOf",
+    "max_age_slot": 165,
+    "sources_max_age_s": 900,
+    "max_divergence_bps": 100,
+    "source_entries": [ 293, 320 ],
+    "group_ids": [ 1 ]
+  },
+  "327": {
+    "label": "jSOL/SOL",
+    "oracle_mapping": "CtMyWsrUtAwXWiGr9WjHT5fC3p3fgV8cyGpLTo2LJzG1",
+    "oracle_type": "SplStake",
+    "group_ids": [ 1, 2 ]
+  },
   "345": {
     "label": "Orca JCO/SOL",
     "oracle_type": "OrcaWhirlpoolBtoA",

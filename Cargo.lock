@@ -3,6 +3,18 @@
 version = 3
 
 [[package]]
+name = "adrena-perp-itf"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "bytemuck",
+ "num",
+ "num-traits",
+ "solana-program",
+]
+
+[[package]]
 name = "aead"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2382,6 +2394,7 @@ dependencies = [
 name = "scope"
 version = "0.1.0"
 dependencies = [
+ "adrena-perp-itf",
  "anchor-lang",
  "anchor-spl",
  "arrayref",
