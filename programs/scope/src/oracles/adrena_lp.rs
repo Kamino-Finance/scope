@@ -48,7 +48,7 @@ where
             adrena_pool.last_aum_and_lp_token_price_usd_update,
         ),
         unix_timestamp: u64::try_from(adrena_pool.last_aum_and_lp_token_price_usd_update)
-            .map_err(|_| ScopeError::PriceNotValid)?,
+            .map_err(|_| ScopeError::BadTimestamp)?,
         generic_data: [0; 24], // Placeholder for generic data
     })
 }
