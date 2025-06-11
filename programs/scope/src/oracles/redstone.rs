@@ -6,7 +6,7 @@ use crate::{
     warn, DatedPrice, Price, ScopeError, ScopeResult,
 };
 
-fn redstone_value_to_scope_price(
+pub fn redstone_value_to_scope_price(
     raw_be_value: &[u8; U256_BYTE_SIZE],
     decimals: u8,
 ) -> ScopeResult<Price> {
