@@ -9,7 +9,7 @@ const DECIMALS: u32 = 15u32;
 /// 0.5%
 const MAX_ACCEPTABLE_FEE_BPS: spl_stake_pool::Fee = spl_stake_pool::Fee {
     denominator: 1000,
-    numerator: 5,
+    numerator: 6,
 };
 
 // Gives the price of 1 staked SOL in SOL

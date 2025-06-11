@@ -61,6 +61,7 @@ jup-perp-itf = { path = "../jup-perp-itf", features = ["cpi"] }
 lb-clmm-itf = { path = "../lb-clmm-itf", features = ["no-entrypoint"] }
 sbod-itf = { path = "../sbod-itf" }
 redstone-itf = { path = "../redstone-itf", features = ["no-entrypoint"] }
+adrena-perp-itf = { path = "../adrena-perp-itf", features = ["no-entrypoint"] }
 pyth-lazer-solana-contract = { git = "https://github.com/Kamino-Finance/pyth-crosschain.git", branch = "lazer_on_anchor_0.29", features = [
     "no-entrypoint",
 ] }
