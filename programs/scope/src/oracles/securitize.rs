@@ -10,7 +10,7 @@ use crate::{
 use anchor_spl::token::spl_token::state::Mint;
 use anchor_spl::token_interface::TokenAccount;
 
-use solana_program::program_pack::Pack;
+use solana_program::{program_pack::Pack, pubkey};
 
 // sAcred is not necessarily pegged 1:1 to ACRED as the vault can be undercollateralized (but it cannot overcollateralize as the vault mechanism tops the value at $1). So it may be worth $1 or less depending on the vault status.
 // The way to get the price, which is secured via RedStone, because the method does as follows:
@@ -22,10 +22,16 @@ use solana_program::program_pack::Pack;
 
 /// There is no connection between VaultState to the Feed Account it uses for the share value.
 /// Program `nav_provider_program` from VaultState account uses below account (RedStone Acred Feed).
-const ACRED_FEED_ADDRESS: Pubkey = Pubkey::new_from_array([
-    87, 45, 249, 239, 149, 76, 238, 9, 125, 13, 122, 250, 108, 212, 185, 54, 210, 92, 118, 153,
-    224, 126, 27, 246, 142, 115, 239, 161, 28, 61, 250, 196,
-]);
+
+pub fn vault_mapping(vault_account: &Pubkey) -> Option<Pubkey> {
+    let acred_vault = pubkey!("9L4WxKkUHKBZ96EpHBc7APqvEhobmY1A2ENk5dUfdrpw");
+    let redstone_feed = pubkey!("6sK8czVw8Xy6T8YbH6VC8p5ovNZD2mXf5vUTv8sgnUJf");
+
+    match vault_account {
+        v if *v == acred_vault => Some(redstone_feed),
+        _ => None,
+    }
+}
 
 pub fn get_sacred_price<'a, 'b>(
     price_info: &AccountInfo,
@@ -53,6 +59,7 @@ where
         mint_account.key,
         vault_account.key,
         redstone_price_data,
+        vault_mapping(price_info.key),
     )?;
 
     let mint = {
@@ -69,7 +76,7 @@ where
     let rate = get_rate(&price_data, &mint)?;
     let price = get_share_value(vault.amount, rate, mint.decimals, mint.supply)?;
     let Some(write_timestamp_ms) = price_data.write_timestamp else {
-        return Err(ScopeError::BadTimestamp)?;
+        return Err(ScopeError::BadTimestamp.into());
     };
 
     let unix_timestamp = (write_timestamp_ms.min(price_data.timestamp) / MILLIS_PER_SECOND)
@@ -91,11 +98,13 @@ fn check_accounts(
     mint_account: &Pubkey,
     vault_account: &Pubkey,
     redstone_adapter_account: &AccountInfo,
+    expected_adapter_account: Option<Pubkey>,
 ) -> ScopeResult {
-    if state.asset_vault != *vault_account
+    if expected_adapter_account.is_none()
+        || state.asset_vault != *vault_account
         || state.share_mint != *mint_account
         || *redstone_adapter_account.owner != redstone_itf::ID
-        || *redstone_adapter_account.key != ACRED_FEED_ADDRESS
+        || *redstone_adapter_account.key != expected_adapter_account.unwrap()
     {
         return Err(ScopeError::UnexpectedAccount);
     }
@@ -141,12 +150,12 @@ pub fn mul_div(value: u64, multiplier: u64, divisor: u64) -> ScopeResult<u64> {
 
     let product = value
         .checked_mul(multiplier)
-        .ok_or_else(|| ScopeError::MathOverflow)?;
+        .ok_or(ScopeError::MathOverflow)?;
 
     let result = product.checked_div(divisor);
 
     result
-        .ok_or_else(|| ScopeError::MathOverflow)?
+        .ok_or(ScopeError::MathOverflow)?
         .try_into()
         .map_err(|_| ScopeError::MathOverflow)
 }
@@ -161,14 +170,14 @@ fn normalize_rate(value: u64, from_decimals: u8, to_decimals: u8) -> ScopeResult
         (to_decimals.checked_sub(from_decimals), false)
     };
 
-    let diff = diff.ok_or_else(|| ScopeError::MathOverflow)?;
+    let diff = diff.ok_or(ScopeError::MathOverflow)?;
     let factor = 10u64
         .checked_pow(diff as u32)
-        .ok_or_else(|| ScopeError::MathOverflow)?;
+        .ok_or(ScopeError::MathOverflow)?;
     let result = if is_div {
         value.checked_div(factor)
     } else {
         value.checked_mul(factor)
     };
-    result.ok_or_else(|| ScopeError::MathOverflow)
+    result.ok_or(ScopeError::MathOverflow)
 }
