@@ -20,6 +20,7 @@ pub mod pyth_pull;
 pub mod pyth_pull_ema;
 pub mod raydium_ammv3;
 pub mod redstone;
+pub mod securitize;
 pub mod spl_stake;
 pub mod switchboard_on_demand;
 pub mod switchboard_v2;
@@ -128,6 +129,8 @@ pub enum OracleType {
     RedStone = 30,
     /// Adrena's perpetual LP token price
     AdrenaLp = 31,
+    /// Securitize sacred price oracle
+    Securitize = 32,
 }
 
 impl OracleType {
@@ -169,6 +172,7 @@ impl OracleType {
             OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
                 panic!("DeprecatedPlaceholder is not a valid oracle type")
             }
+            OracleType::Securitize => 30_000,
             OracleType::AdrenaLp => 20_000,
         }
     }
@@ -317,6 +321,12 @@ where
             msg!("PythLazer oracle type cannot be refreshed directly");
             return err!(ScopeError::PriceNotValid);
         }
+        OracleType::Securitize => {
+            let oracle_prices = oracle_prices.load()?;
+            let dated_price = oracle_prices.prices[index];
+            securitize::get_sacred_price(base_account, &dated_price, clock, extra_accounts)
+                .map_err(Into::into)
+        }
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
@@ -400,6 +410,7 @@ pub fn validate_oracle_cfg(
         OracleType::PythLazer => {
             pyth_lazer::validate_mapping_cfg(price_account, generic_data).map_err(Into::into)
         }
+        OracleType::Securitize => Ok(()),
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }

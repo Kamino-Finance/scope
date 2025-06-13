@@ -1,0 +1,18 @@
+[package]
+description = "Interface to Securitize program"
+edition = "2021"
+name = "securitize-itf"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "securitize_itf"
+
+[features]
+cpi = ["no-entrypoint"]
+debug = []
+no-entrypoint = []
+test-bpf = []
+
+[dependencies]
+anchor-lang = "0.28.0"
