@@ -2101,6 +2101,29 @@
     "oracle_type": "SplStake",
     "group_ids": [ 1, 2 ]
   },
+  "328": {
+    "label": "Adrena ALP/USD",
+    "oracle_mapping": "4bQRutgDJs6vuh6ZcWaPVXiQaBzbHketjbCDjL4oRN34",
+    "oracle_type": "AdrenaLp",
+    "twap_enabled": true,
+    "group_ids": [ 1 ]
+  },
+  "329": {
+    "label": "TWAP Adrena ALP/USD",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 328,
+    "max_age_slot": 165,
+    "group_ids": [ 1 ]
+  },
+  "331": {
+    "label": "Securitize sACRED/USD",
+    "oracle_mapping": "9L4WxKkUHKBZ96EpHBc7APqvEhobmY1A2ENk5dUfdrpw",
+    "oracle_type": "Securitize",
+    "twap_enabled": true,
+    "max_age_slot": 1510,
+    "ref_price": 191,
+    "group_ids": [ 1 ]
+  },
   "345": {
     "label": "Orca JCO/SOL",
     "oracle_type": "OrcaWhirlpoolBtoA",

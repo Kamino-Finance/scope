@@ -271,3 +271,46 @@ pub fn estimate_slot_update_from_ts(clock: &solana_program::clock::Clock, ts: u6
     let elapsed_slot_estimate = saturating_secs_to_slots(elapsed_time_s);
     clock.slot.saturating_sub(elapsed_slot_estimate)
 }
+
+pub fn mul_div(value: u64, multiplier: u64, divisor: u64) -> ScopeResult<u64> {
+    if divisor == 0 {
+        return Err(ScopeError::MathOverflow);
+    }
+
+    let value = value as u128;
+    let multiplier = multiplier as u128;
+    let divisor = divisor as u128;
+
+    let product = value
+        .checked_mul(multiplier)
+        .ok_or(ScopeError::MathOverflow)?;
+
+    let result = product.checked_div(divisor);
+
+    result
+        .ok_or(ScopeError::MathOverflow)?
+        .try_into()
+        .map_err(|_| ScopeError::MathOverflow)
+}
+
+pub fn normalize_rate(value: u64, from_decimals: u8, to_decimals: u8) -> ScopeResult<u64> {
+    if from_decimals == to_decimals {
+        return Ok(value);
+    }
+    let (diff, is_div) = if from_decimals > to_decimals {
+        (from_decimals.checked_sub(to_decimals), true)
+    } else {
+        (to_decimals.checked_sub(from_decimals), false)
+    };
+
+    let diff = diff.ok_or(ScopeError::MathOverflow)?;
+    let factor = 10u64
+        .checked_pow(diff as u32)
+        .ok_or(ScopeError::MathOverflow)?;
+    let result = if is_div {
+        value.checked_div(factor)
+    } else {
+        value.checked_mul(factor)
+    };
+    result.ok_or(ScopeError::MathOverflow)
+}
