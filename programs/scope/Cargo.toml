@@ -74,4 +74,4 @@ tracing = { version = "0.1.10", optional = true }
 chainlink-streams-report = { git = "https://github.com/smartcontractkit/data-streams-sdk.git", package = "data-streams-report" }
 num-bigint = "0.4"
 securitize-itf = { path = "../securitize-itf", features = ["no-entrypoint"] }
-
+unitas-itf = { path = "../unitas-itf", features = ["no-entrypoint"] }

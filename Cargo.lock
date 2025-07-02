@@ -2319,6 +2319,7 @@ dependencies = [
  "strum",
  "switchboard-program",
  "tracing",
+ "unitas-itf",
  "whirlpool",
  "yvaults_stub",
 ]
@@ -3323,6 +3324,17 @@ name = "unicode-segmentation"
 version = "1.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1dd624098567895118886609431a7c3b8f516e41d30e0643f03d94592a147e36"
+
+[[package]]
+name = "unitas-itf"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "num",
+ "num-traits",
+ "solana-program",
+]
 
 [[package]]
 name = "universal-hash"
