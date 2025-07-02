@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 use decimal_wad::decimal::Decimal;
 use anchor_spl::token::spl_token::state::Account as TokenAccount;
-use solana_program::program_pack::Pack;
 
 use unitas_itf::account::{
     AssetLookupTable, get_associated_token_address, UsduConfig,
@@ -9,7 +8,7 @@ use unitas_itf::account::{
 
 use crate::{
     utils::{account_deserialize, math::ten_pow},
-    DatedPrice, Result, ScopeError,
+    DatedPrice, Result, ScopeError, warn,
 };
 
 pub const AUM_VALUE_SCALE_DECIMALS: u8 = 6;
@@ -109,7 +108,7 @@ fn compute_unitas_aum(
     
     let mut total_value: u128 = 0;
     for jlp_acc in jlp_accounts {
-        let token_account = TokenAccount::unpack(&jlp_acc.data.borrow())?;
+        let token_account = TokenAccount::try_deserialize(&mut &**jlp_acc.data.borrow())?;
         let token_amount: u128 = token_account.amount.into();
         
         let token_amount_usd = if price_decimals + token_decimals > AUM_VALUE_SCALE_DECIMALS {
@@ -133,4 +132,18 @@ fn compute_unitas_aum(
         unix_timestamp: u64::try_from(clock.unix_timestamp).unwrap(),
         ..Default::default()
     })
+}
+
+pub fn validate_price_account(price_data_account: &Option<AccountInfo>) -> Result<()> {
+    let Some(price_data_account) = price_data_account else {
+        warn!("No Unitas price account provided");
+        return err!(ScopeError::ExpectedPriceAccount);
+    };
+    require_keys_eq!(
+        *price_data_account.owner,
+        unitas_itf::ID,
+        ScopeError::WrongAccountOwner
+    );
+    let _: AssetLookupTable = account_deserialize(price_data_account)?;
+    Ok(())
 }

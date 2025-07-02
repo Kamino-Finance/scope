@@ -420,6 +420,6 @@ pub fn validate_oracle_cfg(
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
         OracleType::AdrenaLp => adrena_lp::validate_adrena_pool(price_account, clock),
-        OracleType::Unitas => Ok(()),
+        OracleType::Unitas => unitas::validate_price_account(price_account).map_err(Into::into),
     }
 }
