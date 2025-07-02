@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use decimal_wad::decimal::Decimal;
 use anchor_spl::token::spl_token::state::Account as TokenAccount;
+use solana_program::program_pack::Pack;
 
 use unitas_itf::account::{
     AssetLookupTable, get_associated_token_address, UsduConfig,
@@ -108,7 +109,7 @@ fn compute_unitas_aum(
     
     let mut total_value: u128 = 0;
     for jlp_acc in jlp_accounts {
-        let token_account = TokenAccount::try_deserialize(&mut &**jlp_acc.data.borrow())?;
+        let token_account = TokenAccount::unpack(&jlp_acc.data.borrow())?;
         let token_amount: u128 = token_account.amount.into();
         
         let token_amount_usd = if price_decimals + token_decimals > AUM_VALUE_SCALE_DECIMALS {
