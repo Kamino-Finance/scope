@@ -1,8 +1,6 @@
 use anchor_lang::prelude::*;
 use solana_program::pubkey;
 
-pub const MAX_ACCOUNTS_PER_TABLE: usize = 15;
-
 pub static TOKEN_PROGRAM_ID: Pubkey = pubkey!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 pub static ASSOCIATED_TOKEN_PROGRAM_ID: Pubkey = pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 
