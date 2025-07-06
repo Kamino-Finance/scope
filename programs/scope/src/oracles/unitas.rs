@@ -106,7 +106,7 @@ fn compute_unitas_aum(
     let price_decimals: u8 = price.exp.try_into().unwrap();
     let token_decimals = unitas_asset_lookup_table.decimals;
     
-    let mut total_value: u128 = 0;
+    let mut total_value: u128 = unitas_asset_lookup_table.aum_usd;
     for jlp_acc in jlp_accounts {
         let token_account = TokenAccount::try_deserialize(&mut &**jlp_acc.data.borrow())?;
         let token_amount: u128 = token_account.amount.into();
