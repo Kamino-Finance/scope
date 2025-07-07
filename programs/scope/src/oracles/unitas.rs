@@ -68,20 +68,24 @@ fn check_accounts(
         ScopeError::UnexpectedAccount
     );
 
+    let mut actual_owners: Vec<Pubkey> = Vec::new();
     for acc in jlp_accounts {
-        let at_acc = get_associated_token_address(acc.owner, &unitas_asset_lookup_table.mint);
+        let token_account = TokenAccount::try_deserialize(&mut &**acc.data.borrow())?;
+        let at_acc = get_associated_token_address(
+            &token_account.owner,
+             &unitas_asset_lookup_table.mint
+        );
         require_keys_eq!(
             at_acc,
             *acc.key,
             ScopeError::UnexpectedAccount
         );
+        actual_owners.push(at_acc);
     }
+    actual_owners.sort();
 
     let mut expected_jlp_pks = unitas_asset_lookup_table.accounts.clone();
     expected_jlp_pks.sort();
-
-    let mut actual_owners: Vec<Pubkey> = jlp_accounts.iter().map(|acc| *acc.owner).collect();
-    actual_owners.sort();
 
     for (expected_pk, actual_owner) in expected_jlp_pks.iter().zip(actual_owners.iter()) {
         require_keys_eq!(
