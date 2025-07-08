@@ -6,7 +6,7 @@ use crate::{utils::SECONDS_PER_HOUR, warn, DatedPrice, Price, Result, ScopeError
 
 const DECIMALS: u32 = 15u32;
 
-/// 0.5%
+/// 0.6%
 const MAX_ACCEPTABLE_FEE_BPS: spl_stake_pool::Fee = spl_stake_pool::Fee {
     denominator: 1000,
     numerator: 6,

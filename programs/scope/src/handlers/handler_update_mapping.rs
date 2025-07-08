@@ -81,7 +81,8 @@ pub fn process(
                 | OracleType::FixedPrice
                 | OracleType::DiscountToMaturity
                 | OracleType::MostRecentOf
-                | OracleType::PythLazer => *price_pubkey = crate::id(),
+                | OracleType::PythLazer
+                | OracleType::CappedFloored => *price_pubkey = crate::id(),
 
                 _ => {
                     // if no price_info account is passed, it means that the mapping has to be removed,
