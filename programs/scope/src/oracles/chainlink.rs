@@ -1,7 +1,11 @@
 use anchor_lang::prelude::*;
-use chainlink_streams_report::{feed_id::ID as FeedID, report::v3::ReportDataV3};
+use chainlink_streams_report::{
+    feed_id::ID as FeedID,
+    report::{v3::ReportDataV3, v4::ReportDataV4},
+};
 use decimal_wad::decimal::{Decimal, U192};
 use num_bigint::BigInt;
+use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 use crate::{
     errors::ScopeError,
@@ -10,34 +14,64 @@ use crate::{
     warn, DatedPrice, Price, ScopeResult,
 };
 
-pub fn update_price(
+#[derive(IntoPrimitive, TryFromPrimitive, Clone, Copy, PartialEq, Eq, Debug)]
+#[repr(u32)]
+enum ReportDataV4MarketStatus {
+    Unknown = 0,
+    Closed,
+    Open,
+}
+
+fn validate_report_feed_id(feed_id: &FeedID, mapping: &Pubkey) -> ScopeResult<()> {
+    if feed_id.0 != mapping.to_bytes() {
+        warn!("The chainlink report provided {} does not match the expected feed id in the mapping {}",
+            feed_id.to_hex_string(),
+            FeedID(mapping.to_bytes()).to_hex_string()
+        );
+        return Err(ScopeError::PriceNotValid);
+    }
+    Ok(())
+}
+
+fn validate_observations_timestamp(
+    observations_ts: u64,
+    dated_price: &DatedPrice,
+    clock: &Clock,
+) -> ScopeResult<(u64, u64, [u8; 24])> {
+    let current_onchain_ts: u64 = clock
+        .unix_timestamp
+        .try_into()
+        .expect("Invalid clock timestamp");
+    let last_observations_ts =
+        u64::from_le_bytes(dated_price.generic_data[0..8].try_into().unwrap());
+
+    if observations_ts <= last_observations_ts {
+        warn!("An outdated report was provided");
+        return Err(ScopeError::BadTimestamp);
+    }
+
+    let price_ts = u64::min(observations_ts, current_onchain_ts);
+
+    let last_updated_slot = estimate_slot_update_from_ts(clock, price_ts);
+    let mut generic_data = [0u8; 24];
+    generic_data[..8].copy_from_slice(&observations_ts.to_le_bytes());
+
+    Ok((price_ts, last_updated_slot, generic_data))
+}
+
+pub fn update_price_v3(
     dated_price: &mut DatedPrice,
     mapping: Pubkey,
     mapping_generic_data: &[u8],
     clock: &Clock,
     chainlink_report: &ReportDataV3,
 ) -> ScopeResult<()> {
-    if chainlink_report.feed_id.0 != mapping.to_bytes() {
-        warn!("The chainlink report provided {} does not match the expected feed id in the mapping {}",
-            chainlink_report.feed_id.to_hex_string(),
-            FeedID(mapping.to_bytes()).to_hex_string()
-        );
-        return Err(ScopeError::PriceNotValid);
-    }
-
-    let chainlink_ts: u64 = chainlink_report.observations_timestamp.into();
-    let current_onchain_ts: u64 = clock
-        .unix_timestamp
-        .try_into()
-        .expect("Invalid clock timestamp");
-    let last_chainlink_ts = u64::from_le_bytes(dated_price.generic_data[0..8].try_into().unwrap());
-
-    if chainlink_ts <= last_chainlink_ts {
-        warn!("An outdated report was provided");
-        return Err(ScopeError::BadTimestamp);
-    }
-
-    let price_ts = u64::min(chainlink_ts, current_onchain_ts);
+    validate_report_feed_id(&chainlink_report.feed_id, &mapping)?;
+    let (unix_timestamp, last_updated_slot, generic_data) = validate_observations_timestamp(
+        chainlink_report.observations_timestamp.into(),
+        dated_price,
+        clock,
+    )?;
 
     let price_dec = chainlink_price_parse(&chainlink_report.benchmark_price)?;
 
@@ -57,10 +91,6 @@ pub fn update_price(
     })?;
 
     let price: Price = price_dec.into();
-    let last_updated_slot = estimate_slot_update_from_ts(clock, price_ts);
-    let unix_timestamp = price_ts;
-    let mut generic_data = [0u8; 24];
-    generic_data[..8].copy_from_slice(&chainlink_ts.to_le_bytes());
 
     *dated_price = DatedPrice {
         price,
@@ -72,7 +102,41 @@ pub fn update_price(
     Ok(())
 }
 
-pub fn validate_mapping(
+pub fn update_price_v4(
+    dated_price: &mut DatedPrice,
+    mapping: Pubkey,
+    clock: &Clock,
+    chainlink_report: &ReportDataV4,
+) -> ScopeResult<()> {
+    validate_report_feed_id(&chainlink_report.feed_id, &mapping)?;
+    let (unix_timestamp, last_updated_slot, generic_data) = validate_observations_timestamp(
+        chainlink_report.observations_timestamp.into(),
+        dated_price,
+        clock,
+    )?;
+
+    let market_status = ReportDataV4MarketStatus::try_from(chainlink_report.market_status)
+        .map_err(|_| ScopeError::ConversionFailure)?;
+    // Don't refresh the price when market status is `unknown`
+    if market_status == ReportDataV4MarketStatus::Unknown {
+        warn!("Price received when market status is unknown, rejecting it");
+        return Err(ScopeError::PriceNotValid);
+    }
+
+    let price_dec = chainlink_price_parse(&chainlink_report.price)?;
+    let price: Price = price_dec.into();
+
+    *dated_price = DatedPrice {
+        price,
+        last_updated_slot,
+        unix_timestamp,
+        generic_data,
+    };
+
+    Ok(())
+}
+
+pub fn validate_mapping_v3(
     price_account: &Option<AccountInfo>,
     generic_data: &[u8],
 ) -> ScopeResult<()> {
@@ -81,16 +145,30 @@ pub fn validate_mapping(
         return Err(ScopeError::UnexpectedAccount);
     };
 
-    let feed_id = FeedID(account.key.to_bytes());
-
     let confidence_factor: u32 = AnchorDeserialize::try_from_slice(&generic_data[..4]).unwrap();
     if confidence_factor < 1 {
         warn!("Confidence factor must be a positive integer");
         return Err(ScopeError::InvalidGenericData);
     }
 
+    let feed_id = FeedID(account.key.to_bytes());
     info!(
-        "Validating mapping with feed id: {} and confidence factor of {confidence_factor}",
+        "Validating mapping for Chainlink price with feed id: {} and confidence factor of {confidence_factor}",
+        feed_id.to_hex_string()
+    );
+
+    Ok(())
+}
+
+pub fn validate_mapping_v4(price_account: &Option<AccountInfo>) -> ScopeResult<()> {
+    let Some(account) = price_account else {
+        warn!("ChainlinkRWA requires a price id as account");
+        return Err(ScopeError::UnexpectedAccount);
+    };
+
+    let feed_id = FeedID(account.key.to_bytes());
+    info!(
+        "Validating mapping for ChainlinkRWA price with feed id: {}",
         feed_id.to_hex_string()
     );
 

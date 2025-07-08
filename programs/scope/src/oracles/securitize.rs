@@ -19,6 +19,8 @@ use crate::{
 
 // Only works with the sAcred vault
 // There is no connection between VaultState to the Feed Account it uses for the share value.
+// WARNING: If this ever changes, we also need to ensure that the securitize token mint has the same number
+// of decimals as the base token mint or include this difference in the computation of the price
 pub const ACRED_VAULT_PK: Pubkey = pubkey!("9L4WxKkUHKBZ96EpHBc7APqvEhobmY1A2ENk5dUfdrpw");
 pub const REDSTONE_FEED_PK: Pubkey = pubkey!("6sK8czVw8Xy6T8YbH6VC8p5ovNZD2mXf5vUTv8sgnUJf");
 
@@ -121,6 +123,7 @@ fn get_share_value(
     if total_supply == 0 {
         return Ok(0);
     }
+    // WARNING: This assumes both token mint has the same number of decimals
     Ok(u64::min(
         10u64.pow(decimals.into()),
         math::mul_div(total_assets, rate, total_supply)?,

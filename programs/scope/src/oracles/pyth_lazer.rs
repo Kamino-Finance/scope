@@ -216,10 +216,7 @@ pub fn validate_mapping_cfg(mapping: &Option<AccountInfo>, generic_data: &[u8]) 
     } = PythLazerData::from_generic_data(generic_data)?;
 
     msg!(
-        "Pyth Lazer: validating mapping with feed_id = {}, exponent = {}, confidence_factor = {}",
-        feed_id,
-        exponent,
-        confidence_factor
+        "Pyth Lazer: validating mapping with feed_id = {feed_id}, exponent = {exponent}, confidence_factor = {confidence_factor}",
     );
 
     if feed_id == 0 {
