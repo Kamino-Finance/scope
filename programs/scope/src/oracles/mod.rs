@@ -5,6 +5,7 @@ pub mod ktokens;
 pub mod ktokens_token_x;
 
 pub mod adrena_lp;
+pub mod capped_floored;
 pub mod chainlink;
 pub mod discount_to_maturity;
 pub mod jito_restaking;
@@ -132,8 +133,12 @@ pub enum OracleType {
     AdrenaLp = 31,
     /// Securitize sacred price oracle
     Securitize = 32,
+    /// Keeps track of a source price, capping and/or flooring to given source prices
+    CappedFloored = 33,
+    /// Chainlink xStocks oracle
+    ChainlinkRWA = 34,
     /// Unitas price oracle
-    Unitas = 33,
+    Unitas = 35,
 }
 
 impl OracleType {
@@ -167,11 +172,12 @@ impl OracleType {
             OracleType::JitoRestaking => 25_000,
             OracleType::DiscountToMaturity => 30_000,
             // Chainlink oracles are not updated through normal refresh ixs
-            OracleType::Chainlink => 0,
+            OracleType::Chainlink | OracleType::ChainlinkRWA => 0,
             OracleType::MostRecentOf => 35_000,
             OracleType::RedStone => 20_000,
             // PythLazer oracle is not updated through normal refresh ixs
             OracleType::PythLazer => 0,
+            OracleType::CappedFloored => 20_000,
             OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
                 panic!("DeprecatedPlaceholder is not a valid oracle type")
             }
@@ -303,7 +309,7 @@ where
         OracleType::JitoRestaking => {
             jito_restaking::get_price(base_account, clock).map_err(Into::into)
         }
-        OracleType::Chainlink => {
+        OracleType::Chainlink | OracleType::ChainlinkRWA => {
             msg!("Chainlink oracle type cannot be refreshed directly");
             return err!(ScopeError::PriceNotValid);
         }
@@ -325,6 +331,11 @@ where
             msg!("PythLazer oracle type cannot be refreshed directly");
             return err!(ScopeError::PriceNotValid);
         }
+        OracleType::CappedFloored => capped_floored::get_price(
+            oracle_prices.load()?.deref(),
+            &oracle_mappings.generic[index],
+        )
+        .map_err(Into::into),
         OracleType::Securitize => {
             let oracle_prices = oracle_prices.load()?;
             let dated_price = oracle_prices.prices[index];
@@ -402,7 +413,10 @@ pub fn validate_oracle_cfg(
         }
         OracleType::JitoRestaking => jito_restaking::validate_account(price_account),
         OracleType::Chainlink => {
-            chainlink::validate_mapping(price_account, generic_data).map_err(Into::into)
+            chainlink::validate_mapping_v3(price_account, generic_data).map_err(Into::into)
+        }
+        OracleType::ChainlinkRWA => {
+            chainlink::validate_mapping_v4(price_account).map_err(Into::into)
         }
         OracleType::DiscountToMaturity => {
             discount_to_maturity::validate_mapping_cfg(price_account, generic_data, clock)
@@ -414,6 +428,9 @@ pub fn validate_oracle_cfg(
         OracleType::RedStone => redstone::validate_price_account(price_account).map_err(Into::into),
         OracleType::PythLazer => {
             pyth_lazer::validate_mapping_cfg(price_account, generic_data).map_err(Into::into)
+        }
+        OracleType::CappedFloored => {
+            capped_floored::validate_mapping_cfg(price_account, generic_data).map_err(Into::into)
         }
         OracleType::Securitize => Ok(()),
         OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {

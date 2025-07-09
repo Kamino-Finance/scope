@@ -1,13 +1,13 @@
 use anchor_lang::prelude::*;
-use chainlink_streams_report::report::v3::ReportDataV3;
+use chainlink_streams_report::report::{v3::ReportDataV3, v4::ReportDataV4};
 use solana_program::program::{get_return_data, invoke};
 
 use crate::{
     oracles::{
         chainlink::{
-            self, chainlink_streams_itf,
+            self,
             chainlink_streams_itf::{
-                ACCESS_CONTROLLER_PUBKEY, VERIFIER_CONFIG_PUBKEY, VERIFIER_PROGRAM_ID,
+                self, ACCESS_CONTROLLER_PUBKEY, VERIFIER_CONFIG_PUBKEY, VERIFIER_PROGRAM_ID,
             },
         },
         OracleType,
@@ -55,7 +55,7 @@ pub fn refresh_chainlink_price<'info>(
     token: u16,
     serialized_chainlink_report: Vec<u8>,
 ) -> Result<()> {
-    // 1 - verify and load the report
+    // 1 - verify the report
     let program_id = ctx.accounts.verifier_program_id.key();
     let verifier_account = ctx.accounts.verifier_account.key();
     let access_controller = ctx.accounts.access_controller.key();
@@ -83,15 +83,12 @@ pub fn refresh_chainlink_price<'info>(
         ],
     )?;
 
-    // Decode and log the verified report data
     let Some((_program_id, return_data)) = get_return_data() else {
         msg!("No report data found");
         return Err(error!(ScopeError::NoChainlinkReportData));
     };
-    let chainlink_report = ReportDataV3::decode(&return_data)
-        .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
 
-    // 2 - update the price
+    // 2 - load the report and update the price
     let oracle_mappings = ctx.accounts.oracle_mappings.load()?;
     let mut oracle_twaps = ctx.accounts.oracle_twaps.load_mut()?;
     let mut oracle_prices = ctx.accounts.oracle_prices.load_mut()?;
@@ -106,7 +103,7 @@ pub fn refresh_chainlink_price<'info>(
             .try_into()
             .map_err(|_| ScopeError::BadTokenType)?;
         require!(
-            price_type == OracleType::Chainlink,
+            price_type == OracleType::Chainlink || price_type == OracleType::ChainlinkRWA,
             ScopeError::BadTokenType
         );
 
@@ -116,13 +113,31 @@ pub fn refresh_chainlink_price<'info>(
         let old_price = *dated_price_ref;
         let clock = Clock::get()?;
 
-        chainlink::update_price(
-            dated_price_ref,
-            oracle_mapping,
-            mapping_generic_data,
-            &clock,
-            &chainlink_report,
-        )?;
+        // Decode the verified report data before updating the price
+        match price_type {
+            OracleType::Chainlink => {
+                let chainlink_report = ReportDataV3::decode(&return_data)
+                    .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
+                chainlink::update_price_v3(
+                    dated_price_ref,
+                    oracle_mapping,
+                    mapping_generic_data,
+                    &clock,
+                    &chainlink_report,
+                )?;
+            }
+            OracleType::ChainlinkRWA => {
+                let chainlink_report = ReportDataV4::decode(&return_data)
+                    .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
+                chainlink::update_price_v4(
+                    dated_price_ref,
+                    oracle_mapping,
+                    &clock,
+                    &chainlink_report,
+                )?;
+            }
+            _ => return Err(error!(ScopeError::BadTokenType)),
+        }
 
         if oracle_mappings.is_twap_enabled(token_idx) {
             let _ =

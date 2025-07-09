@@ -1412,7 +1412,8 @@
     "sources_max_age_s": 7200,
     "max_divergence_bps": 50,
     "source_entries": [ 20, 230, 302 ],
-    "ref_price": 20
+    "ref_price": 20,
+    "group_ids": [ 1 ]
   },
   "234": {
     "label": "hayekSOL/SOL",
@@ -1966,13 +1967,13 @@
     "label": "Pyth Pull FX EUR/USD",
     "oracle_mapping": "Fu76ChamBDjE8UuGLV6GP2AcPPSU6gjhkNhAyuoPm7ny",
     "oracle_type": "PythPull",
-    "group_ids": [ 2 ]
+    "group_ids": [ 1, 2 ]
   },
   "310": {
     "label": "Pyth Pull EMA FX EUR/USD",
     "oracle_mapping": "Fu76ChamBDjE8UuGLV6GP2AcPPSU6gjhkNhAyuoPm7ny",
     "oracle_type": "PythPullEMA",
-    "group_ids": [ 2 ]
+    "group_ids": [ 1, 2 ]
   },
   "311": {
     "label": "Most recent EUR/USD",
@@ -1980,7 +1981,8 @@
     "max_age_slot": 165,
     "sources_max_age_s": 172800,
     "max_divergence_bps": 600,
-    "source_entries": [ 173, 309 ]
+    "source_entries": [ 173, 309 ],
+    "group_ids": [ 1, 2 ]
   },
   "312": {
     "label": "Most recent TWAP EUR/USD",
@@ -1988,7 +1990,8 @@
     "max_age_slot": 165,
     "sources_max_age_s": 172800,
     "max_divergence_bps": 600,
-    "source_entries": [ 174, 310 ]
+    "source_entries": [ 174, 310 ],
+    "group_ids": [ 1, 2 ]
   },
   "313": {
     "label": "Orca GME/USDC",
@@ -2115,6 +2118,13 @@
     "max_age_slot": 165,
     "group_ids": [ 1 ]
   },
+  "330": {
+    "label": "Exponent PT-2509/kySOL",
+    "oracle_type": "DiscountToMaturity",
+    "discount_per_year_bps": 2500,
+    "maturity_timestamp": 1759233500,
+    "group_ids": [ 1 ]
+  },
   "331": {
     "label": "Securitize sACRED/USD",
     "oracle_mapping": "9L4WxKkUHKBZ96EpHBc7APqvEhobmY1A2ENk5dUfdrpw",
@@ -2122,6 +2132,20 @@
     "twap_enabled": true,
     "max_age_slot": 1510,
     "ref_price": 191,
+    "group_ids": [ 1 ]
+  },
+  "332": {
+    "label": "Exponent PT-2510/FragSOL",
+    "oracle_type": "DiscountToMaturity",
+    "discount_per_year_bps": 2500,
+    "maturity_timestamp": 1761904699,
+    "group_ids": [ 1 ]
+  },
+  "333": {
+    "label": "RateX PT-2508/FragSOL",
+    "oracle_type": "DiscountToMaturity",
+    "discount_per_year_bps": 2500,
+    "maturity_timestamp": 1756425600,
     "group_ids": [ 1 ]
   },
   "345": {

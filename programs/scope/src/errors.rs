@@ -168,6 +168,12 @@ pub enum ScopeError {
 
     #[msg("Provided account has a different owner than expected")]
     WrongAccountOwner,
+
+    #[msg("Provided source index is invalid")]
+    CompositeOracleInvalidSourceIndex,
+
+    #[msg("Can't set both cap and floor to None for CappedFloored oracle")]
+    CappedFlooredBothCapAndFloorAreNone,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError
