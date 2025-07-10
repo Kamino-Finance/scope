@@ -26,6 +26,7 @@ pub mod spl_stake;
 pub mod switchboard_on_demand;
 pub mod switchboard_v2;
 pub mod twap;
+pub mod unitas;
 
 use std::ops::Deref;
 
@@ -136,6 +137,8 @@ pub enum OracleType {
     CappedFloored = 33,
     /// Chainlink xStocks oracle
     ChainlinkRWA = 34,
+    /// Unitas price oracle
+    Unitas = 35,
 }
 
 impl OracleType {
@@ -180,6 +183,7 @@ impl OracleType {
             }
             OracleType::Securitize => 30_000,
             OracleType::AdrenaLp => 20_000,
+            OracleType::Unitas => 20_000,
         }
     }
 }
@@ -342,6 +346,7 @@ where
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
         OracleType::AdrenaLp => adrena_lp::get_price(base_account, clock),
+        OracleType::Unitas => unitas::get_price(base_account, clock, extra_accounts),
     }?;
     // The price providers above are performing their type-specific validations, but are still free
     // to return 0, which we can only tolerate in case of explicit fixed price:
@@ -432,5 +437,6 @@ pub fn validate_oracle_cfg(
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
         OracleType::AdrenaLp => adrena_lp::validate_adrena_pool(price_account, clock),
+        OracleType::Unitas => unitas::validate_price_account(price_account).map_err(Into::into),
     }
 }
