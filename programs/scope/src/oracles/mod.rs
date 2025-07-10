@@ -411,7 +411,7 @@ pub fn validate_oracle_cfg(
             chainlink::validate_mapping_v3(price_account, generic_data).map_err(Into::into)
         }
         OracleType::ChainlinkRWA => {
-            chainlink::validate_mapping_v4(price_account).map_err(Into::into)
+            chainlink::validate_mapping_v4(price_account, generic_data).map_err(Into::into)
         }
         OracleType::DiscountToMaturity => {
             discount_to_maturity::validate_mapping_cfg(price_account, generic_data, clock)

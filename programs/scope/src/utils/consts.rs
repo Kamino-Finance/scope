@@ -13,3 +13,4 @@ pub const FULL_BPS: u16 = 10_000;
 
 pub const SECONDS_PER_YEAR: u64 = 365 * 24 * 60 * 60;
 pub const MILLIS_PER_SECOND: u64 = 1_000;
+pub const NANOSECONDS_PER_SECOND: u64 = 1_000_000_000;

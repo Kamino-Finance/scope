@@ -1,25 +1,69 @@
 use anchor_lang::prelude::*;
 use chainlink_streams_report::{
     feed_id::ID as FeedID,
-    report::{v3::ReportDataV3, v4::ReportDataV4},
+    report::{v3::ReportDataV3, v8::ReportDataV8},
 };
 use decimal_wad::decimal::{Decimal, U192};
 use num_bigint::BigInt;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 use crate::{
+    borsh::BorshSerialize,
     errors::ScopeError,
     info,
-    utils::math::{check_confidence_interval_decimal, estimate_slot_update_from_ts},
+    utils::{
+        consts::NANOSECONDS_PER_SECOND,
+        math::{check_confidence_interval_decimal, estimate_slot_update_from_ts},
+    },
     warn, DatedPrice, Price, ScopeResult,
 };
 
+const PRICE_STALENESS_S: u64 = 60;
+
 #[derive(IntoPrimitive, TryFromPrimitive, Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u32)]
-enum ReportDataV4MarketStatus {
+enum ReportDataV8MarketStatus {
     Unknown = 0,
     Closed,
     Open,
+}
+
+#[derive(
+    IntoPrimitive,
+    TryFromPrimitive,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Debug,
+    AnchorSerialize,
+    AnchorDeserialize,
+)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[repr(u8)]
+pub enum MarketStatusBehavior {
+    AllUpdates = 0,
+    Open,
+    OpenAndPrePost,
+}
+
+impl MarketStatusBehavior {
+    pub fn from_generic_data(mut buff: &[u8]) -> ScopeResult<Self> {
+        AnchorDeserialize::deserialize(&mut buff).map_err(|_| {
+            msg!("Failed to deserialize MarketStatusBehavior");
+            ScopeError::InvalidGenericData
+        })
+    }
+
+    pub fn to_generic_data(&self) -> [u8; 20] {
+        let mut buff = [0u8; 20];
+        let mut cursor = &mut buff[..];
+        BorshSerialize::serialize(&self, &mut cursor)
+            .expect("Failed to serialize MarketStatusBehavior");
+        buff
+    }
 }
 
 fn validate_report_feed_id(feed_id: &FeedID, mapping: &Pubkey) -> ScopeResult<()> {
@@ -105,8 +149,9 @@ pub fn update_price_v3(
 pub fn update_price_v4(
     dated_price: &mut DatedPrice,
     mapping: Pubkey,
+    mapping_generic_data: &[u8],
     clock: &Clock,
-    chainlink_report: &ReportDataV4,
+    chainlink_report: &ReportDataV8,
 ) -> ScopeResult<()> {
     validate_report_feed_id(&chainlink_report.feed_id, &mapping)?;
     let (unix_timestamp, last_updated_slot, generic_data) = validate_observations_timestamp(
@@ -115,15 +160,46 @@ pub fn update_price_v4(
         clock,
     )?;
 
-    let market_status = ReportDataV4MarketStatus::try_from(chainlink_report.market_status)
+    // `last_update_timestamp` is in nanoseconds
+    let now_timestamp_u64 =
+        u64::try_from(clock.unix_timestamp).map_err(|_| ScopeError::ConversionFailure)?;
+    let price_is_stale = chainlink_report.last_update_timestamp
+        < (now_timestamp_u64.saturating_sub(PRICE_STALENESS_S)) * NANOSECONDS_PER_SECOND;
+
+    let market_status_behavior = MarketStatusBehavior::from_generic_data(mapping_generic_data)
         .map_err(|_| ScopeError::ConversionFailure)?;
-    // Don't refresh the price when market status is `unknown`
-    if market_status == ReportDataV4MarketStatus::Unknown {
-        warn!("Price received when market status is unknown, rejecting it");
-        return Err(ScopeError::PriceNotValid);
+    let market_status = ReportDataV8MarketStatus::try_from(chainlink_report.market_status)
+        .map_err(|_| ScopeError::ConversionFailure)?;
+
+    match market_status_behavior {
+        MarketStatusBehavior::Open => {
+            // Reject all prices that are not during market open, or are during market open but price is stale
+            // (which means unexpected market pause)
+            if market_status != ReportDataV8MarketStatus::Open {
+                warn!("ChainlinkRWA type DuringOpen: price received outside of market hours, rejecting update");
+                return Err(ScopeError::PriceNotValid);
+            }
+            if price_is_stale {
+                warn!("ChainlinkRWA type DuringOpen: price is stale (unexpected market pause), rejecting update");
+                return Err(ScopeError::PriceNotValid);
+            }
+        }
+        MarketStatusBehavior::OpenAndPrePost => {
+            // Accept all prices that are not stale, which means that the update is either during market open,
+            // or during pre and post market hours
+            if market_status == ReportDataV8MarketStatus::Unknown {
+                warn!("ChainlinkRWA type DuringOpenAndPrePost: market status is unknown, rejecting update");
+                return Err(ScopeError::PriceNotValid);
+            }
+            if price_is_stale {
+                warn!("ChainlinkRWA type DuringOpenAndPrePost: price is stale, rejecting update");
+                return Err(ScopeError::PriceNotValid);
+            }
+        }
+        MarketStatusBehavior::AllUpdates => (),
     }
 
-    let price_dec = chainlink_price_parse(&chainlink_report.price)?;
+    let price_dec = chainlink_price_parse(&chainlink_report.mid_price)?;
     let price: Price = price_dec.into();
 
     *dated_price = DatedPrice {
@@ -160,11 +236,19 @@ pub fn validate_mapping_v3(
     Ok(())
 }
 
-pub fn validate_mapping_v4(price_account: &Option<AccountInfo>) -> ScopeResult<()> {
+pub fn validate_mapping_v4(
+    price_account: &Option<AccountInfo>,
+    generic_data: &[u8],
+) -> ScopeResult<()> {
     let Some(account) = price_account else {
         warn!("ChainlinkRWA requires a price id as account");
         return Err(ScopeError::UnexpectedAccount);
     };
+
+    if MarketStatusBehavior::from_generic_data(generic_data).is_err() {
+        warn!("Invalid market status behavior passed in");
+        return Err(ScopeError::InvalidGenericData);
+    }
 
     let feed_id = FeedID(account.key.to_bytes());
     info!(
