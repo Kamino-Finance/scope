@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use chainlink_streams_report::report::{v3::ReportDataV3, v4::ReportDataV4};
+use chainlink_streams_report::report::{v3::ReportDataV3, v8::ReportDataV8};
 use solana_program::program::{get_return_data, invoke};
 
 use crate::{
@@ -127,11 +127,12 @@ pub fn refresh_chainlink_price<'info>(
                 )?;
             }
             OracleType::ChainlinkRWA => {
-                let chainlink_report = ReportDataV4::decode(&return_data)
+                let chainlink_report = ReportDataV8::decode(&return_data)
                     .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
                 chainlink::update_price_v4(
                     dated_price_ref,
                     oracle_mapping,
+                    mapping_generic_data,
                     &clock,
                     &chainlink_report,
                 )?;

@@ -734,8 +734,8 @@ checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 
 [[package]]
 name = "chainlink-data-streams-report"
-version = "1.0.0"
-source = "git+https://github.com/Kamino-Finance/chainlink-data-streams-sdk.git?branch=rwa_report_data_v4_with_last_update_timestamp#f67a85602fb4b3671c2279ad8043dae901bdca41"
+version = "1.0.1"
+source = "git+https://github.com/smartcontractkit/data-streams-sdk.git#a423fcc5aa8805d6622d3a7c725cf12f9ff367fc"
 dependencies = [
  "hex",
  "num-bigint",
@@ -2392,7 +2392,7 @@ dependencies = [
 
 [[package]]
 name = "scope"
-version = "0.1.0"
+version = "0.26.1"
 dependencies = [
  "adrena-perp-itf",
  "anchor-lang",
