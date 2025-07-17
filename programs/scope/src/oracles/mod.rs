@@ -8,6 +8,7 @@ pub mod adrena_lp;
 pub mod capped_floored;
 pub mod chainlink;
 pub mod discount_to_maturity;
+pub mod flashtrade_lp;
 pub mod jito_restaking;
 pub mod jupiter_lp;
 pub mod meteora_dlmm;
@@ -136,6 +137,8 @@ pub enum OracleType {
     CappedFloored = 33,
     /// Chainlink xStocks oracle
     ChainlinkRWA = 34,
+    /// Flashtrade's perpetual LP token price
+    FlashtradeLp = 35,
 }
 
 impl OracleType {
@@ -180,6 +183,7 @@ impl OracleType {
             }
             OracleType::Securitize => 30_000,
             OracleType::AdrenaLp => 20_000,
+            OracleType::FlashtradeLp => 20_000,
         }
     }
 }
@@ -342,6 +346,7 @@ where
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
         OracleType::AdrenaLp => adrena_lp::get_price(base_account, clock),
+        OracleType::FlashtradeLp => flashtrade_lp::get_price(base_account, clock),
     }?;
     // The price providers above are performing their type-specific validations, but are still free
     // to return 0, which we can only tolerate in case of explicit fixed price:
@@ -432,5 +437,6 @@ pub fn validate_oracle_cfg(
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
         OracleType::AdrenaLp => adrena_lp::validate_adrena_pool(price_account, clock),
+        OracleType::FlashtradeLp => flashtrade_lp::validate_flashtrade_pool(price_account, clock),
     }
 }

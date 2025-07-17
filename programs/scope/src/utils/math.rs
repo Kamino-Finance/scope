@@ -4,7 +4,9 @@ use decimal_wad::{
 };
 use raydium_amm_v3::libraries::U256;
 use solana_program::clock;
-use yvaults::utils::FULL_BPS;
+// use yvaults::utils::FULL_BPS;
+
+pub const FULL_BPS: u32 = 10_000; // 100% in basis points (Override to compile)
 
 use crate::{Price, ScopeError, ScopeResult};
 
