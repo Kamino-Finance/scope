@@ -181,15 +181,448 @@
     "oracle_type": "PythPullEMA"
   },
   "30": {
-    "label": "Chainlink AAPLx/USD",
+    "label": "Chainlink AAPLx/USD Open",
     "oracle_type": "ChainlinkRWA",
     "chainlink_feed_id": "0x0008e64e9538dea4c50f9a8203d2c8993b6f3756da73cabafbb204637310c450",
-    "twap_enabled": true
+    "market_status_behavior": "Open"
   },
   "31": {
     "label": "Chainlink TWAP AAPLx/USD",
     "oracle_type": "ScopeTwap",
-    "twap_source": 30,
+    "twap_source": 33,
     "max_age_slot": 165
+  },
+  "32": {
+    "label": "Chainlink AAPLx/USD PrePost",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008e64e9538dea4c50f9a8203d2c8993b6f3756da73cabafbb204637310c450",
+    "market_status_behavior": "OpenAndPrePost"
+  },
+  "33": {
+    "label": "Chainlink AAPLx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008e64e9538dea4c50f9a8203d2c8993b6f3756da73cabafbb204637310c450",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true
+  },
+  "34": {
+    "label": "Pyth Pull GOOGL/USD",
+    "oracle_mapping": "HShKFQqhYkUiXpVyyLmrAALXwWqHB7ikLmPbrwJzpRNh",
+    "oracle_type": "PythPull"
+  },
+  "35": {
+    "label": "Pyth Pull EMA GOOGL/USD",
+    "oracle_mapping": "HShKFQqhYkUiXpVyyLmrAALXwWqHB7ikLmPbrwJzpRNh",
+    "oracle_type": "PythPullEMA"
+  },
+  "36": {
+    "label": "Pyth Pull GOOGLx/GOOGL",
+    "oracle_mapping": "5KtoPy9WsV2tg87qQbpPFPJeTyDyyvnaurqeiwk1f3Ks",
+    "oracle_type": "PythPull"
+  },
+  "37": {
+    "label": "Pyth Pull EMA GOOGLx/GOOGL",
+    "oracle_mapping": "5KtoPy9WsV2tg87qQbpPFPJeTyDyyvnaurqeiwk1f3Ks",
+    "oracle_type": "PythPullEMA"
+  },
+  "38": {
+    "label": "Chainlink GOOGLx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00081e842c78eee5a521e7c876e749715e980f07349f9edf868fe1078403d6b1",
+    "market_status_behavior": "Open"
+  },
+  "39": {
+    "label": "Chainlink TWAP GOOGLx/USD",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 41,
+    "max_age_slot": 165
+  },
+  "40": {
+    "label": "Chainlink GOOGLx/USD PrePost",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00081e842c78eee5a521e7c876e749715e980f07349f9edf868fe1078403d6b1",
+    "market_status_behavior": "OpenAndPrePost"
+  },
+  "41": {
+    "label": "Chainlink GOOGLx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00081e842c78eee5a521e7c876e749715e980f07349f9edf868fe1078403d6b1",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true
+  },
+  "42": {
+    "label": "Pyth Pull NVDA/USD",
+    "oracle_mapping": "2w1Tg1XTZbUib7srfRoStJ4v5JXVsK7roQEGMsMaGZFC",
+    "oracle_type": "PythPull"
+  },
+  "43": {
+    "label": "Pyth Pull EMA NVDA/USD",
+    "oracle_mapping": "2w1Tg1XTZbUib7srfRoStJ4v5JXVsK7roQEGMsMaGZFC",
+    "oracle_type": "PythPullEMA"
+  },
+  "44": {
+    "label": "Pyth Pull NVDAx/NVDA",
+    "oracle_mapping": "9Qxr7ZFsMCoA7Yo1vEMc23mqeZX5qx6xBo5jbHgVHKir",
+    "oracle_type": "PythPull"
+  },
+  "45": {
+    "label": "Pyth Pull EMA NVDAx/NVDA",
+    "oracle_mapping": "9Qxr7ZFsMCoA7Yo1vEMc23mqeZX5qx6xBo5jbHgVHKir",
+    "oracle_type": "PythPullEMA"
+  },
+  "46": {
+    "label": "Chainlink NVDAx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008adc184847ba8d17f0030c15e78f61b83eda2e190f30346c4ea3babed647d",
+    "market_status_behavior": "Open"
+  },
+  "47": {
+    "label": "Chainlink TWAP NVDAx/USD",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 49,
+    "max_age_slot": 165
+  },
+  "48": {
+    "label": "Chainlink NVDAx/USD PrePost",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008adc184847ba8d17f0030c15e78f61b83eda2e190f30346c4ea3babed647d",
+    "market_status_behavior": "OpenAndPrePost"
+  },
+  "49": {
+    "label": "Chainlink NVDAx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008adc184847ba8d17f0030c15e78f61b83eda2e190f30346c4ea3babed647d",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true
+  },
+  "50": {
+    "label": "Pyth Pull AMZN/USD",
+    "oracle_mapping": "GBkjjFxbaFY9TBHpAPypk5JBchpPPve2jskAcd9zuFNd",
+    "oracle_type": "PythPull"
+  },
+  "51": {
+    "label": "Pyth Pull EMA AMZN/USD",
+    "oracle_mapping": "GBkjjFxbaFY9TBHpAPypk5JBchpPPve2jskAcd9zuFNd",
+    "oracle_type": "PythPullEMA"
+  },
+  "52": {
+    "label": "Chainlink AMZNx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008fdc9c3ba3f3a8f44424d7e1d9f56ca47510fe942985b41622f7314bedd8b",
+    "market_status_behavior": "Open"
+  },
+  "53": {
+    "label": "Chainlink TWAP AMZNx/USD",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 55,
+    "max_age_slot": 165
+  },
+  "54": {
+    "label": "Chainlink AMZNx/USD PrePost",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008fdc9c3ba3f3a8f44424d7e1d9f56ca47510fe942985b41622f7314bedd8b",
+    "market_status_behavior": "OpenAndPrePost"
+  },
+  "55": {
+    "label": "Chainlink AMZNx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008fdc9c3ba3f3a8f44424d7e1d9f56ca47510fe942985b41622f7314bedd8b",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true
+  },
+  "56": {
+    "label": "Pyth Pull TSLA/USD",
+    "oracle_mapping": "E8WFH8brgP58arcuW2wwsPHiomYrSvrgWTsRLZLAEZUQ",
+    "oracle_type": "PythPull"
+  },
+  "57": {
+    "label": "Pyth Pull EMA TSLA/USD",
+    "oracle_mapping": "E8WFH8brgP58arcuW2wwsPHiomYrSvrgWTsRLZLAEZUQ",
+    "oracle_type": "PythPullEMA"
+  },
+  "58": {
+    "label": "Pyth Pull TSLAx/TSLA",
+    "oracle_mapping": "4a4TAWMimr7GHbWPpKtHTqGhgagVTCW5rAN9PprM6NEJ",
+    "oracle_type": "PythPull"
+  },
+  "59": {
+    "label": "Pyth Pull EMA TSLAx/TSLA",
+    "oracle_mapping": "4a4TAWMimr7GHbWPpKtHTqGhgagVTCW5rAN9PprM6NEJ",
+    "oracle_type": "PythPullEMA"
+  },
+  "60": {
+    "label": "Chainlink TSLAx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00084edc844a6f88449c59c8cfcdb2225799a2330503472cb0bc4f9369a717fa",
+    "market_status_behavior": "Open"
+  },
+  "61": {
+    "label": "Chainlink TWAP TSLAx/USD",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 63,
+    "max_age_slot": 165
+  },
+  "62": {
+    "label": "Chainlink TSLAx/USD PrePost",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00084edc844a6f88449c59c8cfcdb2225799a2330503472cb0bc4f9369a717fa",
+    "market_status_behavior": "OpenAndPrePost"
+  },
+  "63": {
+    "label": "Chainlink TSLAx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00084edc844a6f88449c59c8cfcdb2225799a2330503472cb0bc4f9369a717fa",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true
+  },
+  "64": {
+    "label": "Pyth Pull COIN/USD",
+    "oracle_mapping": "91JXaWGHr57awfqhXQP2TxrkLX6CpvtBaaRjz1PEQqXn",
+    "oracle_type": "PythPull"
+  },
+  "65": {
+    "label": "Pyth Pull EMA COIN/USD",
+    "oracle_mapping": "91JXaWGHr57awfqhXQP2TxrkLX6CpvtBaaRjz1PEQqXn",
+    "oracle_type": "PythPullEMA"
+  },
+  "66": {
+    "label": "Pyth Pull COINx/COIN",
+    "oracle_mapping": "4S9Labj9bT2CqRJb5uc36x54gZoN8JBc6eJYLTB2orBx",
+    "oracle_type": "PythPull"
+  },
+  "67": {
+    "label": "Pyth Pull EMA COINx/COIN",
+    "oracle_mapping": "4S9Labj9bT2CqRJb5uc36x54gZoN8JBc6eJYLTB2orBx",
+    "oracle_type": "PythPullEMA"
+  },
+  "68": {
+    "label": "Chainlink COINx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x000807d210856cc2783978eb01ba478aa6ae15b7bad433e3a10e9c343421cc49",
+    "market_status_behavior": "Open"
+  },
+  "69": {
+    "label": "Chainlink TWAP COINx/USD",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 71,
+    "max_age_slot": 165
+  },
+  "70": {
+    "label": "Chainlink COINx/USD PrePost",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x000807d210856cc2783978eb01ba478aa6ae15b7bad433e3a10e9c343421cc49",
+    "market_status_behavior": "OpenAndPrePost"
+  },
+  "71": {
+    "label": "Chainlink COINx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x000807d210856cc2783978eb01ba478aa6ae15b7bad433e3a10e9c343421cc49",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true
+  },
+  "72": {
+    "label": "Pyth Pull MSTR/USD",
+    "oracle_mapping": "HJGvGyWrAXdZPG4Q7LNkkKja72FDkJW7ixuyg3u6vZyP",
+    "oracle_type": "PythPull"
+  },
+  "73": {
+    "label": "Pyth Pull EMA MSTR/USD",
+    "oracle_mapping": "HJGvGyWrAXdZPG4Q7LNkkKja72FDkJW7ixuyg3u6vZyP",
+    "oracle_type": "PythPullEMA"
+  },
+  "74": {
+    "label": "Pyth Pull MSTRx/MSTR",
+    "oracle_mapping": "5cWXcVyw5LWfvKjUHm6PKnfEfbW9C6bYSHRGhiU7hZC1",
+    "oracle_type": "PythPull"
+  },
+  "75": {
+    "label": "Pyth Pull EMA MSTRx/MSTR",
+    "oracle_mapping": "5cWXcVyw5LWfvKjUHm6PKnfEfbW9C6bYSHRGhiU7hZC1",
+    "oracle_type": "PythPullEMA"
+  },
+  "76": {
+    "label": "Chainlink MSTRx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00081af08dfd67dcee9394faecd71eb1dc586eb2a396509f1c49380976d69739",
+    "market_status_behavior": "Open"
+  },
+  "77": {
+    "label": "Chainlink TWAP MSTRx/USD",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 79,
+    "max_age_slot": 165
+  },
+  "78": {
+    "label": "Chainlink MSTRx/USD PrePost",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00081af08dfd67dcee9394faecd71eb1dc586eb2a396509f1c49380976d69739",
+    "market_status_behavior": "OpenAndPrePost"
+  },
+  "79": {
+    "label": "Chainlink MSTRx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00081af08dfd67dcee9394faecd71eb1dc586eb2a396509f1c49380976d69739",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true
+  },
+  "80": {
+    "label": "Chainlink SPYx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00081025c627b3392ee8bfeb1dbd1297382cbf2dadc30aeedacb3278a9f0b21f",
+    "market_status_behavior": "Open"
+  },
+  "81": {
+    "label": "Chainlink TWAP SPYx/USD",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 83,
+    "max_age_slot": 165
+  },
+  "82": {
+    "label": "Chainlink SPYx/USD PrePost",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00081025c627b3392ee8bfeb1dbd1297382cbf2dadc30aeedacb3278a9f0b21f",
+    "market_status_behavior": "OpenAndPrePost"
+  },
+  "83": {
+    "label": "Chainlink SPYx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00081025c627b3392ee8bfeb1dbd1297382cbf2dadc30aeedacb3278a9f0b21f",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true
+  },
+  "84": {
+    "label": "Pyth Pull SPYx/SPY",
+    "oracle_mapping": "2if3wciQYbmgCzicHgofw2NFA6YHAQHxQKxzSZWb8Cpg",
+    "oracle_type": "PythPull"
+  },
+  "85": {
+    "label": "Pyth Pull EMA SPYx/SPY",
+    "oracle_mapping": "2if3wciQYbmgCzicHgofw2NFA6YHAQHxQKxzSZWb8Cpg",
+    "oracle_type": "PythPullEMA"
+  },
+  "86": {
+    "label": "Chainlink QQQx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008707410e2c111fb0e80cab2fa004b215eea2d95b106e700243f9ebcc8fbd9",
+    "market_status_behavior": "Open"
+  },
+  "87": {
+    "label": "Chainlink TWAP QQQx/USD",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 89,
+    "max_age_slot": 165
+  },
+  "88": {
+    "label": "Chainlink QQQx/USD PrePost",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008707410e2c111fb0e80cab2fa004b215eea2d95b106e700243f9ebcc8fbd9",
+    "market_status_behavior": "OpenAndPrePost"
+  },
+  "89": {
+    "label": "Chainlink QQQx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008707410e2c111fb0e80cab2fa004b215eea2d95b106e700243f9ebcc8fbd9",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true
+  },
+  "90": {
+    "label": "Pyth Pull QQQ/USD",
+    "oracle_mapping": "EwssJrQ7UVz6itHEaQQsKWikhZ3iHddyxRhmR7pTvwt5",
+    "oracle_type": "PythPull"
+  },
+  "91": {
+    "label": "Pyth Pull EMA QQQ/USD",
+    "oracle_mapping": "EwssJrQ7UVz6itHEaQQsKWikhZ3iHddyxRhmR7pTvwt5",
+    "oracle_type": "PythPullEMA"
+  },
+  "92": {
+    "label": "Pyth Pull QQQx/QQQ",
+    "oracle_mapping": "BYaWQnztYwBDPvH2m7yTGRx3TdSumGcu9ocCPhQ4HHdk",
+    "oracle_type": "PythPull"
+  },
+  "93": {
+    "label": "Pyth Pull EMA QQQx/QQQ",
+    "oracle_mapping": "BYaWQnztYwBDPvH2m7yTGRx3TdSumGcu9ocCPhQ4HHdk",
+    "oracle_type": "PythPullEMA"
+  },
+  "94": {
+    "label": "Pyth Pull HOOD/USD",
+    "oracle_mapping": "5tZizzQN776ZWTibPJKecjk1DkTSDHu47dXM3SxR5D5i",
+    "oracle_type": "PythPull"
+  },
+  "95": {
+    "label": "Pyth Pull EMA HOOD/USD",
+    "oracle_mapping": "5tZizzQN776ZWTibPJKecjk1DkTSDHu47dXM3SxR5D5i",
+    "oracle_type": "PythPullEMA"
+  },
+  "96": {
+    "label": "Pyth Pull HOODx/HOOD",
+    "oracle_mapping": "BkLXe2FGM8udS2GMewjoYbmLjxKhfApEXYyYR2yKzAj3",
+    "oracle_type": "PythPull"
+  },
+  "97": {
+    "label": "Pyth Pull EMA HOODx/HOOD",
+    "oracle_mapping": "BkLXe2FGM8udS2GMewjoYbmLjxKhfApEXYyYR2yKzAj3",
+    "oracle_type": "PythPullEMA"
+  },
+  "98": {
+    "label": "Chainlink HOODx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00088cf407215dc12239f90b6b4837571aca4939a65cfa564a50af23f48aef37",
+    "market_status_behavior": "Open"
+  },
+  "99": {
+    "label": "Chainlink TWAP HOODx/USD",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 101,
+    "max_age_slot": 165
+  },
+  "100": {
+    "label": "Chainlink HOODx/USD PrePost",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00088cf407215dc12239f90b6b4837571aca4939a65cfa564a50af23f48aef37",
+    "market_status_behavior": "OpenAndPrePost"
+  },
+  "101": {
+    "label": "Chainlink HOODx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00088cf407215dc12239f90b6b4837571aca4939a65cfa564a50af23f48aef37",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true
+  },
+  "102": {
+    "label": "Pyth Pull PUMP/USD",
+    "oracle_mapping": "HMm3GPbdnqGwbkTnUUqCFsH8AMHDdEC3Lg8gcPD3HJSH",
+    "oracle_type": "PythPull"
+  },
+  "103": {
+    "label": "Pyth Pull EMA PUMP/USD",
+    "oracle_mapping": "HMm3GPbdnqGwbkTnUUqCFsH8AMHDdEC3Lg8gcPD3HJSH",
+    "oracle_type": "PythPullEMA"
+  },
+  "104": {
+    "label": "Chainlink PUMP/USD",
+    "oracle_type": "Chainlink",
+    "chainlink_feed_id": "0x00032ce910d5ee7e47506b9f0607acdc017fb6cd92ed3696eb3573db6ad41cb9",
+    "confidence_factor": 50,
+    "twap_enabled": true
+  },
+  "105": {
+    "label": "Chainlink TWAP PUMP/USD",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 104,
+    "max_age_slot": 165
+  },
+  "106": {
+    "label": "RateX PT-2508/fragSOL",
+    "oracle_type": "DiscountToMaturity",
+    "discount_per_year_bps": 2500,
+    "maturity_timestamp": 1756425600
+  },
+  "107": {
+    "label": "RateX PT-2508/fragBTC",
+    "oracle_type": "DiscountToMaturity",
+    "discount_per_year_bps": 2500,
+    "maturity_timestamp": 1756425600
   }
 }

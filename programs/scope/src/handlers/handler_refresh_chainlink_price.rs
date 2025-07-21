@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use chainlink_streams_report::report::{v3::ReportDataV3, v8::ReportDataV8};
+use chainlink_streams_report::report::{v3::ReportDataV3, v8::ReportDataV8, v9::ReportDataV9};
 use solana_program::program::{get_return_data, invoke};
 
 use crate::{
@@ -103,7 +103,9 @@ pub fn refresh_chainlink_price<'info>(
             .try_into()
             .map_err(|_| ScopeError::BadTokenType)?;
         require!(
-            price_type == OracleType::Chainlink || price_type == OracleType::ChainlinkRWA,
+            price_type == OracleType::Chainlink
+                || price_type == OracleType::ChainlinkRWA
+                || price_type == OracleType::ChainlinkNAV,
             ScopeError::BadTokenType
         );
 
@@ -129,10 +131,20 @@ pub fn refresh_chainlink_price<'info>(
             OracleType::ChainlinkRWA => {
                 let chainlink_report = ReportDataV8::decode(&return_data)
                     .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
-                chainlink::update_price_v4(
+                chainlink::update_price_v8(
                     dated_price_ref,
                     oracle_mapping,
                     mapping_generic_data,
+                    &clock,
+                    &chainlink_report,
+                )?;
+            }
+            OracleType::ChainlinkNAV => {
+                let chainlink_report = ReportDataV9::decode(&return_data)
+                    .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
+                chainlink::update_price_v9(
+                    dated_price_ref,
+                    oracle_mapping,
                     &clock,
                     &chainlink_report,
                 )?;

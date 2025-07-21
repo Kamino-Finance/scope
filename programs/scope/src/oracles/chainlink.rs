@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use chainlink_streams_report::{
     feed_id::ID as FeedID,
-    report::{v3::ReportDataV3, v8::ReportDataV8},
+    report::{v3::ReportDataV3, v8::ReportDataV8, v9::ReportDataV9},
 };
 use decimal_wad::decimal::{Decimal, U192};
 use num_bigint::BigInt;
@@ -24,7 +24,7 @@ const PRICE_STALENESS_S: u64 = 60;
 
 #[derive(IntoPrimitive, TryFromPrimitive, Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u32)]
-enum ReportDataV8MarketStatus {
+pub enum ReportDataV8MarketStatus {
     Unknown = 0,
     Closed,
     Open,
@@ -64,6 +64,17 @@ impl MarketStatusBehavior {
             .expect("Failed to serialize MarketStatusBehavior");
         buff
     }
+}
+
+/// # Ripcord Flag
+/// - `0` (false): Feed's data provider is OK. Fund's data provider and accuracy is as expected.
+/// - `1` (true): Feed's data provider is flagging a pause. Data provider detected outliers,
+///   deviated thresholds, or operational issues. **DO NOT consume NAV data when ripcord=1.**
+#[derive(IntoPrimitive, TryFromPrimitive, Clone, Copy, PartialEq, Eq, Debug)]
+#[repr(u32)]
+pub enum ReportDataV9RipcordFlag {
+    Normal = 0,
+    Paused,
 }
 
 fn validate_report_feed_id(feed_id: &FeedID, mapping: &Pubkey) -> ScopeResult<()> {
@@ -146,7 +157,7 @@ pub fn update_price_v3(
     Ok(())
 }
 
-pub fn update_price_v4(
+pub fn update_price_v8(
     dated_price: &mut DatedPrice,
     mapping: Pubkey,
     mapping_generic_data: &[u8],
@@ -212,6 +223,39 @@ pub fn update_price_v4(
     Ok(())
 }
 
+pub fn update_price_v9(
+    dated_price: &mut DatedPrice,
+    mapping: Pubkey,
+    clock: &Clock,
+    chainlink_report: &ReportDataV9,
+) -> ScopeResult<()> {
+    validate_report_feed_id(&chainlink_report.feed_id, &mapping)?;
+    let (unix_timestamp, last_updated_slot, generic_data) = validate_observations_timestamp(
+        chainlink_report.observations_timestamp.into(),
+        dated_price,
+        clock,
+    )?;
+
+    let ripcord = ReportDataV9RipcordFlag::try_from(chainlink_report.ripcord)
+        .map_err(|_| ScopeError::ConversionFailure)?;
+    if ripcord == ReportDataV9RipcordFlag::Paused {
+        warn!("ChainlinkNAV: feed's data provider is flagging a pause, rejecting nav data");
+        return Err(ScopeError::PriceNotValid);
+    }
+
+    let price_dec = chainlink_price_parse(&chainlink_report.nav_per_share)?;
+    let price: Price = price_dec.into();
+
+    *dated_price = DatedPrice {
+        price,
+        last_updated_slot,
+        unix_timestamp,
+        generic_data,
+    };
+
+    Ok(())
+}
+
 pub fn validate_mapping_v3(
     price_account: &Option<AccountInfo>,
     generic_data: &[u8],
@@ -236,7 +280,7 @@ pub fn validate_mapping_v3(
     Ok(())
 }
 
-pub fn validate_mapping_v4(
+pub fn validate_mapping_v8(
     price_account: &Option<AccountInfo>,
     generic_data: &[u8],
 ) -> ScopeResult<()> {
@@ -253,6 +297,21 @@ pub fn validate_mapping_v4(
     let feed_id = FeedID(account.key.to_bytes());
     info!(
         "Validating mapping for ChainlinkRWA price with feed id: {}",
+        feed_id.to_hex_string()
+    );
+
+    Ok(())
+}
+
+pub fn validate_mapping_v9(price_account: &Option<AccountInfo>) -> ScopeResult<()> {
+    let Some(account) = price_account else {
+        warn!("ChainlinkNAV requires a price id as account");
+        return Err(ScopeError::UnexpectedAccount);
+    };
+
+    let feed_id = FeedID(account.key.to_bytes());
+    info!(
+        "Validating mapping for ChainlinkNAV price with feed id: {}",
         feed_id.to_hex_string()
     );
 
