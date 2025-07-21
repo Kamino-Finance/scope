@@ -14,7 +14,7 @@ pub struct Pool {
     pub ratios: Vec<TokenRatios>,
     pub markets: Vec<Pubkey>,
     pub max_aum_usd: u128,
-    pub aum_usd: u128, // For persistnace
+    pub aum_usd: u128, // raw AUM imn USD not including cumulative unrealised pnl 
     pub total_staked: StakeStats,
     pub staking_fee_share_bps: u64,
     pub bump: u8,
@@ -33,9 +33,9 @@ pub struct Pool {
     pub min_lp_price_usd: u64,
     pub max_lp_price_usd: u64,
 
-    pub lp_price: u64,
-    pub compounding_lp_price: u64,
-    pub last_updated_timestamp: i64,
+    pub lp_price: u64, // The current staked LP (sFLP) price in USD scaled by 6 decimals
+    pub compounding_lp_price: u64, // The current compounding LP (FLP) price in USD scaled by 6 decimals
+    pub last_updated_timestamp: i64, // The timestamp of the last LP price update
     pub padding2: [u64; 1],
 }
 
