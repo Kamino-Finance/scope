@@ -32,7 +32,10 @@ pub fn get_price(
 
     // Confirm the price is not older than the previously saved one
     let last_price_ts_ms = u64::from_le_bytes(dated_price.generic_data[0..8].try_into().unwrap());
-    if price_data.timestamp <= last_price_ts_ms {
+
+    // Allow same timestamp, but not older.
+    // Same timestamp is used when computing Securitize price.
+    if price_data.timestamp < last_price_ts_ms {
         warn!("An outdated price was provided");
         return Err(ScopeError::BadTimestamp);
     }

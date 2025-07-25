@@ -725,6 +725,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 
 [[package]]
+name = "chainlink-data-streams-report"
+version = "1.0.0"
+source = "git+https://github.com/Kamino-Finance/chainlink-data-streams-sdk.git?branch=rwa_report_data_v4_with_last_update_timestamp#f67a85602fb4b3671c2279ad8043dae901bdca41"
+dependencies = [
+ "hex",
+ "num-bigint",
+ "serde",
+ "serde_json",
+ "snap",
+ "thiserror",
+]
+
+[[package]]
 name = "chrono"
 version = "0.4.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -898,19 +911,6 @@ dependencies = [
  "darling_core",
  "quote",
  "syn 2.0.60",
-]
-
-[[package]]
-name = "data-streams-report"
-version = "0.0.1"
-source = "git+https://github.com/smartcontractkit/data-streams-sdk.git#e0788716cbefd927ff11b23216681593db86470d"
-dependencies = [
- "hex",
- "num-bigint",
- "serde",
- "serde_json",
- "snap",
- "thiserror",
 ]
 
 [[package]]
@@ -2296,7 +2296,7 @@ dependencies = [
  "arrayref",
  "bytemuck",
  "cfg-if",
- "data-streams-report",
+ "chainlink-data-streams-report",
  "decimal-wad",
  "intbits",
  "jup-perp-itf",

@@ -106,6 +106,8 @@ pub fn validate_mapping_cfg(mapping: &Option<AccountInfo>, generic_data: &[u8]) 
         sources_max_age_s,
     } = MostRecentOfData::from_generic_data(generic_data)?;
 
+    msg!("Validate MostRecentOf price with source_entries = {source_entries:?}, max_divergence_bps = {max_divergence_bps}, sources_max_age_s = {sources_max_age_s}",);
+
     if source_entries[0] >= MAX_ENTRIES_U16 {
         return Err(ScopeError::MostRecentOfInvalidSourceIndices);
     }
