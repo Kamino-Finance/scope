@@ -115,15 +115,14 @@ fn compute_unitas_aum(
         let token_account = TokenAccount::try_deserialize(&mut &**jlp_acc.data.borrow())?;
         let token_amount: u128 = token_account.amount.into();
         
-        let token_amount_usd = if price_decimals + token_decimals > AUM_VALUE_SCALE_DECIMALS {
-            let diff = price_decimals + token_decimals - AUM_VALUE_SCALE_DECIMALS;
-            let nom = price_value * token_amount;
-            let denom = ten_pow(u32::from(diff));
-    
-            nom / denom
+        let total_decimals = price_decimals + token_decimals;
+        let raw_value = price_value.checked_mul(token_amount).ok_or(ScopeError::MathError)?;
+        let token_amount_usd = if total_decimals > AUM_VALUE_SCALE_DECIMALS {
+            let diff = total_decimals - AUM_VALUE_SCALE_DECIMALS;
+            raw_value / ten_pow(u32::from(diff))
         } else {
-            let diff = AUM_VALUE_SCALE_DECIMALS - (price_decimals + token_decimals);
-            price_value * token_amount * ten_pow(u32::from(diff))
+            let diff = AUM_VALUE_SCALE_DECIMALS - total_decimals;
+            raw_value * ten_pow(u32::from(diff))
         };
         total_value += token_amount_usd;
     }
