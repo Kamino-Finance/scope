@@ -115,6 +115,7 @@
     "oracle_mapping": "BfyQYYr2T9eJfMfq5gPXcq3SUkJSh2ahtk7ZNUCzkx9e",
     "oracle_type": "KToken",
     "twap_enabled": true,
+    "max_age_slot": 190,
     "group_ids": [ 0, 1 ]
   },
   "51": {
@@ -624,13 +625,13 @@
     "oracle_mapping": "5BUwFW4nRbftYTDMbgxykoFWqWHPzahFSNAaaaJtVKsq",
     "oracle_type": "JupiterLpFetch",
     "twap_enabled": true,
-    "group_ids": [ ]
+    "group_ids": [ 1, 2 ]
   },
   "125": {
     "label": "TWAP Fetched JLP/USD",
     "oracle_type": "ScopeTwap",
     "twap_source": 124,
-    "group_ids": [ ]
+    "group_ids": [ 1, 2 ]
   },
   "126": {
     "label": "TWAP kSOL-bSOL_Orca/USD",
@@ -1629,15 +1630,7 @@
     "oracle_type": "SwitchboardOnDemand",
     "oracle_mapping": "BFsSfoacGGpvpriER87B8JqEs7AX4F5SUfz8kp5aSAhV",
     "twap_enabled": true,
-    "max_age_slot": 160,
-    "group_ids": [ 1, 2 ]
-  },
-  "263": {
-    "label": "TWAP Sbod ALP/USDC",
-    "oracle_type": "ScopeTwap",
-    "twap_source": 262,
-    "max_age_slot": 165,
-    "group_ids": [ 1, 2 ]
+    "max_age_slot": 2000
   },
   "264": {
     "label": "Orca GFM/JitoSOL",
@@ -2148,12 +2141,84 @@
     "maturity_timestamp": 1756425600,
     "group_ids": [ 1 ]
   },
+  "334": {
+    "label": "Chainlink TSLAx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00084edc844a6f88449c59c8cfcdb2225799a2330503472cb0bc4f9369a717fa",
+    "market_status_behavior": "Open"
+  },
+  "335": {
+    "label": "Chainlink TSLAx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00084edc844a6f88449c59c8cfcdb2225799a2330503472cb0bc4f9369a717fa",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true,
+    "ref_price": 334
+  },
+  "336": {
+    "label": "TWAP CL TSLAx/USD AllUpdates",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 335,
+    "max_age_slot": 165
+  },
+  "337": {
+    "label": "Chainlink COINx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x000807d210856cc2783978eb01ba478aa6ae15b7bad433e3a10e9c343421cc49",
+    "market_status_behavior": "Open"
+  },
+  "338": {
+    "label": "Chainlink COINx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x000807d210856cc2783978eb01ba478aa6ae15b7bad433e3a10e9c343421cc49",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true,
+    "ref_price": 337
+  },
+  "339": {
+    "label": "TWAP CL COINx/USD AllUpdates",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 338,
+    "max_age_slot": 165
+  },
+  "340": {
+    "label": "Chainlink AMZNx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008fdc9c3ba3f3a8f44424d7e1d9f56ca47510fe942985b41622f7314bedd8b",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true,
+    "ref_price": 355
+  },
+  "341": {
+    "label": "Chainlink NVDAx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008adc184847ba8d17f0030c15e78f61b83eda2e190f30346c4ea3babed647d",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true,
+    "ref_price": 350
+  },
+  "342": {
+    "label": "Chainlink GOOGLx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00081e842c78eee5a521e7c876e749715e980f07349f9edf868fe1078403d6b1",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true,
+    "ref_price": 357
+  },
+  "343": {
+    "label": "Chainlink AAPLx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008e64e9538dea4c50f9a8203d2c8993b6f3756da73cabafbb204637310c450",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true,
+    "ref_price": 344
+  },
   "344": {
-    "label": "Chainlink AAPLx/USD",
+    "label": "Chainlink AAPLx/USD Open",
     "oracle_type": "ChainlinkRWA",
     "group_ids": [ 1 ],
     "chainlink_feed_id": "0x0008e64e9538dea4c50f9a8203d2c8993b6f3756da73cabafbb204637310c450",
-    "twap_enabled": true
+    "market_status_behavior": "Open"
   },
   "345": {
     "label": "Orca JCO/SOL",
@@ -2171,11 +2236,32 @@
     "group_ids": [ 2 ]
   },
   "347": {
-    "label": "TWAP AAPLx/USD",
+    "label": "TWAP CL AAPLx/USD AllUpdates",
     "oracle_type": "ScopeTwap",
-    "twap_source": 344,
+    "twap_source": 343,
     "max_age_slot": 165,
     "group_ids": [ 1 ]
+  },
+  "348": {
+    "label": "Chainlink SPYx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "group_ids": [ 1 ],
+    "chainlink_feed_id": "0x00081025c627b3392ee8bfeb1dbd1297382cbf2dadc30aeedacb3278a9f0b21f",
+    "market_status_behavior": "Open"
+  },
+  "349": {
+    "label": "TWAP CL SPYx/USD AllUpdates",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 370,
+    "max_age_slot": 165,
+    "group_ids": [ 1 ]
+  },
+  "350": {
+    "label": "Chainlink NVDAx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "group_ids": [ 1 ],
+    "chainlink_feed_id": "0x0008adc184847ba8d17f0030c15e78f61b83eda2e190f30346c4ea3babed647d",
+    "market_status_behavior": "Open"
   },
   "351": {
     "label": "TWAP Orca GNON/SOL",
@@ -2199,6 +2285,34 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
+  "354": {
+    "label": "TWAP CL NVDAx/USD AllUpdates",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 341,
+    "max_age_slot": 165,
+    "group_ids": [ 1 ]
+  },
+  "355": {
+    "label": "Chainlink AMZNx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "group_ids": [ 1 ],
+    "chainlink_feed_id": "0x0008fdc9c3ba3f3a8f44424d7e1d9f56ca47510fe942985b41622f7314bedd8b",
+    "market_status_behavior": "Open"
+  },
+  "356": {
+    "label": "TWAP CL AMZNx/USD AllUpdates",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 340,
+    "max_age_slot": 165,
+    "group_ids": [ 1 ]
+  },
+  "357": {
+    "label": "Chainlink GOOGLx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "group_ids": [ 1 ],
+    "chainlink_feed_id": "0x00081e842c78eee5a521e7c876e749715e980f07349f9edf868fe1078403d6b1",
+    "market_status_behavior": "Open"
+  },
   "358": {
     "label": "W/USD",
     "oracle_type": "PythPull",
@@ -2212,20 +2326,59 @@
     "oracle_mapping": "BEMsCSQEGi2kwPA4mKnGjxnreijhMki7L4eeb96ypzF9",
     "group_ids": [ 1, 2 ]
   },
+  "360": {
+    "label": "TWAP CL GOOGLx/USD AllUpdates",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 342,
+    "max_age_slot": 165,
+    "group_ids": [ 1 ]
+  },
+  "361": {
+    "label": "Chainlink QQQx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "group_ids": [ 1 ],
+    "chainlink_feed_id": "0x0008707410e2c111fb0e80cab2fa004b215eea2d95b106e700243f9ebcc8fbd9",
+    "market_status_behavior": "Open"
+  },
   "362": {
     "label": "Scope JLP/USD",
     "oracle_mapping": "5BUwFW4nRbftYTDMbgxykoFWqWHPzahFSNAaaaJtVKsq",
     "oracle_type": "JupiterLpScope",
     "max_age_slot": 200,
-    "twap_enabled": true,
-    "group_ids": [ 1, 2 ]
+    "twap_enabled": true
   },
   "363": {
     "label": "TWAP Scope JLP/USD",
     "oracle_type": "ScopeTwap",
     "twap_source": 362,
-    "max_age_slot": 210,
-    "group_ids": [ 1, 2 ]
+    "max_age_slot": 210
+  },
+  "364": {
+    "label": "TWAP CL QQQx/USD AllUpdates",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 371,
+    "max_age_slot": 165,
+    "group_ids": [ 1 ]
+  },
+  "365": {
+    "label": "Chainlink MSTRx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00081af08dfd67dcee9394faecd71eb1dc586eb2a396509f1c49380976d69739",
+    "market_status_behavior": "Open"
+  },
+  "366": {
+    "label": "Chainlink MSTRx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00081af08dfd67dcee9394faecd71eb1dc586eb2a396509f1c49380976d69739",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true,
+    "ref_price": 365
+  },
+  "367": {
+    "label": "TWAP CL MSTRx/USD AllUpdates",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 366,
+    "max_age_slot": 165
   },
   "368": {
     "label": "Orca ZEUS/SOL",
@@ -2242,6 +2395,22 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
+  "370": {
+    "label": "Chainlink SPYx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00081025c627b3392ee8bfeb1dbd1297382cbf2dadc30aeedacb3278a9f0b21f",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true,
+    "ref_price": 348
+  },
+  "371": {
+    "label": "Chainlink QQQx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008707410e2c111fb0e80cab2fa004b215eea2d95b106e700243f9ebcc8fbd9",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true,
+    "ref_price": 361
+  },
   "372": {
     "label": "Orca PUPS/SOL",
     "oracle_mapping": "BVSpGqb2oAh81PVd2SVkB4ABGBGgt5psxoXZ51r1ykwn",
@@ -2256,6 +2425,40 @@
     "twap_source": 372,
     "max_age_slot": 380,
     "group_ids": [ 2 ]
+  },
+  "374": {
+    "label": "Chainlink HOODx/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00088cf407215dc12239f90b6b4837571aca4939a65cfa564a50af23f48aef37",
+    "market_status_behavior": "Open"
+  },
+  "375": {
+    "label": "Chainlink HOODx/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x00088cf407215dc12239f90b6b4837571aca4939a65cfa564a50af23f48aef37",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true,
+    "ref_price": 374
+  },
+  "376": {
+    "label": "TWAP CL HOODx/USD AllUpdates",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 375,
+    "max_age_slot": 165
+  },
+  "377": {
+    "label": "Pyth Pull JLP.RR/USD",
+    "oracle_mapping": "8GtJymgmRdNtnghp4rh5TZbBQLhR5gWtKChRUkeJQUAm",
+    "oracle_type": "PythPull",
+    "ref_price": 124,
+    "group_ids": [ 1 ]
+  },
+  "378": {
+    "label": "Pyth Pull EMA JLP.RR/USD",
+    "oracle_mapping": "8GtJymgmRdNtnghp4rh5TZbBQLhR5gWtKChRUkeJQUAm",
+    "oracle_type": "PythPullEMA",
+    "max_age_slot": 165,
+    "group_ids": [ 1 ]
   },
   "380": {
     "label": "Raydium BORG/bSOL",
@@ -2476,6 +2679,21 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
+  "419": {
+    "label": "Orca GUN/SOL",
+    "oracle_mapping": "DnkcwshapxAKLmLpMVgwEMj1BdBQ2nERDpiQcnPQevie",
+    "oracle_type": "OrcaWhirlpoolBtoA",
+    "twap_enabled": true,
+    "max_age_slot": 375,
+    "group_ids": [ 2 ]
+  },
+  "420": {
+    "label": "TWAP Orca GUN/SOL",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 419,
+    "max_age_slot": 380,
+    "group_ids": [ 2 ]
+  },
   "421": {
     "label": "Orca STEP/SOL",
     "oracle_mapping": "5AX84BrKDWpUZ87fbQpkm7XsSx8bWwANePRmAx17tQjM",
@@ -2511,14 +2729,13 @@
     "oracle_mapping": "GLNvG5Ly4cK512oQeJqnwLftwfoPZ4skyDwZWzxorYQ9",
     "oracle_type": "OrcaWhirlpoolAtoB",
     "twap_enabled": true,
-    "max_age_slot": 200,
     "group_ids": [ 1, 2 ]
   },
   "426": {
     "label": "TWAP Orca UXD/USDC",
     "oracle_type": "ScopeTwap",
     "twap_source": 425,
-    "max_age_slot": 220,
+    "max_age_slot": 165,
     "group_ids": [ 1, 2 ]
   },
   "427": {
@@ -2581,6 +2798,21 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
+  "435": {
+    "label": "Orca ACS/SOL",
+    "oracle_mapping": "Go1hKVCy6mJA5usvHNV74KjkexXG2AUporDMeda5icmb",
+    "oracle_type": "OrcaWhirlpoolBtoA",
+    "twap_enabled": true,
+    "max_age_slot": 375,
+    "group_ids": [ 2 ]
+  },
+  "436": {
+    "label": "TWAP Orca ACS/SOL",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 435,
+    "max_age_slot": 380,
+    "group_ids": [ 2 ]
+  },
   "437": {
     "label": "Orca HBB/USDH",
     "oracle_mapping": "7GZXejXCyJ3R78d71328wqMWT7Ejwu7pxxWRWvHSeVfb",
@@ -2609,7 +2841,7 @@
     "group_ids": [ 1, 2 ]
   },
   "441": {
-    "label": "Raydium ONe/USDG",
+    "label": "Raydium ONyc/USDG",
     "oracle_mapping": "A9RdNEf4T9x1eNPnEHFX1ABHS7J4e9kxBm43S3o5r9Kw",
     "oracle_type": "RaydiumAmmV3BtoA",
     "twap_enabled": true,
@@ -2617,7 +2849,7 @@
     "group_ids": [ 2 ]
   },
   "442": {
-    "label": "TWAP Raydium ONe/USDG",
+    "label": "TWAP Raydium ONyc/USDG",
     "oracle_type": "ScopeTwap",
     "twap_source": 441,
     "max_age_slot": 380,
@@ -2655,7 +2887,7 @@
     "label": "TWAP ADX/USDC",
     "oracle_type": "ScopeTwap",
     "twap_source": 443,
-    "max_age_slot": 220,
+    "max_age_slot": 380,
     "group_ids": [ 4 ]
   },
   "448": {

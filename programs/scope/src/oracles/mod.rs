@@ -137,8 +137,11 @@ pub enum OracleType {
     CappedFloored = 33,
     /// Chainlink xStocks oracle
     ChainlinkRWA = 34,
+    /// Chainlink NAV oracle
+    ChainlinkNAV = 35,
     /// Flashtrade's perpetual LP token price
-    FlashtradeLp = 35,
+    FlashtradeLp = 36,
+
 }
 
 impl OracleType {
@@ -172,7 +175,7 @@ impl OracleType {
             OracleType::JitoRestaking => 25_000,
             OracleType::DiscountToMaturity => 30_000,
             // Chainlink oracles are not updated through normal refresh ixs
-            OracleType::Chainlink | OracleType::ChainlinkRWA => 0,
+            OracleType::Chainlink | OracleType::ChainlinkRWA | OracleType::ChainlinkNAV => 0,
             OracleType::MostRecentOf => 35_000,
             OracleType::RedStone => 20_000,
             // PythLazer oracle is not updated through normal refresh ixs
@@ -309,7 +312,7 @@ where
         OracleType::JitoRestaking => {
             jito_restaking::get_price(base_account, clock).map_err(Into::into)
         }
-        OracleType::Chainlink | OracleType::ChainlinkRWA => {
+        OracleType::Chainlink | OracleType::ChainlinkRWA | OracleType::ChainlinkNAV => {
             msg!("Chainlink oracle type cannot be refreshed directly");
             return err!(ScopeError::PriceNotValid);
         }
@@ -416,7 +419,10 @@ pub fn validate_oracle_cfg(
             chainlink::validate_mapping_v3(price_account, generic_data).map_err(Into::into)
         }
         OracleType::ChainlinkRWA => {
-            chainlink::validate_mapping_v4(price_account, generic_data).map_err(Into::into)
+            chainlink::validate_mapping_v8(price_account, generic_data).map_err(Into::into)
+        }
+        OracleType::ChainlinkNAV => {
+            chainlink::validate_mapping_v9(price_account).map_err(Into::into)
         }
         OracleType::DiscountToMaturity => {
             discount_to_maturity::validate_mapping_cfg(price_account, generic_data, clock)
