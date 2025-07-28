@@ -116,7 +116,7 @@ fn compute_unitas_aum(
         let token_amount: u128 = token_account.amount.into();
         
         let total_decimals = price_decimals + token_decimals;
-        let raw_value = price_value.checked_mul(token_amount).ok_or(ScopeError::MathError)?;
+        let raw_value = price_value.checked_mul(token_amount).ok_or(ScopeError::MathOverflow)?;
         let token_amount_usd = if total_decimals > AUM_VALUE_SCALE_DECIMALS {
             let diff = total_decimals - AUM_VALUE_SCALE_DECIMALS;
             raw_value / ten_pow(u32::from(diff))
