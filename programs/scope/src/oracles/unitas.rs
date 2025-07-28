@@ -80,7 +80,7 @@ fn check_accounts(
             *acc.key,
             ScopeError::UnexpectedAccount
         );
-        actual_owners.push(at_acc);
+        actual_owners.push(token_account.owner);
     }
     actual_owners.sort();
 
