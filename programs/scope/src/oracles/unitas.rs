@@ -35,7 +35,7 @@ where
 
     // 2. Get jlp oracle price
     let jlp_oracle_acc = extra_accounts.next().ok_or(ScopeError::AccountsAndTokenMismatch)?;
-    let data_price = super::pyth::get_price(jlp_oracle_acc, clock)?;
+    let data_price = super::pyth_pull::get_price(jlp_oracle_acc, clock)?;
 
     // 3. Get usdu config account
     let usdu_config_acc = extra_accounts.next().ok_or(ScopeError::AccountsAndTokenMismatch)?;
