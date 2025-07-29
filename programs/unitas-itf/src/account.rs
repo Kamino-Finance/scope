@@ -11,6 +11,7 @@ pub struct AssetLookupTable {
     pub aum_usd: u128,
     pub mint: Pubkey,
     pub decimals: u8,
+    pub last_updated_timestamp: i64,
     pub accounts: Vec<Pubkey>,
 }
 

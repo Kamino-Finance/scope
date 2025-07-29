@@ -7,7 +7,7 @@ use unitas_itf::account::{
 };
 
 use crate::{
-    utils::{account_deserialize, math::ten_pow},
+    utils::{account_deserialize, math::{estimate_slot_update_from_ts, ten_pow}},
     DatedPrice, Result, ScopeError, warn,
 };
 
@@ -129,10 +129,17 @@ fn compute_unitas_aum(
 
     let usdu_price = Decimal::from(total_value) / usdu_config.total_supply;
     
+    // Use the oldest timestamp between:
+    // 1. JLP oracle price timestamp
+    // 2. Asset lookup table's AUM timestamp
+    let aum_timestamp = u64::try_from(unitas_asset_lookup_table.last_updated_timestamp)
+        .map_err(|_| ScopeError::MathOverflow)?;
+    let timestamp = std::cmp::min(data_price.unix_timestamp, aum_timestamp);
+    
     Ok(DatedPrice {
         price: usdu_price.into(),
-        last_updated_slot: clock.slot,
-        unix_timestamp: u64::try_from(clock.unix_timestamp).unwrap(),
+        last_updated_slot: estimate_slot_update_from_ts(clock, timestamp),
+        unix_timestamp: timestamp,
         ..Default::default()
     })
 }
