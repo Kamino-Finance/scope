@@ -11,8 +11,6 @@ use crate::{
 use unitas_itf::account::{AssetLookupTable, get_associated_token_address, UsduConfig};
 
 const AUM_VALUE_SCALE_DECIMALS: u8 = 6;
-const USDC_MINT: Pubkey = pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
-const JLP_MINT: Pubkey = pubkey!("27G8MtK7VtTcCHkpASjSDdkWWYfoqT6ggEuKidVJidD4");
 
 /**
  * JLP Mint Decimals: 6
@@ -43,13 +41,16 @@ where
 
     // 3. Get jlp & usdc oracle price
     let jlp_oracle_acc = extra_accounts.next().ok_or(ScopeError::AccountsAndTokenMismatch)?;
+    assert_eq!(jlp_oracle_acc.key(), unitas_asset_lookup_table.jlp_oracle_account);
     let jlp_data_price = super::pyth_pull::get_price(jlp_oracle_acc, clock)?;
 
     let usdc_oracle_acc = extra_accounts.next().ok_or(ScopeError::AccountsAndTokenMismatch)?;
+    assert_eq!(usdc_oracle_acc.key(), unitas_asset_lookup_table.usdc_oracle_account);
     let usdc_data_price = super::pyth_pull::get_price(usdc_oracle_acc, clock)?;
 
     // 4. Get usdu config account
     let usdu_config_acc = extra_accounts.next().ok_or(ScopeError::AccountsAndTokenMismatch)?;
+    assert_eq!(usdu_config_acc.key(), unitas_asset_lookup_table.usdu_config);
     let usdu_config: UsduConfig = account_deserialize(usdu_config_acc)?;
 
     // 5. Get jlp token accounts
@@ -83,7 +84,7 @@ fn check_jlp_accounts(
         let token_account = TokenAccount::try_deserialize(&mut &**acc.data.borrow())?;
         let at_acc = get_associated_token_address(
             &token_account.owner,
-             &JLP_MINT
+             &unitas_asset_lookup_table.jlp_mint
         );
         require_keys_eq!(
             at_acc,
@@ -113,10 +114,10 @@ fn check_usdc_account(
     usdc_token_account: &TokenAccount,
     usdc_token_account_key: &Pubkey,
 ) -> Result<()> {
-    require_keys_eq!(usdc_token_account.mint, USDC_MINT, ScopeError::UnexpectedAccount);
+    require_keys_eq!(usdc_token_account.mint, unitas_asset_lookup_table.usdc_mint, ScopeError::UnexpectedAccount);
     let at_acc = get_associated_token_address(
         &usdc_token_account.owner,
-        &USDC_MINT
+        &unitas_asset_lookup_table.usdc_mint
     );
     require_keys_eq!(at_acc, *usdc_token_account_key, ScopeError::UnexpectedAccount);
 

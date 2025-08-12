@@ -7,9 +7,13 @@ pub static ASSOCIATED_TOKEN_PROGRAM_ID: Pubkey = pubkey!("ATokenGPvbdGVxr1b2hvZb
 #[account]
 #[derive(Default)]
 pub struct AssetLookupTable {
-    pub index: u8,
     pub aum_usd: u128,
     pub last_updated_timestamp: i64,
+    pub jlp_oracle_account: Pubkey,
+    pub usdc_oracle_account: Pubkey,
+    pub usdc_mint: Pubkey,
+    pub jlp_mint: Pubkey,
+    pub usdu_config: Pubkey,
     pub accounts: Vec<Pubkey>,
 }
 
