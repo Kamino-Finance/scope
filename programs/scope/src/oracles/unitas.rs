@@ -182,6 +182,9 @@ fn compute_unitas_aum(
     total_value = total_value.checked_add(usdc_value_usd).ok_or(ScopeError::MathOverflow)?;
 
 
+    // The final price calculation assumes that the USDU token also has 6 decimals (AUM_VALUE_SCALE_DECIMALS).
+    // This is because both `total_value` (the AUM) and `usdu_config.total_supply` are scaled
+    // by 10^6, so the scaling factors cancel each other out upon division.
     let usdu_price = Decimal::from(total_value) / usdu_config.total_supply;
     
     // Use the oldest timestamp between:
