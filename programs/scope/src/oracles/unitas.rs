@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::TokenAccount;
 use decimal_wad::decimal::Decimal;
-use solana_program::pubkey;
 use solana_program::pubkey::Pubkey;
 
 use crate::{
