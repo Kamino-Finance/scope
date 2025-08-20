@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
-use chainlink_streams_report::report::{v3::ReportDataV3, v8::ReportDataV8, v9::ReportDataV9};
+use chainlink_streams_report::report::{
+    v10::ReportDataV10, v3::ReportDataV3, v7::ReportDataV7, v8::ReportDataV8, v9::ReportDataV9,
+};
 use solana_program::program::{get_return_data, invoke};
 
 use crate::{
@@ -103,9 +105,14 @@ pub fn refresh_chainlink_price<'info>(
             .try_into()
             .map_err(|_| ScopeError::BadTokenType)?;
         require!(
-            price_type == OracleType::Chainlink
-                || price_type == OracleType::ChainlinkRWA
-                || price_type == OracleType::ChainlinkNAV,
+            matches!(
+                price_type,
+                OracleType::Chainlink
+                    | OracleType::ChainlinkRWA
+                    | OracleType::ChainlinkNAV
+                    | OracleType::ChainlinkX
+                    | OracleType::ChainlinkExchangeRate,
+            ),
             ScopeError::BadTokenType
         );
 
@@ -143,6 +150,27 @@ pub fn refresh_chainlink_price<'info>(
                 let chainlink_report = ReportDataV9::decode(&return_data)
                     .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
                 chainlink::update_price_v9(
+                    dated_price_ref,
+                    oracle_mapping,
+                    &clock,
+                    &chainlink_report,
+                )?;
+            }
+            OracleType::ChainlinkX => {
+                let chainlink_report = ReportDataV10::decode(&return_data)
+                    .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
+                chainlink::update_price_v10(
+                    dated_price_ref,
+                    oracle_mapping,
+                    mapping_generic_data,
+                    &clock,
+                    &chainlink_report,
+                )?;
+            }
+            OracleType::ChainlinkExchangeRate => {
+                let chainlink_report = ReportDataV7::decode(&return_data)
+                    .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
+                chainlink::update_price_v7(
                     dated_price_ref,
                     oracle_mapping,
                     &clock,

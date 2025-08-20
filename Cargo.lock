@@ -734,8 +734,8 @@ checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 
 [[package]]
 name = "chainlink-data-streams-report"
-version = "1.0.1"
-source = "git+https://github.com/smartcontractkit/data-streams-sdk.git#a423fcc5aa8805d6622d3a7c725cf12f9ff367fc"
+version = "1.0.3"
+source = "git+https://github.com/smartcontractkit/data-streams-sdk.git#fb56ce042fc72bb052f1e753a6ffe19974c136b1"
 dependencies = [
  "hex",
  "num-bigint",
@@ -1089,6 +1089,15 @@ checksum = "38e2275cc4e4fc009b0669731a1e5ab7ebf11f469eaede2bab9309a5b4d6057f"
 dependencies = [
  "memoffset",
  "rustc_version",
+]
+
+[[package]]
+name = "flashtrade-perp-itf"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "solana-program",
 ]
 
 [[package]]
@@ -2402,6 +2411,7 @@ dependencies = [
  "cfg-if",
  "chainlink-data-streams-report",
  "decimal-wad",
+ "flashtrade-perp-itf",
  "intbits",
  "jup-perp-itf",
  "lb-clmm-itf",
