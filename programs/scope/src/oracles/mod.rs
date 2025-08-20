@@ -8,6 +8,7 @@ pub mod adrena_lp;
 pub mod capped_floored;
 pub mod chainlink;
 pub mod discount_to_maturity;
+pub mod flashtrade_lp;
 pub mod jito_restaking;
 pub mod jupiter_lp;
 pub mod meteora_dlmm;
@@ -138,6 +139,16 @@ pub enum OracleType {
     ChainlinkRWA = 34,
     /// Chainlink NAV oracle
     ChainlinkNAV = 35,
+    /// Flashtrade's perpetual LP token price
+    ///
+    /// When using this price and setting a max age, care has to be taken that the max age
+    /// of the source oracles is not the price's timestamp, and thus `max_age` needs
+    /// to be set 10s lower than the intended target on the usage side to ensure the same liveliness.
+    FlashtradeLp = 36,
+    /// Chainlink xStocks oracle
+    ChainlinkX = 37,
+    /// Chainlink exchange rate oracle
+    ChainlinkExchangeRate = 38,
 }
 
 impl OracleType {
@@ -171,7 +182,11 @@ impl OracleType {
             OracleType::JitoRestaking => 25_000,
             OracleType::DiscountToMaturity => 30_000,
             // Chainlink oracles are not updated through normal refresh ixs
-            OracleType::Chainlink | OracleType::ChainlinkRWA | OracleType::ChainlinkNAV => 0,
+            OracleType::Chainlink
+            | OracleType::ChainlinkRWA
+            | OracleType::ChainlinkNAV
+            | OracleType::ChainlinkX
+            | OracleType::ChainlinkExchangeRate => 0,
             OracleType::MostRecentOf => 35_000,
             OracleType::RedStone => 20_000,
             // PythLazer oracle is not updated through normal refresh ixs
@@ -182,6 +197,7 @@ impl OracleType {
             }
             OracleType::Securitize => 30_000,
             OracleType::AdrenaLp => 20_000,
+            OracleType::FlashtradeLp => 20_000,
         }
     }
 }
@@ -307,7 +323,11 @@ where
         OracleType::JitoRestaking => {
             jito_restaking::get_price(base_account, clock).map_err(Into::into)
         }
-        OracleType::Chainlink | OracleType::ChainlinkRWA | OracleType::ChainlinkNAV => {
+        OracleType::Chainlink
+        | OracleType::ChainlinkRWA
+        | OracleType::ChainlinkNAV
+        | OracleType::ChainlinkX
+        | OracleType::ChainlinkExchangeRate => {
             msg!("Chainlink oracle type cannot be refreshed directly");
             return err!(ScopeError::PriceNotValid);
         }
@@ -344,6 +364,7 @@ where
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
         OracleType::AdrenaLp => adrena_lp::get_price(base_account, clock),
+        OracleType::FlashtradeLp => flashtrade_lp::get_price(base_account, clock),
     }?;
     // The price providers above are performing their type-specific validations, but are still free
     // to return 0, which we can only tolerate in case of explicit fixed price:
@@ -413,10 +434,16 @@ pub fn validate_oracle_cfg(
             chainlink::validate_mapping_v3(price_account, generic_data).map_err(Into::into)
         }
         OracleType::ChainlinkRWA => {
-            chainlink::validate_mapping_v8(price_account, generic_data).map_err(Into::into)
+            chainlink::validate_mapping_v8_v10(price_account, generic_data).map_err(Into::into)
         }
         OracleType::ChainlinkNAV => {
-            chainlink::validate_mapping_v9(price_account).map_err(Into::into)
+            chainlink::validate_mapping_v7_v9(price_account).map_err(Into::into)
+        }
+        OracleType::ChainlinkX => {
+            chainlink::validate_mapping_v8_v10(price_account, generic_data).map_err(Into::into)
+        }
+        OracleType::ChainlinkExchangeRate => {
+            chainlink::validate_mapping_v7_v9(price_account).map_err(Into::into)
         }
         OracleType::DiscountToMaturity => {
             discount_to_maturity::validate_mapping_cfg(price_account, generic_data, clock)
@@ -437,5 +464,6 @@ pub fn validate_oracle_cfg(
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
         OracleType::AdrenaLp => adrena_lp::validate_adrena_pool(price_account, clock),
+        OracleType::FlashtradeLp => flashtrade_lp::validate_flashtrade_pool(price_account, clock),
     }
 }

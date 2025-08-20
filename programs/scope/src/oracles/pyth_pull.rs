@@ -6,7 +6,7 @@ use crate::{
     DatedPrice, ScopeError,
 };
 pub const MAXIMUM_AGE: u64 = 10 * 60; // Ten minutes
-use pyth_sdk_solana::state as pyth_client;
+pub use pyth_sdk_solana::state as pyth_client;
 
 use super::pyth::validate_valid_price;
 use crate::{utils::consts::ORACLE_CONFIDENCE_FACTOR, warn};

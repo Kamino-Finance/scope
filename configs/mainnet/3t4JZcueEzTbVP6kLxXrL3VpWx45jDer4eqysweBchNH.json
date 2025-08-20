@@ -624,5 +624,63 @@
     "oracle_type": "DiscountToMaturity",
     "discount_per_year_bps": 2500,
     "maturity_timestamp": 1756425600
+  },
+  "108": {
+    "label": "Chainlink ONyc",
+    "oracle_type": "ChainlinkNAV",
+    "chainlink_feed_id": "0x0009a5831badbd7ca44834d9943b0d4a7ea28ebad0e5119f6855b80acb84ec25"
+  },
+  "109": {
+    "label": "Pyth Pull fragSOL/SOL RR",
+    "oracle_mapping": "GvXHoc7sVP2skio1s3t7ggqH8Kt73h25E9QQAozEHXSE",
+    "oracle_type": "PythPull"
+  },
+  "110": {
+    "label": "Pyth Pull PST/USDC RR",
+    "oracle_mapping": "CBGwQddTeYn3KdvxGWtU95fqCcavzHK9XPFBLENDF5JR",
+    "oracle_type": "PythPull"
+  },
+  "111": {
+    "label": "Pyth Pull EMA PST/USDC RR",
+    "oracle_mapping": "CBGwQddTeYn3KdvxGWtU95fqCcavzHK9XPFBLENDF5JR",
+    "oracle_type": "PythPullEMA"
+  },
+  "112": {
+    "label": "dzSOL/SOL",
+    "oracle_mapping": "3fV1sdGeXaNEZj6EPDTpub82pYxcRXwt2oie6jkSzeWi",
+    "oracle_type": "SplStake"
+  },
+  "113": {
+    "label": "LsSOL/SOL",
+    "oracle_mapping": "CCcYLoF18ntXCnS98HeoCEUrqN8nwN2ZGUKeP4hZH9xh",
+    "oracle_type": "SplStake"
+  },
+  "114": {
+    "label": "TruSOL/SOL",
+    "oracle_mapping": "EyKyx9LKz7Qbp6PSbBRoMdt8iNYp8PvFVupQTQRMY9AM",
+    "oracle_type": "SplStake"
+  },
+  "115": {
+    "label": "jagSOL/SOL",
+    "oracle_mapping": "jagEdDepWUgexiu4jxojcRWcVKKwFqgZBBuAoGu2BxM",
+    "oracle_type": "SplStake"
+  },
+  "116": {
+    "label": "edgeSOL/SOL",
+    "oracle_mapping": "edgejNWAqkePLpi5sHRxT9vHi7u3kSHP9cocABPKiWZ",
+    "oracle_type": "SplStake"
+  },
+  "117": {
+    "label": "Chainlink EUR/USD AllUpdates",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008b943a6e94c024eb38a19e31802180d12aa0cac4c7fd857c3112378f591aa",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": true
+  },
+  "118": {
+    "label": "TWAP CL EUR/USD AllUpdates",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 117,
+    "max_age_slot": 165
   }
 }
