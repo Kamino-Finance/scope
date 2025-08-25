@@ -726,8 +726,8 @@ checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 
 [[package]]
 name = "chainlink-data-streams-report"
-version = "1.0.0"
-source = "git+https://github.com/Kamino-Finance/chainlink-data-streams-sdk.git?branch=rwa_report_data_v4_with_last_update_timestamp#f67a85602fb4b3671c2279ad8043dae901bdca41"
+version = "1.0.3"
+source = "git+https://github.com/smartcontractkit/data-streams-sdk.git#fb56ce042fc72bb052f1e753a6ffe19974c136b1"
 dependencies = [
  "hex",
  "num-bigint",
@@ -1052,6 +1052,15 @@ name = "feature-probe"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "835a3dc7d1ec9e75e2b5fb4ba75396837112d2060b03f7d43bc1897c7f7211da"
+
+[[package]]
+name = "flashtrade-perp-itf"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "solana-program",
+]
 
 [[package]]
 name = "fnv"
@@ -2288,7 +2297,7 @@ dependencies = [
 
 [[package]]
 name = "scope"
-version = "0.1.0"
+version = "0.26.1"
 dependencies = [
  "adrena-perp-itf",
  "anchor-lang",
@@ -2298,6 +2307,7 @@ dependencies = [
  "cfg-if",
  "chainlink-data-streams-report",
  "decimal-wad",
+ "flashtrade-perp-itf",
  "intbits",
  "jup-perp-itf",
  "lb-clmm-itf",

@@ -1,6 +1,6 @@
 [package]
 name = "scope"
-version = "0.1.0"
+version = "0.26.1"
 description = "Scope is Kamino's oracle aggregator"
 repository = "https://github.com/Kamino-Finance/scope"
 edition = "2021"
@@ -71,7 +71,9 @@ pyth-solana-receiver-sdk = "0.1.0"
 static_assertions = "1.1.0"
 tracing = { version = "0.1.10", optional = true }
 # Chainlink Streams
-chainlink-streams-report = { git = "https://github.com/Kamino-Finance/chainlink-data-streams-sdk.git", branch = "rwa_report_data_v4_with_last_update_timestamp", package = "chainlink-data-streams-report" }
+chainlink-streams-report = { git = "https://github.com/smartcontractkit/data-streams-sdk.git", package = "chainlink-data-streams-report" }
 num-bigint = "0.4"
 securitize-itf = { path = "../securitize-itf", features = ["no-entrypoint"] }
+flashtrade-perp-itf = { path = "../flashtrade-perp-itf", features = ["no-entrypoint"] }
 unitas-itf = { path = "../unitas-itf", features = ["no-entrypoint"] }
+
