@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::TokenAccount;
 use decimal_wad::decimal::Decimal;
-use solana_program::pubkey::Pubkey;
 
 use crate::{
     utils::{account_deserialize, math::{estimate_slot_update_from_ts, ten_pow}},
@@ -33,12 +32,7 @@ where
      // 1. Get unitas accounts
     let unitas_asset_lookup_table: AssetLookupTable = account_deserialize(unitas_asset_lookup_table_acc)?;
 
-    // 2. Get usdc token account
-    let usdc_token_account_info = extra_accounts.next().ok_or(ScopeError::AccountsAndTokenMismatch)?;
-    let usdc_token_account: TokenAccount = TokenAccount::try_deserialize(&mut &**usdc_token_account_info.data.borrow())?;
-    check_usdc_account(&unitas_asset_lookup_table, &usdc_token_account, &usdc_token_account_info.key())?;
-
-    // 3. Get jlp & usdc oracle price
+    // 2. Get jlp & usdc oracle price
     let jlp_oracle_acc = extra_accounts.next().ok_or(ScopeError::AccountsAndTokenMismatch)?;
     assert_eq!(jlp_oracle_acc.key(), unitas_asset_lookup_table.jlp_oracle_account);
     let jlp_data_price = super::pyth_pull::get_price(jlp_oracle_acc, clock)?;
@@ -47,99 +41,49 @@ where
     assert_eq!(usdc_oracle_acc.key(), unitas_asset_lookup_table.usdc_oracle_account);
     let usdc_data_price = super::pyth_pull::get_price(usdc_oracle_acc, clock)?;
 
-    // 4. Get usdu config account
+    // 3. Get usdu config account
     let usdu_config_acc = extra_accounts.next().ok_or(ScopeError::AccountsAndTokenMismatch)?;
     assert_eq!(usdu_config_acc.key(), unitas_asset_lookup_table.usdu_config);
     let usdu_config: UsduConfig = account_deserialize(usdu_config_acc)?;
 
-    // 5. Get jlp token accounts
-    let jlp_accounts = extra_accounts.take(unitas_asset_lookup_table.accounts.len()).collect::<Vec<_>>();
-    check_jlp_accounts(&unitas_asset_lookup_table, &jlp_accounts)?;
+    // 4. Get jlp & usdc token accounts
+    let num_owners = unitas_asset_lookup_table.token_account_owners.len();
+    let jlp_accounts = extra_accounts.take(num_owners).collect::<Vec<_>>();
+    let usdc_accounts = extra_accounts.take(num_owners).collect::<Vec<_>>();
 
-    // 6. Compute unitas aum
+    // 5. Compute unitas aum
     compute_unitas_aum(
         &unitas_asset_lookup_table,
         jlp_accounts,
         &jlp_data_price,
-        &usdc_token_account,
+        usdc_accounts,
         &usdc_data_price,
         &usdu_config,
         clock,
     )
 }
 
-fn check_jlp_accounts(
-    unitas_asset_lookup_table: &AssetLookupTable,
-    jlp_accounts: &[&AccountInfo],
-) -> Result<()> {
-    require_eq!(
-        jlp_accounts.len(),
-        unitas_asset_lookup_table.accounts.len(),
-        ScopeError::AccountsAndTokenMismatch
-    );
-
-    let mut actual_owners: Vec<Pubkey> = Vec::new();
-    for acc in jlp_accounts {
-        let token_account = TokenAccount::try_deserialize(&mut &**acc.data.borrow())?;
-        let at_acc = get_associated_token_address(
-            &token_account.owner,
-             &unitas_asset_lookup_table.jlp_mint
-        );
-        require_keys_eq!(
-            at_acc,
-            *acc.key,
-            ScopeError::UnexpectedAccount
-        );
-        actual_owners.push(token_account.owner);
-    }
-    actual_owners.sort();
-
-    let mut expected_jlp_pks = unitas_asset_lookup_table.accounts.clone();
-    expected_jlp_pks.sort();
-
-    for (expected_pk, actual_owner) in expected_jlp_pks.iter().zip(actual_owners.iter()) {
-        require_keys_eq!(
-            *expected_pk,
-            *actual_owner,
-            ScopeError::UnexpectedAccount
-        );
-    }
-
-    Ok(())
-}
-
-fn check_usdc_account(
-    unitas_asset_lookup_table: &AssetLookupTable,
-    usdc_token_account: &TokenAccount,
-    usdc_token_account_key: &Pubkey,
-) -> Result<()> {
-    require_keys_eq!(usdc_token_account.mint, unitas_asset_lookup_table.usdc_mint, ScopeError::UnexpectedAccount);
-    let at_acc = get_associated_token_address(
-        &usdc_token_account.owner,
-        &unitas_asset_lookup_table.usdc_mint
-    );
-    require_keys_eq!(at_acc, *usdc_token_account_key, ScopeError::UnexpectedAccount);
-
-    let mut signal = false;
-    for acc in unitas_asset_lookup_table.accounts.iter() {
-        if *acc == usdc_token_account.owner {
-            signal = true;
-            break;
-        }
-    }
-    require!(signal, ScopeError::UnexpectedAccount);
-    Ok(())
-}
-
 fn compute_unitas_aum(
     unitas_asset_lookup_table: &AssetLookupTable,
     jlp_accounts: Vec<&AccountInfo>,
     jlp_data_price: &DatedPrice,
-    usdc_token_account: &TokenAccount,
+    usdc_accounts: Vec<&AccountInfo>,
     usdc_data_price: &DatedPrice,
     usdu_config: &UsduConfig,
     clock: &Clock,
 ) -> Result<DatedPrice> {
+    // Check lengths
+    require_eq!(
+        jlp_accounts.len(),
+        unitas_asset_lookup_table.token_account_owners.len(),
+        ScopeError::AccountsAndTokenMismatch
+    );
+    require_eq!(
+        usdc_accounts.len(),
+        unitas_asset_lookup_table.token_account_owners.len(),
+        ScopeError::AccountsAndTokenMismatch
+    );
+    
     // JLP value calculation
     let jlp_price = jlp_data_price.price;
     let jlp_price_value: u128 = jlp_price.value.into();
@@ -147,7 +91,16 @@ fn compute_unitas_aum(
     let jlp_token_decimals = 6;
 
     let mut total_value: u128 = unitas_asset_lookup_table.aum_usd;
-    for jlp_acc in jlp_accounts {
+    for (idx, jlp_acc) in jlp_accounts.iter().enumerate() {
+        // Skip uninitialized accounts
+        if jlp_acc.owner == &solana_program::system_program::ID {
+            continue;
+        }
+
+        let owner = unitas_asset_lookup_table.token_account_owners[idx];
+        let expected_ata = get_associated_token_address(&owner, &unitas_asset_lookup_table.jlp_mint);
+        require_keys_eq!(*jlp_acc.key, expected_ata, ScopeError::UnexpectedAccount);
+
         let token_account = TokenAccount::try_deserialize(&mut &**jlp_acc.data.borrow())?;
         let token_amount: u128 = token_account.amount.into();
         
@@ -168,19 +121,31 @@ fn compute_unitas_aum(
     let usdc_price_value: u128 = usdc_price.value.into();
     let usdc_price_decimals: u8 = usdc_price.exp.try_into().unwrap();
     let usdc_token_decimals = 6;
-    let usdc_amount: u128 = usdc_token_account.amount.into();
     
-    let total_usdc_decimals = usdc_price_decimals + usdc_token_decimals;
-    let raw_usdc_value = usdc_price_value.checked_mul(usdc_amount).ok_or(ScopeError::MathOverflow)?;
-    let usdc_value_usd = if total_usdc_decimals > AUM_VALUE_SCALE_DECIMALS {
-        let diff = total_usdc_decimals - AUM_VALUE_SCALE_DECIMALS;
-        raw_usdc_value / ten_pow(u32::from(diff))
-    } else {
-        let diff = AUM_VALUE_SCALE_DECIMALS - total_usdc_decimals;
-        raw_usdc_value.checked_mul(ten_pow(u32::from(diff))).ok_or(ScopeError::MathOverflow)?
-    };
-    total_value = total_value.checked_add(usdc_value_usd).ok_or(ScopeError::MathOverflow)?;
+    for (idx, usdc_acc) in usdc_accounts.iter().enumerate() {
+        // Skip uninitialized accounts
+        if usdc_acc.owner == &solana_program::system_program::ID {
+            continue;
+        }
+        
+        let owner = unitas_asset_lookup_table.token_account_owners[idx];
+        let expected_ata = get_associated_token_address(&owner, &unitas_asset_lookup_table.usdc_mint);
+        require_keys_eq!(*usdc_acc.key, expected_ata, ScopeError::UnexpectedAccount);
 
+        let usdc_token_account = TokenAccount::try_deserialize(&mut &**usdc_acc.data.borrow())?;
+        let usdc_amount: u128 = usdc_token_account.amount.into();
+        
+        let total_usdc_decimals = usdc_price_decimals + usdc_token_decimals;
+        let raw_usdc_value = usdc_price_value.checked_mul(usdc_amount).ok_or(ScopeError::MathOverflow)?;
+        let usdc_value_usd = if total_usdc_decimals > AUM_VALUE_SCALE_DECIMALS {
+            let diff = total_usdc_decimals - AUM_VALUE_SCALE_DECIMALS;
+            raw_usdc_value / ten_pow(u32::from(diff))
+        } else {
+            let diff = AUM_VALUE_SCALE_DECIMALS - total_usdc_decimals;
+            raw_usdc_value.checked_mul(ten_pow(u32::from(diff))).ok_or(ScopeError::MathOverflow)?
+        };
+        total_value = total_value.checked_add(usdc_value_usd).ok_or(ScopeError::MathOverflow)?;
+    }
 
     // The final price calculation assumes that the USDU token also has 6 decimals (AUM_VALUE_SCALE_DECIMALS).
     // This is because both `total_value` (the AUM) and `usdu_config.total_supply` are scaled

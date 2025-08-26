@@ -14,7 +14,7 @@ pub struct AssetLookupTable {
     pub usdc_mint: Pubkey,
     pub jlp_mint: Pubkey,
     pub usdu_config: Pubkey,
-    pub accounts: Vec<Pubkey>,
+    pub token_account_owners: Vec<Pubkey>,
 }
 
 #[account]
