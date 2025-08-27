@@ -8,6 +8,7 @@ pub mod adrena_lp;
 pub mod capped_floored;
 pub mod chainlink;
 pub mod discount_to_maturity;
+pub mod exceed_liquid_staking;
 pub mod flashtrade_lp;
 pub mod jito_restaking;
 pub mod jupiter_lp;

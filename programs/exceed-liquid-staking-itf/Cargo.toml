@@ -1,0 +1,21 @@
+[package]
+name = "exceed-liquid-staking-itf"
+version = "0.1.0"
+edition = "2021"
+description = "Interface to interact with Exceed Liquid Staking Program (partial)"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "exceed_liquid_staking_itf"
+
+[features]
+no-entrypoint = []
+cpi = ["no-entrypoint"]
+test-bpf = []
+debug = []
+
+[dependencies]
+anchor-lang = "0.28.0"
+anchor-spl = "0.28.0"
+solana-program = "~1.16.18"
+ruint = "1.3.0"
