@@ -4,17 +4,26 @@ use solana_program::pubkey;
 pub static TOKEN_PROGRAM_ID: Pubkey = pubkey!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 pub static ASSOCIATED_TOKEN_PROGRAM_ID: Pubkey = pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 
-#[account]
-#[derive(Default)]
+#[account(zero_copy)]
+#[repr(C)]
+#[derive(Debug)]
 pub struct AssetLookupTable {
+    pub asset_mint: Pubkey,
+    pub oracle_account: Pubkey,
+    pub token_account_owners: [Pubkey; 16],
+    pub token_account_owners_len: u32,
+    pub decimals: u8,
+    pub paddings: [u8; 3],
+}
+
+#[account]
+#[derive(Default, Debug)]
+pub struct UnitasConfig {
+    pub admin: Pubkey,
+    pub pending_admin: Pubkey,
     pub aum_usd: u128,
     pub last_updated_timestamp: i64,
-    pub jlp_oracle_account: Pubkey,
-    pub usdc_oracle_account: Pubkey,
-    pub usdc_mint: Pubkey,
-    pub jlp_mint: Pubkey,
     pub usdu_config: Pubkey,
-    pub token_account_owners: Vec<Pubkey>,
 }
 
 #[account]
@@ -43,6 +52,7 @@ pub fn get_associated_token_address(
             TOKEN_PROGRAM_ID.as_ref(),
             mint_address.as_ref(),
         ],
-        &ASSOCIATED_TOKEN_PROGRAM_ID
-    ).0
+        &ASSOCIATED_TOKEN_PROGRAM_ID,
+    )
+    .0
 }
