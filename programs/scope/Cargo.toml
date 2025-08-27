@@ -75,4 +75,6 @@ chainlink-streams-report = { git = "https://github.com/smartcontractkit/data-str
 num-bigint = "0.4"
 securitize-itf = { path = "../securitize-itf", features = ["no-entrypoint"] }
 flashtrade-perp-itf = { path = "../flashtrade-perp-itf", features = ["no-entrypoint"] }
-
+exceed-liquid-staking-itf = { path = "../exceed-liquid-staking-itf", features = [
+    "no-entrypoint",
+] }
