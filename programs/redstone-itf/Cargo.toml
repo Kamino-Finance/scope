@@ -15,4 +15,5 @@ test-bpf = []
 debug = []
 
 [dependencies]
+ahash.workspace = true
 anchor-lang = "0.28.0"

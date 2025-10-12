@@ -15,4 +15,5 @@ no-entrypoint = []
 test-bpf = []
 
 [dependencies]
+ahash.workspace = true
 anchor-lang = "0.28.0"

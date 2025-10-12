@@ -26,6 +26,7 @@ pub mod securitize;
 pub mod spl_stake;
 pub mod switchboard_on_demand;
 pub mod switchboard_v2;
+// pub mod switchboard_surge; // TODO: Commented out - module file doesn't exist yet
 pub mod twap;
 
 use std::ops::Deref;
@@ -229,6 +230,10 @@ where
         OracleType::SwitchboardOnDemand => {
             switchboard_on_demand::get_price(base_account, clock).map_err(Into::into)
         }
+        // TODO: SwitchboardSurge oracle type not yet defined
+        // OracleType::SwitchboardSurge => {
+        //     switchboard_surge::get_price(base_account, clock).map_err(Into::into)
+        // }
         OracleType::CToken => ctokens::get_price(base_account, clock),
         OracleType::SplStake => spl_stake::get_price(base_account, clock),
         #[cfg(not(feature = "yvaults"))]
