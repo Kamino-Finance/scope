@@ -7,6 +7,8 @@ use anchor_lang::prelude::*;
 
 // Re-export commonly used types
 pub use anchor_lang::solana_program::pubkey::Pubkey;
+pub use switchboard_quote::SwitchboardQuote;
+pub use feed_info::{PackedFeedInfo, PackedQuoteHeader};
 
 // Re-export borsh traits for internal use
 pub use borsh::{BorshSerialize, BorshDeserialize};

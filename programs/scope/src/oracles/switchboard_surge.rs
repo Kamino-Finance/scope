@@ -2,11 +2,18 @@ use std::convert::TryInto;
 
 use anchor_lang::prelude::*;
 use switchboard_surge_itf::SwitchboardQuote;
-
+use switchboard_surge_itf::switchboard_quote::QUOTE_DISCRIMINATOR;
 use crate::{
     utils::math::slots_to_secs,
     warn, DatedPrice, Price, ScopeError,
 };
+
+/// Switchboard Surge uses 18 decimals of precision (10^18)
+const SB_PRECISION: u32 = 18;
+
+/// Maximum exponent we support in our Price type
+/// This matches the Switchboard On-Demand implementation
+const MAX_EXPONENT: u32 = 15;
 
 pub fn get_price(
     price_oracle: &AccountInfo,
@@ -17,8 +24,12 @@ pub fn get_price(
         ScopeError::UnableToDeserializeAccount
     })?;
 
+    let discriminator = &data[..8];
+    if discriminator != QUOTE_DISCRIMINATOR {
+        return Err(ScopeError::UnableToDeserializeAccount);
+    }
     // Deserialize as SwitchboardQuote
-    let quote_data = SwitchboardQuote::try_deserialize(&mut &data[..]).map_err(|e| {
+    let quote_data = SwitchboardQuote::deserialize(&mut &data[8..]).map_err(|e| {
         warn!("Failed to deserialize Switchboard Surge quote: {:?}", e);
         ScopeError::UnableToDeserializeAccount
     })?;
