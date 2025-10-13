@@ -21,3 +21,4 @@ solana-program = ">= 1.16.18"
 bytemuck = { version = "1.4.0", features = ["derive", "min_const_generics"] }
 rust_decimal = "1.32.0"
 static_assertions = "1.1.0"
+switchboard-on-demand = "0.10.0"

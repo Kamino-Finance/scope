@@ -1,4 +1,8 @@
 pub mod accounts;
+pub mod smallvec;
+pub mod ed25519_sysvar;
+pub mod feed_info;
+pub mod switchboard_quote;
 
 use anchor_lang::prelude::*;
 

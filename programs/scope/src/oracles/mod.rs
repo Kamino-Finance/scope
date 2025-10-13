@@ -26,7 +26,7 @@ pub mod securitize;
 pub mod spl_stake;
 pub mod switchboard_on_demand;
 pub mod switchboard_v2;
-// pub mod switchboard_surge; // TODO: Commented out - module file doesn't exist yet
+pub mod switchboard_surge;
 pub mod twap;
 
 use std::ops::Deref;
@@ -150,6 +150,8 @@ pub enum OracleType {
     ChainlinkX = 37,
     /// Chainlink exchange rate oracle
     ChainlinkExchangeRate = 38,
+    /// Switchboard Surge
+    SwitchboardSurge = 39,
 }
 
 impl OracleType {
@@ -199,6 +201,7 @@ impl OracleType {
             OracleType::Securitize => 30_000,
             OracleType::AdrenaLp => 20_000,
             OracleType::FlashtradeLp => 20_000,
+            OracleType::SwitchboardSurge => 1_000,
         }
     }
 }
@@ -230,10 +233,6 @@ where
         OracleType::SwitchboardOnDemand => {
             switchboard_on_demand::get_price(base_account, clock).map_err(Into::into)
         }
-        // TODO: SwitchboardSurge oracle type not yet defined
-        // OracleType::SwitchboardSurge => {
-        //     switchboard_surge::get_price(base_account, clock).map_err(Into::into)
-        // }
         OracleType::CToken => ctokens::get_price(base_account, clock),
         OracleType::SplStake => spl_stake::get_price(base_account, clock),
         #[cfg(not(feature = "yvaults"))]
@@ -370,6 +369,9 @@ where
         }
         OracleType::AdrenaLp => adrena_lp::get_price(base_account, clock),
         OracleType::FlashtradeLp => flashtrade_lp::get_price(base_account, clock),
+        OracleType::SwitchboardSurge => {
+            switchboard_surge::get_price(base_account, clock).map_err(Into::into)
+        }
     }?;
     // The price providers above are performing their type-specific validations, but are still free
     // to return 0, which we can only tolerate in case of explicit fixed price:
@@ -404,6 +406,7 @@ pub fn validate_oracle_cfg(
             switchboard_on_demand::validate_price_account(price_account)
         }
         OracleType::SwitchboardV2 => Ok(()), // TODO at least check account ownership?
+        OracleType::SwitchboardSurge => Ok(()), // TODO add proper validation
         OracleType::CToken => Ok(()),        // TODO how shall we validate ctoken account?
         OracleType::SplStake => Ok(()),
         OracleType::KToken => Ok(()), // TODO, should validate ownership of the ktoken account
