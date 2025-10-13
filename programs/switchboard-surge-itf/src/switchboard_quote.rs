@@ -1,7 +1,7 @@
 use crate::ed25519_sysvar::Ed25519SignatureOffsets;
 use crate::smallvec::{SmallVec, U8Prefix, U16Prefix};
 use crate::feed_info::{PackedFeedInfo, PackedQuoteHeader};
-use crate::Pubkey;
+use crate::{Pubkey, BorshSerialize, BorshDeserialize};
 
 pub const QUOTE_DISCRIMINATOR: &[u8; 8] = b"SBOracle";
 
@@ -17,18 +17,18 @@ pub struct OracleSignature {
     pub signature: [u8; 64],
 }
 
-impl borsh::BorshSerialize for OracleSignature {
+impl BorshSerialize for OracleSignature {
     fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
-        self.offsets.serialize(writer)?;
+        BorshSerialize::serialize(&self.offsets, writer)?;
         writer.write_all(self.pubkey.as_ref())?;
         writer.write_all(&self.signature)?;
         Ok(())
     }
 }
 
-impl borsh::BorshDeserialize for OracleSignature {
+impl BorshDeserialize for OracleSignature {
     fn deserialize_reader<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
-        let offsets = Ed25519SignatureOffsets::deserialize_reader(reader)?;
+        let offsets = BorshDeserialize::deserialize_reader(reader)?;
         let mut pubkey_bytes = [0u8; 32];
         reader.read_exact(&mut pubkey_bytes)?;
         let pubkey = Pubkey::new_from_array(pubkey_bytes);
@@ -85,7 +85,7 @@ pub struct SwitchboardQuote {
     pub tail_discriminator: [u8; 4],
 }
 
-impl borsh::BorshSerialize for SwitchboardQuote {
+impl BorshSerialize for SwitchboardQuote {
     fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
         writer.write_all(self.queue.as_ref())?;
         self.signatures.serialize(writer)?;
@@ -99,19 +99,19 @@ impl borsh::BorshSerialize for SwitchboardQuote {
     }
 }
 
-impl borsh::BorshDeserialize for SwitchboardQuote {
+impl BorshDeserialize for SwitchboardQuote {
     fn deserialize_reader<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
         let mut queue_bytes = [0u8; 32];
         reader.read_exact(&mut queue_bytes)?;
         Ok(Self {
             queue: Pubkey::new_from_array(queue_bytes),
-            signatures: borsh::BorshDeserialize::deserialize_reader(reader)?,
-            quote_header: borsh::BorshDeserialize::deserialize_reader(reader)?,
-            feeds: borsh::BorshDeserialize::deserialize_reader(reader)?,
-            oracle_idxs: borsh::BorshDeserialize::deserialize_reader(reader)?,
-            slot: borsh::BorshDeserialize::deserialize_reader(reader)?,
-            version: borsh::BorshDeserialize::deserialize_reader(reader)?,
-            tail_discriminator: borsh::BorshDeserialize::deserialize_reader(reader)?,
+            signatures: BorshDeserialize::deserialize_reader(reader)?,
+            quote_header: BorshDeserialize::deserialize_reader(reader)?,
+            feeds: BorshDeserialize::deserialize_reader(reader)?,
+            oracle_idxs: BorshDeserialize::deserialize_reader(reader)?,
+            slot: BorshDeserialize::deserialize_reader(reader)?,
+            version: BorshDeserialize::deserialize_reader(reader)?,
+            tail_discriminator: BorshDeserialize::deserialize_reader(reader)?,
         })
     }
 }

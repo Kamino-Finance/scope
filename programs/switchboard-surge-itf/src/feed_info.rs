@@ -23,7 +23,7 @@ pub struct PackedQuoteHeader {
 }
 
 // Custom Borsh implementation for packed struct
-impl borsh::BorshSerialize for PackedQuoteHeader {
+impl crate::BorshSerialize for PackedQuoteHeader {
     fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
         // Read values without taking references (safe for packed structs)
         let slothash = self.signed_slothash;
@@ -32,7 +32,7 @@ impl borsh::BorshSerialize for PackedQuoteHeader {
     }
 }
 
-impl borsh::BorshDeserialize for PackedQuoteHeader {
+impl crate::BorshDeserialize for PackedQuoteHeader {
     fn deserialize_reader<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
         let mut signed_slothash = [0u8; 32];
         reader.read_exact(&mut signed_slothash)?;
@@ -59,7 +59,7 @@ pub struct PackedFeedInfo {
 }
 
 // Custom Borsh implementation for packed struct
-impl borsh::BorshSerialize for PackedFeedInfo {
+impl crate::BorshSerialize for PackedFeedInfo {
     fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
         // Read values without taking references (safe for packed structs)
         let feed_id = self.feed_id;
@@ -73,7 +73,7 @@ impl borsh::BorshSerialize for PackedFeedInfo {
     }
 }
 
-impl borsh::BorshDeserialize for PackedFeedInfo {
+impl crate::BorshDeserialize for PackedFeedInfo {
     fn deserialize_reader<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
         let mut feed_id = [0u8; 32];
         reader.read_exact(&mut feed_id)?;

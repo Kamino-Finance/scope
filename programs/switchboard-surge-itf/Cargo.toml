@@ -17,5 +17,6 @@ debug = []
 [dependencies]
 ahash.workspace = true
 anchor-lang = ">=0.28.0"
+borsh = "0.10.3"
 bytemuck = { version = "1.4.0", features = ["derive", "min_const_generics"] }
 rust_decimal = "1.32.0"

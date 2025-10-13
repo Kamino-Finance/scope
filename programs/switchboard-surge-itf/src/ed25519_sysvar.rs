@@ -1,8 +1,8 @@
-use crate::borsh;
+use crate::{BorshSerialize, BorshDeserialize};
 
 /// ED25519 signature data offsets within instruction data
 #[repr(C)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, borsh::BorshSerialize, borsh::BorshDeserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
 pub struct Ed25519SignatureOffsets {
     /// Offset to the signature data
     pub signature_offset: u16,

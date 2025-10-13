@@ -3111,6 +3111,7 @@ version = "0.1.0"
 dependencies = [
  "ahash 0.8.4",
  "anchor-lang",
+ "borsh 0.10.3",
  "bytemuck",
  "rust_decimal",
 ]
