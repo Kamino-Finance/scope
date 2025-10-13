@@ -1,3 +1,4 @@
+use crate::borsh;
 
 /// ED25519 signature data offsets within instruction data
 #[repr(C)]
