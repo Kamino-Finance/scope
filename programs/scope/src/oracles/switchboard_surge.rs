@@ -3,13 +3,11 @@ use std::convert::TryInto;
 use anchor_lang::prelude::*;
 use switchboard_surge_itf::SwitchboardQuote;
 use switchboard_surge_itf::switchboard_quote::QUOTE_DISCRIMINATOR;
+use switchboard_surge_itf::prelude::PRECISION;
 use crate::{
     utils::math::slots_to_secs,
     warn, DatedPrice, Price, ScopeError,
 };
-
-/// Switchboard Surge uses 18 decimals of precision (10^18)
-const SB_PRECISION: u32 = 18;
 
 pub fn get_price(
     price_oracle: &AccountInfo,
@@ -73,7 +71,7 @@ fn convert_surge_price(value: i128) -> std::result::Result<Price, ScopeError> {
         return Err(ScopeError::PriceNotValid);
     }
 
-    let exp: u64 = SB_PRECISION.into();
+    let exp: u64 = PRECISION.into();
     let value: u64 = value.try_into().map_err(|_| ScopeError::IntegerOverflow)?;
     Ok(Price { value, exp })
 }
