@@ -11,10 +11,6 @@ use crate::{
 /// Switchboard Surge uses 18 decimals of precision (10^18)
 const SB_PRECISION: u32 = 18;
 
-/// Maximum exponent we support in our Price type
-/// This matches the Switchboard On-Demand implementation
-const MAX_EXPONENT: u32 = 15;
-
 pub fn get_price(
     price_oracle: &AccountInfo,
     clock: &Clock,
@@ -77,22 +73,7 @@ fn convert_surge_price(value: i128) -> std::result::Result<Price, ScopeError> {
         return Err(ScopeError::PriceNotValid);
     }
 
-    let (exp, value) = if SB_PRECISION > MAX_EXPONENT {
-        // exp is capped. Remove the extra digits from the value.
-        let exp_diff = SB_PRECISION
-            .checked_sub(MAX_EXPONENT)
-            .ok_or(ScopeError::MathOverflow)?;
-        let factor = 10_i128
-            .checked_pow(exp_diff)
-            .ok_or(ScopeError::MathOverflow)?;
-        // Loss of precision here is expected.
-        let adjusted_value = value / factor;
-        (MAX_EXPONENT, adjusted_value)
-    } else {
-        (SB_PRECISION, value)
-    };
-
-    let exp: u64 = exp.into();
+    let exp: u64 = SB_PRECISION.into();
     let value: u64 = value.try_into().map_err(|_| ScopeError::IntegerOverflow)?;
     Ok(Price { value, exp })
 }
