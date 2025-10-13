@@ -1,12 +1,12 @@
 [package]
-name = "sbod-itf"
+name = "switchboard-surge-itf"
 version = "0.1.0"
-description = "Interface to read switchboard-on-demand aggregator data"
+description = "Interface to read switchboard surge data"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "sbod_itf"
+name = "switchboard_surge_itf"
 
 [features]
 no-entrypoint = []
@@ -17,7 +17,5 @@ debug = []
 [dependencies]
 ahash.workspace = true
 anchor-lang = ">=0.28.0"
-solana-program = ">= 1.16.18"
 bytemuck = { version = "1.4.0", features = ["derive", "min_const_generics"] }
 rust_decimal = "1.32.0"
-static_assertions = "1.1.0"
