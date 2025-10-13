@@ -15,7 +15,6 @@ test-bpf = []
 debug = []
 
 [dependencies]
-ahash.workspace = true
 anchor-lang = "0.28.0"
 decimal-wad = "0.1.9"
 bytemuck = { version = "1.4.0", features = ["derive", "min_const_generics"] }

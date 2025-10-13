@@ -1,15 +1,6 @@
 [workspace]
 members = ["programs/*"]
-exclude = ["patches/*"]
 resolver = "2"
-
-[workspace.dependencies]
-# Force use of ahash 0.8 to avoid stdsimd feature compatibility issue
-ahash = "0.8"
-
-[patch.crates-io]
-# Patch ahash to fix stdsimd feature compatibility with Rust 1.74+
-ahash = { path = "../ahash-patches/ahash-0.8.4", version = "0.8.4" }
 
 [profile.release]
 lto = "thin"
