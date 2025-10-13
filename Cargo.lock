@@ -2333,6 +2333,7 @@ dependencies = [
  "static_assertions",
  "strum",
  "switchboard-program",
+ "switchboard-surge-itf",
  "tracing",
  "whirlpool",
  "yvaults_stub",
@@ -3102,6 +3103,16 @@ dependencies = [
  "borsh 0.9.3",
  "byteorder",
  "quick-protobuf",
+]
+
+[[package]]
+name = "switchboard-surge-itf"
+version = "0.1.0"
+dependencies = [
+ "ahash 0.8.4",
+ "anchor-lang",
+ "bytemuck",
+ "rust_decimal",
 ]
 
 [[package]]

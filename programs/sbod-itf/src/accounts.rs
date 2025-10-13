@@ -107,7 +107,3 @@ pub struct CompactResult {
     /// The slot at which this value was signed.
     pub slot: u64,
 }
-
-// Re-export Switchboard Surge types from switchboard-on-demand
-pub use switchboard_on_demand::CrossbarClient as SwitchboardQuote;
-pub use switchboard_on_demand::PullFeed as SurgeFeed;

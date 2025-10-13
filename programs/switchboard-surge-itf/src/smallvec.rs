@@ -6,7 +6,7 @@
 //!
 //! SmallVec is stack-allocated with a maximum capacity of 8 elements.
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use anchor_lang::prelude::borsh::{BorshDeserialize, BorshSerialize};
 use core::mem::MaybeUninit;
 
 /// Trait for length prefix encoding/decoding

@@ -5,4 +5,4 @@ pub mod switchboard_quote;
 
 use anchor_lang::prelude::*;
 
-declare_id!("SW1TCH7qEPTdLsDHRgPuMQjbQxKdH2aBStViMFnt64f");
+declare_id!("orac1eFjzWL5R3RbbdMV68K9H6TaCVVcL6LjvQQWAbz");

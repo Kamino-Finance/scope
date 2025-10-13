@@ -1,51 +1,12 @@
 use std::convert::TryInto;
 
 use anchor_lang::prelude::*;
+use switchboard_surge_itf::SwitchboardQuote;
 
 use crate::{
     utils::math::slots_to_secs,
     warn, DatedPrice, Price, ScopeError,
 };
-
-const MAX_EXPONENT: u32 = 15;
-const SB_PRECISION: u32 = 18; // Switchboard Surge uses 18 decimals
-
-/// Switchboard Surge Feed entry
-#[derive(Debug, Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-#[repr(C)]
-pub struct SurgeFeed {
-    pub value: i128,
-    pub _reserved: [u8; 24],
-}
-
-impl SurgeFeed {
-    pub fn feed_value(&self) -> i128 {
-        self.value
-    }
-}
-
-/// Switchboard Surge Quote account
-/// This is a simplified representation based on the Switchboard Surge format
-#[derive(Debug)]
-#[account(zero_copy)]
-pub struct SwitchboardQuote {
-    /// Array of feeds in the quote
-    pub feeds: [SurgeFeed; 32],
-    /// Slot when this quote was created
-    pub slot: u64,
-    /// Number of active feeds
-    pub num_feeds: u8,
-    pub _padding: [u8; 7],
-    /// Reserved space
-    pub _reserved: [u8; 256],
-}
-
-impl SwitchboardQuote {
-    pub fn feeds_slice(&self) -> &[SurgeFeed] {
-        let len = self.num_feeds.min(32) as usize;
-        &self.feeds[..len]
-    }
-}
 
 pub fn get_price(
     price_oracle: &AccountInfo,

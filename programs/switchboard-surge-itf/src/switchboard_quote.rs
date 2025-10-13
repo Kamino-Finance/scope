@@ -1,6 +1,6 @@
 use crate::ed25519_sysvar::Ed25519SignatureOffsets;
 use crate::smallvec::{SmallVec, U8Prefix, U16Prefix};
-use crate::on_demand::oracle_quote::feed_info::{PackedFeedInfo, PackedQuoteHeader};
+use crate::feed_info::{PackedFeedInfo, PackedQuoteHeader};
 use crate::Pubkey;
 
 pub const QUOTE_DISCRIMINATOR: &[u8; 8] = b"SBOracle";
