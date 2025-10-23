@@ -1,7 +1,10 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
 
-use crate::{utils::pdas::seeds, MintToScopeChain, MintsToScopeChains};
+use crate::{
+    states::mints_to_scope_chains::{MintToScopeChain, MintsToScopeChains},
+    utils::pdas::seeds,
+};
 
 #[derive(Accounts)]
 #[instruction(
@@ -14,7 +17,7 @@ pub struct CreateMintMap<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     #[account(has_one = admin)]
-    pub configuration: AccountLoader<'info, crate::Configuration>,
+    pub configuration: AccountLoader<'info, crate::states::Configuration>,
     #[account(
         init,
         seeds = [seeds::MINTS_TO_SCOPE_CHAINS, configuration.load()?.oracle_prices.as_ref(), seed_pk.as_ref(), &seed_id.to_le_bytes()],

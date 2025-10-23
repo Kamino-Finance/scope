@@ -12,7 +12,6 @@ use std::convert::TryInto;
 
 pub use anchor_lang;
 use anchor_lang::prelude::*;
-pub use handler_update_token_metadata::UpdateTokenMetadataMode;
 use handlers::*;
 pub use num_enum;
 use program_id::PROGRAM_ID;
@@ -20,7 +19,14 @@ pub use whirlpool;
 #[cfg(feature = "yvaults")]
 pub use yvaults;
 
-pub use crate::{errors::*, states::*, utils::scope_chain};
+pub use crate::{
+    errors::*,
+    handlers::handler_update_mapping_and_metadata::{
+        UpdateOracleMappingAndMetadataEntriesWithId, UpdateOracleMappingAndMetadataEntry,
+    },
+    states::{DatedPrice, Price},
+    utils::scope_chain,
+};
 
 declare_id!(PROGRAM_ID);
 
@@ -74,30 +80,13 @@ pub mod scope {
         )
     }
 
-    #[allow(clippy::too_many_arguments)]
-    pub fn update_mapping(
-        ctx: Context<UpdateOracleMapping>,
-        token: u16,
-        price_type: u8,
-        twap_enabled: bool,
-        twap_source: u16,
-        ref_price_index: u16,
+    pub fn update_mapping_and_metadata(
+        ctx: Context<UpdateOracleMappingAndMetadata>,
         feed_name: String,
-        generic_data: [u8; 20],
+        updates: Vec<UpdateOracleMappingAndMetadataEntriesWithId>,
     ) -> Result<()> {
-        let token: usize = token
-            .try_into()
-            .map_err(|_| ScopeError::OutOfRangeIntegralConversion)?;
         let _feed_name = feed_name;
-        handler_update_mapping::process(
-            ctx,
-            token,
-            price_type,
-            twap_enabled,
-            twap_source,
-            ref_price_index,
-            &generic_data,
-        )
+        handler_update_mapping_and_metadata::process(ctx, updates)
     }
 
     pub fn reset_twap(ctx: Context<ResetTwap>, token: u64, feed_name: String) -> Result<()> {
@@ -105,25 +94,6 @@ pub mod scope {
             .try_into()
             .map_err(|_| ScopeError::OutOfRangeIntegralConversion)?;
         handler_reset_twap::process(ctx, entry_id, feed_name)
-    }
-
-    pub fn update_token_metadata(
-        ctx: Context<UpdateTokensMetadata>,
-        index: u64,
-        mode: u64,
-        feed_name: String,
-        value: Vec<u8>,
-    ) -> Result<()> {
-        msg!(
-            "update_token_metadata index {} mode {} feed_name {}",
-            index,
-            mode,
-            feed_name
-        );
-        let index: usize = index
-            .try_into()
-            .map_err(|_| ScopeError::OutOfRangeIntegralConversion)?;
-        handler_update_token_metadata::process(ctx, index, mode, value, feed_name)
     }
 
     pub fn set_admin_cached(

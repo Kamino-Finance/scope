@@ -32,7 +32,7 @@ pub fn get_price(a_to_b: bool, pool: &AccountInfo, clock: &Clock) -> Result<Date
     })
 }
 
-pub fn validate_pool_account(pool: &Option<AccountInfo>) -> Result<()> {
+pub fn validate_pool_account(pool: Option<&AccountInfo>) -> Result<()> {
     let Some(pool) = pool else {
         warn!("No pool account provided");
         return err!(ScopeError::PriceNotValid);

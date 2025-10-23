@@ -145,7 +145,7 @@ fn validate_pyth_price(pyth_price: &pyth_client::SolanaPriceAccount) -> Result<(
     Ok(())
 }
 
-pub fn validate_pyth_price_info(pyth_price_info: &Option<AccountInfo>) -> Result<()> {
+pub fn validate_pyth_price_info(pyth_price_info: Option<&AccountInfo>) -> Result<()> {
     if cfg!(feature = "skip_price_validation") {
         return Ok(());
     }

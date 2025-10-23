@@ -23,6 +23,7 @@ use crate::{
 };
 
 const PRICE_STALENESS_S: u64 = 60;
+const NAV_REPORT_STALENESS_IN_MS: u64 = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
 #[derive(IntoPrimitive, TryFromPrimitive, Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u32)]
@@ -282,6 +283,14 @@ pub fn update_price_v9(
         clock,
     )?;
 
+    // Check if nav_date is older than a week
+    let current_time_ms =
+        u64::try_from(clock.unix_timestamp).map_err(|_| ScopeError::ConversionFailure)? * 1000;
+    if chainlink_report.nav_date + NAV_REPORT_STALENESS_IN_MS < current_time_ms {
+        warn!("ChainlinkNAV: nav_date is too old, rejecting nav data");
+        return Err(ScopeError::PriceNotValid);
+    }
+
     let ripcord = ReportDataV9RipcordFlag::try_from(chainlink_report.ripcord)
         .map_err(|_| ScopeError::ConversionFailure)?;
     if ripcord == ReportDataV9RipcordFlag::Paused {
@@ -340,7 +349,7 @@ pub fn update_price_v10(
 }
 
 pub fn validate_mapping_v3(
-    price_account: &Option<AccountInfo>,
+    price_account: Option<&AccountInfo>,
     generic_data: &[u8],
 ) -> ScopeResult<()> {
     let Some(account) = price_account else {
@@ -364,7 +373,7 @@ pub fn validate_mapping_v3(
 }
 
 pub fn validate_mapping_v8_v10(
-    price_account: &Option<AccountInfo>,
+    price_account: Option<&AccountInfo>,
     generic_data: &[u8],
 ) -> ScopeResult<()> {
     let Some(account) = price_account else {
@@ -386,7 +395,7 @@ pub fn validate_mapping_v8_v10(
     Ok(())
 }
 
-pub fn validate_mapping_v7_v9(price_account: &Option<AccountInfo>) -> ScopeResult<()> {
+pub fn validate_mapping_v7_v9(price_account: Option<&AccountInfo>) -> ScopeResult<()> {
     let Some(account) = price_account else {
         warn!("ChainlinkNAV/ChainlinkExchangeRate requires a price id as account");
         return Err(ScopeError::UnexpectedAccount);
@@ -415,6 +424,40 @@ fn chainlink_bigint_value_parse(value: &BigInt) -> ScopeResult<Decimal> {
     }
     let scaled_value = U192::from_little_endian(&bytes);
     Ok(Decimal(scaled_value))
+}
+
+pub(super) mod cfg_data {
+    use anchor_lang::prelude::*;
+
+    use super::MarketStatusBehavior;
+
+    #[derive(Clone, Copy, Debug, AnchorSerialize, AnchorDeserialize)]
+    pub struct V3 {
+        pub confidence_factor: u32,
+    }
+
+    impl V3 {
+        pub fn from_generic_data(data: &[u8; 20]) -> Result<V3> {
+            let mut buff: &[u8] = &data[..];
+            AnchorDeserialize::deserialize(&mut buff).map_err(Into::into)
+        }
+    }
+
+    #[derive(Clone, Copy, Debug, AnchorSerialize, AnchorDeserialize)]
+    pub struct V8V10 {
+        pub market_status_behavior: MarketStatusBehavior,
+    }
+
+    impl V8V10 {
+        pub fn from_generic_data(data: &[u8; 20]) -> Result<V8V10> {
+            let mut buff: &[u8] = &data[..];
+            let market_status_behavior: MarketStatusBehavior =
+                AnchorDeserialize::deserialize(&mut buff)?;
+            Ok(V8V10 {
+                market_status_behavior,
+            })
+        }
+    }
 }
 
 pub mod chainlink_streams_itf {

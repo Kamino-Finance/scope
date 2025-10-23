@@ -37,7 +37,7 @@ fn get_price_int(vault: &jito_vault_core::Vault) -> Price {
     price_dec.into()
 }
 
-pub fn validate_account(vault: &Option<AccountInfo>) -> Result<()> {
+pub fn validate_account(vault: Option<&AccountInfo>) -> Result<()> {
     let Some(vault) = vault else {
         warn!("No vault account provided");
         return err!(crate::ScopeError::UnexpectedAccount);

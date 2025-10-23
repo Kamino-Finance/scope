@@ -87,7 +87,7 @@ use bytemuck;
 use decimal_wad::rate::U128;
 pub use strum::IntoEnumIterator;
 
-use crate::{DatedPrice, OraclePrices, Price, ScopeError, MAX_ENTRIES};
+use crate::{states::OraclePrices, DatedPrice, Price, ScopeError, MAX_ENTRIES};
 
 /// Maximum length of a chain (4 so the size of one chain is the same as `u64`)
 pub const MAX_CHAIN_LENGTH: usize = 4;

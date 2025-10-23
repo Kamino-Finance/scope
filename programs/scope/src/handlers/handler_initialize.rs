@@ -1,6 +1,11 @@
 use anchor_lang::prelude::*;
 
-use crate::utils::pdas::seeds;
+use crate::{
+    states::{
+        configuration::Configuration, OracleMappings, OraclePrices, OracleTwaps, TokenMetadatas,
+    },
+    utils::pdas::seeds,
+};
 
 #[derive(Accounts)]
 #[instruction(feed_name: String)]
@@ -13,22 +18,22 @@ pub struct Initialize<'info> {
 
     // Set space to max size here
     // The ability to create multiple feeds is mostly useful for tests
-    #[account(init, seeds = [seeds::CONFIG, feed_name.as_bytes()], bump, payer = admin, space = 8 + std::mem::size_of::<crate::Configuration>())]
-    pub configuration: AccountLoader<'info, crate::Configuration>,
+    #[account(init, seeds = [seeds::CONFIG, feed_name.as_bytes()], bump, payer = admin, space = 8 + std::mem::size_of::<crate::states::configuration::Configuration>())]
+    pub configuration: AccountLoader<'info, Configuration>,
 
     #[account(zero)]
-    pub token_metadatas: AccountLoader<'info, crate::TokenMetadatas>,
+    pub token_metadatas: AccountLoader<'info, TokenMetadatas>,
 
     #[account(zero)]
-    pub oracle_twaps: AccountLoader<'info, crate::OracleTwaps>,
-
-    // Account is pre-reserved/paid outside the program
-    #[account(zero)]
-    pub oracle_prices: AccountLoader<'info, crate::OraclePrices>,
+    pub oracle_twaps: AccountLoader<'info, OracleTwaps>,
 
     // Account is pre-reserved/paid outside the program
     #[account(zero)]
-    pub oracle_mappings: AccountLoader<'info, crate::OracleMappings>,
+    pub oracle_prices: AccountLoader<'info, OraclePrices>,
+
+    // Account is pre-reserved/paid outside the program
+    #[account(zero)]
+    pub oracle_mappings: AccountLoader<'info, OracleMappings>,
 }
 
 pub fn process(ctx: Context<Initialize>, _: String) -> Result<()> {
@@ -36,7 +41,7 @@ pub fn process(ctx: Context<Initialize>, _: String) -> Result<()> {
     let _ = ctx.accounts.token_metadatas.load_init()?;
     let mut oracle_prices = ctx.accounts.oracle_prices.load_init()?;
     let mut oracle_twaps = ctx.accounts.oracle_twaps.load_init()?;
-    let mut configuration: std::cell::RefMut<'_, crate::Configuration> =
+    let mut configuration: std::cell::RefMut<'_, Configuration> =
         ctx.accounts.configuration.load_init()?;
 
     let admin = ctx.accounts.admin.key();

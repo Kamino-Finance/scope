@@ -6,8 +6,9 @@ use std::{
 use anchor_lang::prelude::*;
 
 use crate::{
+    states::OraclePrices,
     utils::{consts::FULL_BPS, math},
-    warn, DatedPrice, OraclePrices, Price, ScopeError, ScopeResult, MAX_ENTRIES_U16,
+    warn, DatedPrice, Price, ScopeError, ScopeResult, MAX_ENTRIES_U16,
 };
 
 pub const MOST_RECENT_OF_CHAIN_SIZE: usize = 4;
@@ -94,7 +95,7 @@ fn assert_prices_within_max_divergence(
         .map_err(|_| ScopeError::MostRecentOfMaxDivergenceBpsViolated)
 }
 
-pub fn validate_mapping_cfg(mapping: &Option<AccountInfo>, generic_data: &[u8]) -> ScopeResult<()> {
+pub fn validate_mapping_cfg(mapping: Option<&AccountInfo>, generic_data: &[u8]) -> ScopeResult<()> {
     if mapping.is_some() {
         warn!("No mapping account is expected for MostRecentOf oracle");
         return Err(ScopeError::PriceAccountNotExpected);

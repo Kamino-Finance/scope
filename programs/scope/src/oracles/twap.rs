@@ -5,27 +5,15 @@ use intbits::Bits;
 
 use self::utils::update_ema_twap;
 use crate::{
-    debug, DatedPrice, OracleMappings, OracleTwaps, ScopeError, ScopeResult, MAX_ENTRIES_U16,
+    debug,
+    states::{OracleMappings, OracleTwaps},
+    DatedPrice, ScopeError, ScopeResult,
 };
 
 const EMA_1H_DURATION_SECONDS: u64 = 60 * 60;
 const MIN_SAMPLES_IN_PERIOD: u32 = 10;
 const NUM_SUB_PERIODS: usize = 3;
 const MIN_SAMPLES_IN_FIRST_AND_LAST_PERIOD: u32 = 1;
-
-pub fn validate_price_account(account: &Option<AccountInfo>, twap_source: u16) -> Result<()> {
-    if account.is_some() {
-        return err!(ScopeError::PriceAccountNotExpected);
-    }
-
-    require_gt!(
-        MAX_ENTRIES_U16,
-        twap_source,
-        ScopeError::TwapSourceIndexOutOfRange
-    );
-
-    Ok(())
-}
 
 pub fn update_twap(
     oracle_twaps: &mut OracleTwaps,
@@ -80,7 +68,7 @@ mod utils {
     use decimal_wad::decimal::Decimal;
 
     use super::*;
-    use crate::{warn, EmaTwap, Price, ScopeResult};
+    use crate::{states::EmaTwap, warn, Price, ScopeResult};
 
     /// Get the adjusted smoothing factor (alpha) based on the time between the last two samples.
     ///

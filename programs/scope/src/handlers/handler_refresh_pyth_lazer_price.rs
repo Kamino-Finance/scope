@@ -10,8 +10,9 @@ use solana_program::{
 
 use crate::{
     oracles::{pyth_lazer, OracleType},
+    states::{OracleMappings, OraclePrices, OracleTwaps},
     utils::price_impl::check_ref_price_difference,
-    OracleMappings, OraclePrices, OracleTwaps, ScopeError,
+    ScopeError,
 };
 
 #[derive(Accounts)]

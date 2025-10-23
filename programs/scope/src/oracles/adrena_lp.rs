@@ -6,7 +6,7 @@ use crate::{
     warn, DatedPrice, Price, Result, ScopeError,
 };
 
-pub fn validate_adrena_pool(account: &Option<AccountInfo>, clock: &Clock) -> Result<()> {
+pub fn validate_adrena_pool(account: Option<&AccountInfo>, clock: &Clock) -> Result<()> {
     let Some(account) = account else {
         warn!("No adrena pool account provided");
         return err!(ScopeError::ExpectedPriceAccount);
