@@ -85,10 +85,16 @@ pub fn refresh_chainlink_price<'info>(
         ],
     )?;
 
-    let Some((_program_id, return_data)) = get_return_data() else {
+    let Some((return_program_id, return_data)) = get_return_data() else {
         msg!("No report data found");
         return Err(error!(ScopeError::NoChainlinkReportData));
     };
+
+    require_keys_eq!(
+        return_program_id,
+        VERIFIER_PROGRAM_ID,
+        ScopeError::NoChainlinkReportData
+    );
 
     // 2 - load the report and update the price
     let oracle_mappings = ctx.accounts.oracle_mappings.load()?;
