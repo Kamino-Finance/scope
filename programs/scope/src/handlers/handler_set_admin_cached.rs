@@ -8,7 +8,7 @@ pub struct SetAdminCached<'info> {
     admin: Signer<'info>,
 
     #[account(mut, seeds = [b"conf", feed_name.as_bytes()], bump, has_one = admin)]
-    pub configuration: AccountLoader<'info, crate::Configuration>,
+    pub configuration: AccountLoader<'info, crate::states::configuration::Configuration>,
 }
 
 pub fn process(ctx: Context<SetAdminCached>, new_admin: Pubkey, feed_name: String) -> Result<()> {

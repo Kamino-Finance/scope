@@ -1,6 +1,9 @@
 use anchor_lang::prelude::*;
 
-use crate::{warn, DatedPrice, OraclePrices, Price, ScopeError, ScopeResult, MAX_ENTRIES_U16};
+use crate::{
+    states::oracle_prices::OraclePrices, warn, DatedPrice, Price, ScopeError, ScopeResult,
+    MAX_ENTRIES_U16,
+};
 
 #[derive(Debug, Default, AnchorDeserialize, AnchorSerialize)]
 pub struct CappedFlooredData {
@@ -80,7 +83,7 @@ pub fn get_price(oracle_prices: &OraclePrices, generic_data: &[u8]) -> ScopeResu
     })
 }
 
-pub fn validate_mapping_cfg(mapping: &Option<AccountInfo>, generic_data: &[u8]) -> ScopeResult<()> {
+pub fn validate_mapping_cfg(mapping: Option<&AccountInfo>, generic_data: &[u8]) -> ScopeResult<()> {
     if mapping.is_some() {
         warn!("No mapping account is expected for CappedFloored oracle");
         return Err(ScopeError::PriceAccountNotExpected);

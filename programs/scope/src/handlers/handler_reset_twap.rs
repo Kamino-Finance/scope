@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use solana_program::sysvar::instructions::ID as SYSVAR_INSTRUCTIONS_ID;
 
-use crate::{oracles::check_context, utils::pdas::seeds};
+use crate::{oracles::check_context, states::OracleTwaps, utils::pdas::seeds};
 
 #[derive(Accounts)]
 #[instruction(token:u64, feed_name: String)]
@@ -12,9 +12,9 @@ pub struct ResetTwap<'info> {
         has_one = admin,
         has_one = oracle_twaps,
     )]
-    pub configuration: AccountLoader<'info, crate::Configuration>,
+    pub configuration: AccountLoader<'info, crate::states::configuration::Configuration>,
     #[account(mut)]
-    pub oracle_twaps: AccountLoader<'info, crate::OracleTwaps>,
+    pub oracle_twaps: AccountLoader<'info, OracleTwaps>,
     /// CHECK: Sysvar fixed address
     #[account(address = SYSVAR_INSTRUCTIONS_ID)]
     pub instruction_sysvar_account_info: AccountInfo<'info>,

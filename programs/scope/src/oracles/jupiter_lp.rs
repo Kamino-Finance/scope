@@ -10,9 +10,12 @@ use solana_program::program_pack::Pack;
 
 use crate::{
     scope_chain::get_price_from_chain,
+    states::{
+        mints_to_scope_chains::{MintToScopeChain, MintsToScopeChains},
+        OraclePrices,
+    },
     utils::{account_deserialize, math::ten_pow},
-    warn, DatedPrice, MintToScopeChain, MintsToScopeChains, OraclePrices, Price, Result,
-    ScopeError,
+    warn, DatedPrice, Price, Result, ScopeError,
 };
 pub const POOL_VALUE_SCALE_DECIMALS: u8 = 6;
 
@@ -61,7 +64,7 @@ where
     Ok(dated_price)
 }
 
-pub fn validate_jlp_pool(account: &Option<AccountInfo>) -> Result<()> {
+pub fn validate_jlp_pool(account: Option<&AccountInfo>) -> Result<()> {
     let Some(account) = account else {
         warn!("No jlp pool account provided");
         return err!(ScopeError::PriceNotValid);

@@ -11,8 +11,9 @@ use solana_program::{
 
 use crate::{
     oracles::{get_non_zero_price, OracleType},
-    utils::{price_impl::check_ref_price_difference, zero_copy_deserialize},
-    OracleMappings, ScopeError,
+    states::{OracleMappings, OraclePrices, OracleTwaps},
+    utils::price_impl::check_ref_price_difference,
+    ScopeError,
 };
 
 const COMPUTE_BUDGET_ID: Pubkey = pubkey!("ComputeBudget111111111111111111111111111111");
@@ -20,12 +21,10 @@ const COMPUTE_BUDGET_ID: Pubkey = pubkey!("ComputeBudget111111111111111111111111
 #[derive(Accounts)]
 pub struct RefreshList<'info> {
     #[account(mut, has_one = oracle_mappings)]
-    pub oracle_prices: AccountLoader<'info, crate::OraclePrices>,
-    /// CHECK: Checked above
-    #[account(owner = crate::ID)]
-    pub oracle_mappings: AccountInfo<'info>,
+    pub oracle_prices: AccountLoader<'info, OraclePrices>,
+    pub oracle_mappings: AccountLoader<'info, OracleMappings>,
     #[account(mut, has_one = oracle_prices, has_one = oracle_mappings)]
-    pub oracle_twaps: AccountLoader<'info, crate::OracleTwaps>,
+    pub oracle_twaps: AccountLoader<'info, OracleTwaps>,
     /// CHECK: Sysvar fixed address
     #[account(address = SYSVAR_INSTRUCTIONS_ID)]
     pub instruction_sysvar_account_info: AccountInfo<'info>,
@@ -38,7 +37,7 @@ pub fn refresh_price_list<'info>(
 ) -> Result<()> {
     check_execution_ctx(&ctx.accounts.instruction_sysvar_account_info)?;
 
-    let oracle_mappings = &zero_copy_deserialize::<OracleMappings>(&ctx.accounts.oracle_mappings)?;
+    let oracle_mappings = ctx.accounts.oracle_mappings.load()?;
     let mut oracle_twaps = ctx.accounts.oracle_twaps.load_mut()?;
 
     // No token to refresh
@@ -95,7 +94,7 @@ pub fn refresh_price_list<'info>(
             &mut accounts_iter,
             &clock,
             &oracle_twaps,
-            oracle_mappings,
+            &oracle_mappings,
             &ctx.accounts.oracle_prices,
             token_idx,
         );

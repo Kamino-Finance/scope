@@ -62,7 +62,7 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
     })
 }
 
-pub fn validate_price_update_v2_info(price_info: &Option<AccountInfo>) -> Result<()> {
+pub fn validate_price_update_v2_info(price_info: Option<&AccountInfo>) -> Result<()> {
     if cfg!(feature = "skip_price_validation") {
         return Ok(());
     }

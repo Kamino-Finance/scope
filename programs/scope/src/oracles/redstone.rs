@@ -66,7 +66,7 @@ pub fn get_price(
     })
 }
 
-pub fn validate_price_account(price_data_account: &Option<AccountInfo>) -> Result<()> {
+pub fn validate_price_account(price_data_account: Option<&AccountInfo>) -> Result<()> {
     let Some(price_data_account) = price_data_account else {
         warn!("No RedStone price account provided");
         return err!(ScopeError::ExpectedPriceAccount);

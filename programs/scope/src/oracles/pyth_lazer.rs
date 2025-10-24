@@ -203,7 +203,7 @@ pub fn update_price(
     Ok(())
 }
 
-pub fn validate_mapping_cfg(mapping: &Option<AccountInfo>, generic_data: &[u8]) -> ScopeResult<()> {
+pub fn validate_mapping_cfg(mapping: Option<&AccountInfo>, generic_data: &[u8]) -> ScopeResult<()> {
     if mapping.is_some() {
         warn!("No mapping account is expected for PythLazer oracle");
         return Err(ScopeError::PriceAccountNotExpected);

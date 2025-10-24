@@ -110,6 +110,28 @@
     "oracle_type": "KToken",
     "group_ids": [ 0 ]
   },
+  "45": {
+    "label": "hyUSD/JitoSOL TWAP",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 48,
+    "max_age_slot": 380,
+    "group_ids": [ 2 ]
+  },
+  "48": {
+    "label": "Orca hyUSD/JitoSOL",
+    "oracle_mapping": "BM4rn7ES2JEo2BXLh62etYRHCk137NhLVsZ8Uhr91d9p",
+    "oracle_type": "OrcaWhirlpoolAtoB",
+    "max_age_slot": 375,
+    "twap_enabled": true,
+    "group_ids": [ 2 ]
+  },
+  "49": {
+    "label": "TWAP Orca PIPE/JitoSOL",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 511,
+    "max_age_slot": 380,
+    "group_ids": [ 2 ]
+  },
   "50": {
     "label": "kUXD-USDC_Orca/USD",
     "oracle_mapping": "BfyQYYr2T9eJfMfq5gPXcq3SUkJSh2ahtk7ZNUCzkx9e",
@@ -1632,13 +1654,6 @@
     "maturity_timestamp": 1753747200,
     "group_ids": [ 1 ]
   },
-  "262": {
-    "label": "Sbod ALP/USDC",
-    "oracle_type": "SwitchboardOnDemand",
-    "oracle_mapping": "BFsSfoacGGpvpriER87B8JqEs7AX4F5SUfz8kp5aSAhV",
-    "twap_enabled": true,
-    "max_age_slot": 2000
-  },
   "263": {
     "label": "Stake pool HosicoSOL/SOL",
     "oracle_mapping": "723TJCeVhP4zFWAuNwM7AgspSZN5eoq3zv5KxRyGPmQm",
@@ -1908,6 +1923,13 @@
     "oracle_type": "ScopeTwap",
     "twap_source": 299,
     "max_age_slot": 380,
+    "group_ids": [ 2 ]
+  },
+  "301": {
+    "label": "Stake pool lsSOL/SOL",
+    "oracle_mapping": "CCcYLoF18ntXCnS98HeoCEUrqN8nwN2ZGUKeP4hZH9xh",
+    "oracle_type": "SplStake",
+    "max_age_slot": 160,
     "group_ids": [ 2 ]
   },
   "302": {
@@ -2716,6 +2738,18 @@
     "max_age_slot": 375,
     "group_ids": [ 2 ]
   },
+  "414": {
+    "label": "Pyth Pull deJAAA/USD RR",
+    "oracle_mapping": "G7ycRzKBSLMfqotmH6kXysEvoK8U3A2rcPsEwZmYghbh",
+    "oracle_type": "PythPull",
+    "group_ids": [ 2 ]
+  },
+  "415": {
+    "label": "Pyth Pull deJTRSY/USD RR",
+    "oracle_mapping": "7eWZ4sEsVqN56VHGu5tNrFEA4q6HKpzN9s89kRM85F1E",
+    "oracle_type": "PythPull",
+    "group_ids": [ 2 ]
+  },
   "416": {
     "label": "Pyth Pull EMA PNUT/USD",
     "oracle_mapping": "8EWYFU21Gf1rVa93qbpvPxpnfCpRJ1URyXNcbP6EqLAY",
@@ -3296,10 +3330,9 @@
     "group_ids": [ 1, 2 ]
   },
   "498": {
-    "label": "Sbod INF/SOL",
-    "oracle_type": "SwitchboardOnDemand",
-    "oracle_mapping": "AJ1C3CpVrWgQFNmxgfvSM81XqzE738BagvXz6hBPWVHL",
-    "max_age_slot": 4000,
+    "label": "Pyth Pull EMA deJAAA/USD RR",
+    "oracle_mapping": "G7ycRzKBSLMfqotmH6kXysEvoK8U3A2rcPsEwZmYghbh",
+    "oracle_type": "PythPullEMA",
     "group_ids": [ 2 ]
   },
   "499": {
@@ -3334,5 +3367,45 @@
     "oracle_mapping": "3KebxXoZLaZvvdc3ecmdgwWQWSCLQeuouS6mrF7ar1en",
     "oracle_type": "PythPullEMA",
     "group_ids": [ 1, 2 ]
+  },
+  "504": {
+    "label": "Pyth Pull EMA deJTRSY/USD RR",
+    "oracle_mapping": "7eWZ4sEsVqN56VHGu5tNrFEA4q6HKpzN9s89kRM85F1E",
+    "oracle_type": "PythPullEMA",
+    "group_ids": [ 2 ]
+  },
+  "505": {
+    "label": "Pyth Pull CASH/RD RR",
+    "oracle_mapping": "7ELVkNXhZLJGdwPGps8sEBgs583TewjZoRzgf9Zdp5T8",
+    "oracle_type": "PythPull",
+    "group_ids": [ 1, 2 ]
+  },
+  "506": {
+    "label": "Pyth Pull EMA CASH/RD RR",
+    "oracle_mapping": "7ELVkNXhZLJGdwPGps8sEBgs583TewjZoRzgf9Zdp5T8",
+    "oracle_type": "PythPullEMA",
+    "group_ids": [ 1, 2 ]
+  },
+  "507": {
+    "label": "Fixed CASH/USD",
+    "oracle_type": "FixedPrice",
+    "fixed_price": 1.0,
+    "ref_price": 508,
+    "group_ids": [ 1, 2 ]
+  },
+  "508": {
+    "label": "Capped CASH/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 505,
+    "cap_entry": 191,
+    "group_ids": [ 1, 2 ]
+  },
+  "511": {
+    "label": "Orca PIPE/JitoSOL",
+    "oracle_mapping": "8yPXec1dNkKbErRsGwQw3YaxGVruU2df5pnDGiX6pzPo",
+    "oracle_type": "OrcaWhirlpoolAtoB",
+    "twap_enabled": true,
+    "max_age_slot": 375,
+    "group_ids": [ 2 ]
   }
 }

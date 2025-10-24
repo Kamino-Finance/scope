@@ -58,7 +58,7 @@ pub fn get_price(cfg_raw: &[u8], clock: &Clock) -> Result<DatedPrice> {
 }
 
 pub fn validate_mapping_cfg(
-    mapping: &Option<AccountInfo>,
+    mapping: Option<&AccountInfo>,
     cfg_raw: &[u8],
     clock: &Clock,
 ) -> ScopeResult<()> {

@@ -14,8 +14,9 @@ use crate::{
         },
         OracleType,
     },
+    states::{OracleMappings, OraclePrices, OracleTwaps},
     utils::price_impl::check_ref_price_difference,
-    OracleMappings, OraclePrices, OracleTwaps, ScopeError,
+    ScopeError,
 };
 
 #[derive(Accounts)]
@@ -85,10 +86,16 @@ pub fn refresh_chainlink_price<'info>(
         ],
     )?;
 
-    let Some((_program_id, return_data)) = get_return_data() else {
+    let Some((return_program_id, return_data)) = get_return_data() else {
         msg!("No report data found");
         return Err(error!(ScopeError::NoChainlinkReportData));
     };
+
+    require_keys_eq!(
+        return_program_id,
+        VERIFIER_PROGRAM_ID,
+        ScopeError::NoChainlinkReportData
+    );
 
     // 2 - load the report and update the price
     let oracle_mappings = ctx.accounts.oracle_mappings.load()?;
@@ -105,14 +112,14 @@ pub fn refresh_chainlink_price<'info>(
             .try_into()
             .map_err(|_| ScopeError::BadTokenType)?;
         require!(
-            matches!(
-                price_type,
-                OracleType::Chainlink
-                    | OracleType::ChainlinkRWA
-                    | OracleType::ChainlinkNAV
-                    | OracleType::ChainlinkX
-                    | OracleType::ChainlinkExchangeRate,
-            ),
+            [
+                OracleType::Chainlink,
+                OracleType::ChainlinkRWA,
+                OracleType::ChainlinkNAV,
+                OracleType::ChainlinkX,
+                OracleType::ChainlinkExchangeRate
+            ]
+            .contains(&price_type),
             ScopeError::BadTokenType
         );
 

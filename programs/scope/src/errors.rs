@@ -52,8 +52,8 @@ pub enum ScopeError {
     #[msg("Refresh price instruction preceded by unexpected ixs")]
     RefreshWithUnexpectedIxs,
 
-    #[msg("Invalid token metadata update mode")]
-    InvalidTokenUpdateMode,
+    #[msg("Invalid update sequence or accounts")]
+    InvalidUpdateSequenceOrAccounts,
 
     #[msg("Unable to derive PDA address")]
     UnableToDerivePDA,
@@ -174,6 +174,9 @@ pub enum ScopeError {
 
     #[msg("Can't set both cap and floor to None for CappedFloored oracle")]
     CappedFlooredBothCapAndFloorAreNone,
+
+    #[msg("Missing price account for Oracle Mapping update")]
+    MissingPriceAccount,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

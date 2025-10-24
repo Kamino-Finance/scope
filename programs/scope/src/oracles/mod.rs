@@ -8,6 +8,7 @@ pub mod adrena_lp;
 pub mod capped_floored;
 pub mod chainlink;
 pub mod discount_to_maturity;
+pub mod fixed_price;
 pub mod flashtrade_lp;
 pub mod jito_restaking;
 pub mod jupiter_lp;
@@ -28,7 +29,10 @@ pub mod switchboard_on_demand;
 pub mod switchboard_v2;
 pub mod twap;
 
-use std::ops::Deref;
+use std::{
+    fmt::{Debug, DebugStruct},
+    ops::Deref,
+};
 
 use anchor_lang::{accounts::account_loader::AccountLoader, prelude::*};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -37,7 +41,10 @@ use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "yvaults")]
 use self::ktokens_token_x::TokenTypes;
-use crate::{warn, DatedPrice, OracleMappings, OraclePrices, OracleTwaps, Price, ScopeError};
+use crate::{
+    states::{DatedPrice, OracleMappings, OraclePrices, OracleTwaps},
+    warn, ScopeError,
+};
 
 pub fn check_context<T>(ctx: &Context<T>) -> Result<()> {
     //make sure there are no extra accounts
@@ -48,7 +55,18 @@ pub fn check_context<T>(ctx: &Context<T>) -> Result<()> {
     Ok(())
 }
 
-#[derive(Default, IntoPrimitive, TryFromPrimitive, Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(
+    Default,
+    AnchorSerialize,
+    AnchorDeserialize,
+    IntoPrimitive,
+    TryFromPrimitive,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Debug,
+)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[repr(u8)]
 pub enum OracleType {
@@ -152,8 +170,53 @@ pub enum OracleType {
 }
 
 impl OracleType {
-    pub fn is_twap(&self) -> bool {
+    pub fn is_twap(self) -> bool {
         matches!(self, OracleType::ScopeTwap)
+    }
+
+    pub fn is_chainlink_provider(self) -> bool {
+        match self {
+            OracleType::Chainlink
+            | OracleType::ChainlinkRWA
+            | OracleType::ChainlinkNAV
+            | OracleType::ChainlinkX
+            | OracleType::ChainlinkExchangeRate => true,
+
+            OracleType::Pyth
+            | OracleType::DeprecatedPlaceholder1
+            | OracleType::SwitchboardV2
+            | OracleType::DeprecatedPlaceholder2
+            | OracleType::CToken
+            | OracleType::SplStake
+            | OracleType::KToken
+            | OracleType::PythEMA
+            | OracleType::MsolStake
+            | OracleType::KTokenToTokenA
+            | OracleType::KTokenToTokenB
+            | OracleType::JupiterLpFetch
+            | OracleType::ScopeTwap
+            | OracleType::OrcaWhirlpoolAtoB
+            | OracleType::OrcaWhirlpoolBtoA
+            | OracleType::RaydiumAmmV3AtoB
+            | OracleType::RaydiumAmmV3BtoA
+            | OracleType::JupiterLpCompute
+            | OracleType::MeteoraDlmmAtoB
+            | OracleType::MeteoraDlmmBtoA
+            | OracleType::JupiterLpScope
+            | OracleType::PythPull
+            | OracleType::PythPullEMA
+            | OracleType::FixedPrice
+            | OracleType::SwitchboardOnDemand
+            | OracleType::JitoRestaking
+            | OracleType::DiscountToMaturity
+            | OracleType::MostRecentOf
+            | OracleType::PythLazer
+            | OracleType::RedStone
+            | OracleType::AdrenaLp
+            | OracleType::Securitize
+            | OracleType::CappedFloored
+            | OracleType::FlashtradeLp => false,
+        }
     }
 
     /// Get the number of compute unit needed to refresh the price of a token
@@ -311,8 +374,7 @@ where
             extra_accounts,
         ),
         OracleType::FixedPrice => {
-            let mut price_data: &[u8] = &oracle_mappings.generic[index];
-            let price = AnchorDeserialize::deserialize(&mut price_data).unwrap();
+            let price = fixed_price::parse_generic_data(&oracle_mappings.generic[index])?;
             Ok(DatedPrice {
                 price,
                 last_updated_slot: clock.slot,
@@ -381,8 +443,7 @@ where
 /// This function shall be called before update of oracle mappings
 pub fn validate_oracle_cfg(
     price_type: OracleType,
-    price_account: &Option<AccountInfo>,
-    twap_source: u16,
+    price_account: Option<&AccountInfo>,
     generic_data: &[u8; 20],
     clock: &Clock,
 ) -> crate::Result<()> {
@@ -409,7 +470,7 @@ pub fn validate_oracle_cfg(
         OracleType::JupiterLpFetch | OracleType::JupiterLpCompute | OracleType::JupiterLpScope => {
             jupiter_lp::validate_jlp_pool(price_account)
         }
-        OracleType::ScopeTwap => twap::validate_price_account(price_account, twap_source),
+        OracleType::ScopeTwap => panic!("ScopeTwap validation uses a different path"),
         OracleType::OrcaWhirlpoolAtoB | OracleType::OrcaWhirlpoolBtoA => {
             orca_whirlpool::validate_pool_account(price_account)
         }
@@ -419,16 +480,7 @@ pub fn validate_oracle_cfg(
         OracleType::MeteoraDlmmAtoB | OracleType::MeteoraDlmmBtoA => {
             meteora_dlmm::validate_pool_account(price_account)
         }
-        OracleType::FixedPrice => {
-            if price_account.is_some() {
-                warn!("No account is expected with a fixed price oracle");
-                return err!(ScopeError::PriceNotValid);
-            }
-            let mut price_data: &[u8] = generic_data;
-            let _price: Price = AnchorDeserialize::deserialize(&mut price_data)
-                .map_err(|_| error!(ScopeError::FixedPriceInvalid))?;
-            Ok(())
-        }
+        OracleType::FixedPrice => fixed_price::validate_mapping(price_account, generic_data),
         OracleType::JitoRestaking => jito_restaking::validate_account(price_account),
         OracleType::Chainlink => {
             chainlink::validate_mapping_v3(price_account, generic_data).map_err(Into::into)
@@ -465,5 +517,134 @@ pub fn validate_oracle_cfg(
         }
         OracleType::AdrenaLp => adrena_lp::validate_adrena_pool(price_account, clock),
         OracleType::FlashtradeLp => flashtrade_lp::validate_flashtrade_pool(price_account, clock),
+    }
+}
+
+pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
+    match price_type {
+        OracleType::Pyth
+        | OracleType::SwitchboardV2
+        | OracleType::CToken
+        | OracleType::SplStake
+        | OracleType::KToken
+        | OracleType::PythEMA
+        | OracleType::MsolStake
+        | OracleType::KTokenToTokenA
+        | OracleType::KTokenToTokenB
+        | OracleType::JupiterLpFetch
+        | OracleType::ScopeTwap
+        | OracleType::OrcaWhirlpoolAtoB
+        | OracleType::OrcaWhirlpoolBtoA
+        | OracleType::RaydiumAmmV3AtoB
+        | OracleType::RaydiumAmmV3BtoA
+        | OracleType::JupiterLpCompute
+        | OracleType::MeteoraDlmmAtoB
+        | OracleType::MeteoraDlmmBtoA
+        | OracleType::JupiterLpScope
+        | OracleType::PythPull
+        | OracleType::PythPullEMA
+        | OracleType::SwitchboardOnDemand
+        | OracleType::JitoRestaking
+        | OracleType::RedStone
+        | OracleType::AdrenaLp
+        | OracleType::Securitize
+        | OracleType::ChainlinkNAV
+        | OracleType::FlashtradeLp
+        | OracleType::ChainlinkExchangeRate => false,
+
+        OracleType::FixedPrice
+        | OracleType::DiscountToMaturity
+        | OracleType::MostRecentOf
+        | OracleType::CappedFloored
+        | OracleType::Chainlink
+        | OracleType::ChainlinkRWA
+        | OracleType::ChainlinkX
+        | OracleType::PythLazer => true,
+
+        OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => unreachable!(),
+    }
+}
+
+pub fn debug_format_generic_data(
+    d: &mut DebugStruct<'_, '_>,
+    price_type: OracleType,
+    generic_data: &[u8; 20],
+) {
+    match price_type {
+        OracleType::Pyth
+        | OracleType::PythEMA
+        | OracleType::PythPull
+        | OracleType::PythPullEMA
+        | OracleType::SwitchboardV2
+        | OracleType::CToken
+        | OracleType::SplStake
+        | OracleType::KToken
+        | OracleType::MsolStake
+        | OracleType::KTokenToTokenA
+        | OracleType::KTokenToTokenB
+        | OracleType::JupiterLpFetch
+        | OracleType::OrcaWhirlpoolAtoB
+        | OracleType::OrcaWhirlpoolBtoA
+        | OracleType::RaydiumAmmV3AtoB
+        | OracleType::RaydiumAmmV3BtoA
+        | OracleType::JupiterLpCompute
+        | OracleType::MeteoraDlmmAtoB
+        | OracleType::MeteoraDlmmBtoA
+        | OracleType::JupiterLpScope
+        | OracleType::SwitchboardOnDemand
+        | OracleType::JitoRestaking
+        | OracleType::RedStone
+        | OracleType::Securitize
+        | OracleType::AdrenaLp
+        | OracleType::FlashtradeLp
+        | OracleType::ScopeTwap
+        | OracleType::ChainlinkNAV
+        | OracleType::ChainlinkExchangeRate
+        | OracleType::DeprecatedPlaceholder1
+        | OracleType::DeprecatedPlaceholder2 => (), // no generic data to print
+
+        OracleType::Chainlink => {
+            d.field(
+                "chainlink_v3_cfg",
+                &chainlink::cfg_data::V3::from_generic_data(generic_data).ok(),
+            );
+        }
+        OracleType::ChainlinkRWA | OracleType::ChainlinkX => {
+            d.field(
+                "chainlink_v8_v10_cfg",
+                &chainlink::cfg_data::V8V10::from_generic_data(generic_data).ok(),
+            );
+        }
+
+        OracleType::FixedPrice => {
+            d.field(
+                "fixed_price",
+                &fixed_price::parse_generic_data(generic_data),
+            );
+        }
+        OracleType::DiscountToMaturity => {
+            d.field(
+                "discount_to_maturity_cfg",
+                &discount_to_maturity::DiscountToMaturityData::from_generic_data(generic_data).ok(),
+            );
+        }
+        OracleType::MostRecentOf => {
+            d.field(
+                "most_recent_of_cfg",
+                &most_recent_of::MostRecentOfData::from_generic_data(generic_data).ok(),
+            );
+        }
+        OracleType::PythLazer => {
+            d.field(
+                "pyth_lazer_cfg",
+                &pyth_lazer::PythLazerData::from_generic_data(generic_data).ok(),
+            );
+        }
+        OracleType::CappedFloored => {
+            d.field(
+                "capped_floored_cfg",
+                &capped_floored::CappedFlooredData::from_generic_data(generic_data).ok(),
+            );
+        }
     }
 }

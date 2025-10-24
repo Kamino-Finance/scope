@@ -65,7 +65,7 @@ pub fn get_price(
     })
 }
 
-pub fn validate_price_account(switchboard_feed_info: &Option<AccountInfo>) -> Result<()> {
+pub fn validate_price_account(switchboard_feed_info: Option<&AccountInfo>) -> Result<()> {
     if cfg!(feature = "skip_price_validation") {
         return Ok(());
     }
