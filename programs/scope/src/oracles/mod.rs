@@ -28,6 +28,7 @@ pub mod spl_stake;
 pub mod switchboard_on_demand;
 pub mod switchboard_v2;
 pub mod twap;
+pub mod unitas;
 
 use std::{
     fmt::{Debug, DebugStruct},
@@ -167,6 +168,8 @@ pub enum OracleType {
     ChainlinkX = 37,
     /// Chainlink exchange rate oracle
     ChainlinkExchangeRate = 38,
+    /// Unitas price oracle
+    Unitas = 39,
 }
 
 impl OracleType {
@@ -261,6 +264,7 @@ impl OracleType {
             OracleType::Securitize => 30_000,
             OracleType::AdrenaLp => 20_000,
             OracleType::FlashtradeLp => 20_000,
+            OracleType::Unitas => 20_000,
         }
     }
 }
@@ -427,6 +431,7 @@ where
         }
         OracleType::AdrenaLp => adrena_lp::get_price(base_account, clock),
         OracleType::FlashtradeLp => flashtrade_lp::get_price(base_account, clock),
+        OracleType::Unitas => unitas::get_price(base_account, clock, extra_accounts),
     }?;
     // The price providers above are performing their type-specific validations, but are still free
     // to return 0, which we can only tolerate in case of explicit fixed price:
@@ -517,6 +522,7 @@ pub fn validate_oracle_cfg(
         }
         OracleType::AdrenaLp => adrena_lp::validate_adrena_pool(price_account, clock),
         OracleType::FlashtradeLp => flashtrade_lp::validate_flashtrade_pool(price_account, clock),
+        OracleType::Unitas => unitas::validate_price_account(price_account).map_err(Into::into),
     }
 }
 
