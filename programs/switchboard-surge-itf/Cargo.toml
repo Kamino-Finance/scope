@@ -1,0 +1,21 @@
+[package]
+name = "switchboard-surge-itf"
+version = "0.1.0"
+description = "Interface to read switchboard surge data"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "switchboard_surge_itf"
+
+[features]
+no-entrypoint = []
+cpi = ["no-entrypoint"]
+test-bpf = []
+debug = []
+
+[dependencies]
+anchor-lang = ">=0.28.0"
+borsh = "0.10.3"
+bytemuck = { version = "1.4.0", features = ["derive", "min_const_generics"] }
+rust_decimal = "1.32.0"
