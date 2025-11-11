@@ -2724,20 +2724,6 @@
     "max_age_slot": 375,
     "group_ids": [ 2 ]
   },
-  "412": {
-    "label": "Pyth Pull IOT/USD",
-    "oracle_mapping": "8UYEn5Weq7toHwgcmctvcAxaNJo3SJxXEayM57rpoXr9",
-    "oracle_type": "PythPull",
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "413": {
-    "label": "Pyth Pull EMA IOT/USD",
-    "oracle_mapping": "8UYEn5Weq7toHwgcmctvcAxaNJo3SJxXEayM57rpoXr9",
-    "oracle_type": "PythPullEMA",
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
   "414": {
     "label": "Pyth Pull deJAAA/USD RR",
     "oracle_mapping": "G7ycRzKBSLMfqotmH6kXysEvoK8U3A2rcPsEwZmYghbh",

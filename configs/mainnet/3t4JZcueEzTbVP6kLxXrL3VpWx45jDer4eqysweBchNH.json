@@ -983,5 +983,65 @@
     "oracle_type": "ScopeTwap",
     "twap_source": 165, 
     "max_age_slot": 165 
+  },
+  "167": {
+    "label": "Chainlink XAU/USD Open",
+    "oracle_type": "ChainlinkRWA",
+    "chainlink_feed_id": "0x0008991d4caf73e8e05f6671ef43cee5e8c5c3652a35fde0b0942e44a77b0e89",
+    "market_status_behavior": "Open",
+    "twap_enabled": true
+  },
+  "168": {
+    "label": "Chainlink TWAP XAU/USD",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 167,
+    "max_age_slot": 165
+  },
+  "169": {
+    "label": "Exponent PT-2603/eUSX",
+    "oracle_type": "DiscountToMaturity",
+    "discount_per_year_bps": 2500,
+    "maturity_timestamp": 1773226699
+  },
+  "170": {
+    "label": "Exponent PT-2602/fragSOL",
+    "oracle_type": "DiscountToMaturity",
+    "discount_per_year_bps": 2500,
+    "maturity_timestamp": 1770893900
+  },
+  "171": {
+    "label": "Exponent PT-2601/ONyc",
+    "oracle_type": "DiscountToMaturity",
+    "discount_per_year_bps": 2500,
+    "maturity_timestamp": 1769338699
+  },
+  "172": {
+    "label": "Chainlink BTC/USD",
+    "oracle_type": "Chainlink",
+    "chainlink_feed_id": "0x00039d9e45394f473ab1f050a1b963e6b05351e52d71e507509ada0c95ed75b8",
+    "confidence_factor": 50,
+    "twap_enabled": true
+  },
+  "173": {
+    "label": "Chainlink TWAP BTC/USD",
+    "oracle_type": "ScopeTwap",
+    "twap_source": 172,
+    "max_age_slot": 165
+  },
+  "174": {
+    "label": "PythLazer BTC/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1,
+    "pyth_lazer_exponent": 8,
+    "confidence_factor": 50
+  },
+  "175": {
+    "label": "Most recent BTC/USD",
+    "oracle_type": "MostRecentOf",
+    "max_age_slot": 165,
+    "sources_max_age_s": 7200,
+    "max_divergence_bps": 300,
+    "source_entries": [ 130, 172, 174 ],
+    "ref_price": 130
   }
 }

@@ -3,9 +3,12 @@ use std::convert::TryInto;
 use anchor_lang::prelude::*;
 use sbod_itf::accounts::PullFeedAccountData;
 
-use super::switchboard_v2::validate_confidence;
 use crate::{
-    utils::{math::slots_to_secs, zero_copy_deserialize},
+    utils::{
+        consts::ORACLE_CONFIDENCE_FACTOR,
+        math::{check_confidence_interval, slots_to_secs},
+        zero_copy_deserialize,
+    },
     warn, DatedPrice, Price, ScopeError,
 };
 
@@ -63,6 +66,22 @@ pub fn get_price(
         unix_timestamp,
         ..Default::default()
     })
+}
+
+#[inline(always)]
+fn validate_confidence(
+    price_mantissa: i128,
+    price_scale: u32,
+    stdev_mantissa: i128,
+    stdev_scale: u32,
+) -> std::result::Result<(), ScopeError> {
+    check_confidence_interval(
+        price_mantissa.try_into().unwrap(),
+        price_scale,
+        stdev_mantissa.try_into().unwrap(),
+        stdev_scale,
+        ORACLE_CONFIDENCE_FACTOR,
+    )
 }
 
 pub fn validate_price_account(switchboard_feed_info: Option<&AccountInfo>) -> Result<()> {

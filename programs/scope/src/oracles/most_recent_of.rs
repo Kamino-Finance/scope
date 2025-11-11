@@ -48,6 +48,24 @@ pub fn get_price(
         sources_max_age_s,
     } = MostRecentOfData::from_generic_data(generic_data)?;
 
+    get_most_recent_price_from_sources(
+        oracle_prices,
+        &source_entries,
+        max_divergence_bps,
+        sources_max_age_s,
+        clock,
+    )
+}
+
+/// Helper function to find the most recent price from a list of source entries
+/// with age and divergence validation
+pub fn get_most_recent_price_from_sources(
+    oracle_prices: &OraclePrices,
+    source_entries: &[u16],
+    max_divergence_bps: u16,
+    sources_max_age_s: u64,
+    clock: &Clock,
+) -> ScopeResult<DatedPrice> {
     let now: u64 = clock
         .unix_timestamp
         .try_into()
@@ -95,6 +113,30 @@ fn assert_prices_within_max_divergence(
         .map_err(|_| ScopeError::MostRecentOfMaxDivergenceBpsViolated)
 }
 
+/// Helper function to validate common MostRecentOf parameters
+pub fn validate_most_recent_of_params(
+    source_entries: &[u16],
+    max_divergence_bps: u16,
+    sources_max_age_s: u64,
+) -> ScopeResult<()> {
+    // Validate source entries
+    if source_entries[0] >= MAX_ENTRIES_U16 {
+        return Err(ScopeError::MostRecentOfInvalidSourceIndices);
+    }
+
+    // Validate max divergence
+    if max_divergence_bps == 0 || max_divergence_bps > FULL_BPS {
+        return Err(ScopeError::MostRecentOfInvalidMaxDivergence);
+    }
+
+    // Validate max age
+    if sources_max_age_s == 0 {
+        return Err(ScopeError::MostRecentOfInvalidMaxAge);
+    }
+
+    Ok(())
+}
+
 pub fn validate_mapping_cfg(mapping: Option<&AccountInfo>, generic_data: &[u8]) -> ScopeResult<()> {
     if mapping.is_some() {
         warn!("No mapping account is expected for MostRecentOf oracle");
@@ -109,17 +151,5 @@ pub fn validate_mapping_cfg(mapping: Option<&AccountInfo>, generic_data: &[u8]) 
 
     msg!("Validate MostRecentOf price with source_entries = {source_entries:?}, max_divergence_bps = {max_divergence_bps}, sources_max_age_s = {sources_max_age_s}",);
 
-    if source_entries[0] >= MAX_ENTRIES_U16 {
-        return Err(ScopeError::MostRecentOfInvalidSourceIndices);
-    }
-
-    if max_divergence_bps == 0 || max_divergence_bps > FULL_BPS {
-        return Err(ScopeError::MostRecentOfInvalidMaxDivergence);
-    }
-
-    if sources_max_age_s == 0 {
-        return Err(ScopeError::MostRecentOfInvalidMaxAge);
-    }
-
-    Ok(())
+    validate_most_recent_of_params(&source_entries, max_divergence_bps, sources_max_age_s)
 }

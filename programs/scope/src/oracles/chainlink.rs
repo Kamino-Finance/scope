@@ -12,7 +12,6 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    borsh::BorshSerialize,
     errors::ScopeError,
     info,
     utils::{
@@ -24,6 +23,12 @@ use crate::{
 
 const PRICE_STALENESS_S: u64 = 60;
 const NAV_REPORT_STALENESS_IN_MS: u64 = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+
+// For xStocks the Chainlink report contains a `activation_date_time` timestamp that points to
+// when a corporate action would take place (stock split, dividend) and a multiplier becomes current
+// Our current design is to suspend the refresh of the price a certain period of time (given by this constant)
+// before the `activation_date_time` and manually resume it later
+const V10_TIME_PERIOD_BEFORE_ACTIVATION_TO_SUSPEND_S: i64 = 24 * 60 * 60; // 24 hours
 
 #[derive(IntoPrimitive, TryFromPrimitive, Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u32)]
@@ -54,23 +59,6 @@ pub enum MarketStatusBehavior {
     OpenAndPrePost,
 }
 
-impl MarketStatusBehavior {
-    pub fn from_generic_data(mut buff: &[u8]) -> ScopeResult<Self> {
-        AnchorDeserialize::deserialize(&mut buff).map_err(|_| {
-            msg!("Failed to deserialize MarketStatusBehavior");
-            ScopeError::InvalidGenericData
-        })
-    }
-
-    pub fn to_generic_data(&self) -> [u8; 20] {
-        let mut buff = [0u8; 20];
-        let mut cursor = &mut buff[..];
-        BorshSerialize::serialize(&self, &mut cursor)
-            .expect("Failed to serialize MarketStatusBehavior");
-        buff
-    }
-}
-
 /// # Ripcord Flag
 /// - `0` (false): Feed's data provider is OK. Fund's data provider and accuracy is as expected.
 /// - `1` (true): Feed's data provider is flagging a pause. Data provider detected outliers,
@@ -80,6 +68,82 @@ impl MarketStatusBehavior {
 pub enum ReportDataV9RipcordFlag {
     Normal = 0,
     Paused,
+}
+
+// This gives the result of a price update refresh operation
+#[derive(Debug, PartialEq, Eq)]
+pub enum PriceUpdateResult {
+    // The result of a standard price update operation with a new updated price
+    Updated,
+    // For xStocks, when we've entered the blackout period before an `activation_date_time`
+    // the existing price is suspended rather than updating to a new price
+    SuspendExistingPrice,
+}
+
+pub trait GenericDataConvertible<const N: usize>
+where
+    Self: AnchorSerialize + AnchorDeserialize + Sized + 'static,
+{
+    const TYPE_NAME: &'static str;
+
+    fn from_generic_data(mut buff: &[u8]) -> ScopeResult<Self> {
+        Self::deserialize(&mut buff).map_err(|_| {
+            msg!("Failed to deserialize {}", Self::TYPE_NAME);
+            ScopeError::InvalidGenericData
+        })
+    }
+
+    fn to_generic_data(&self) -> [u8; N] {
+        let mut buff = [0u8; N];
+        let mut writer = &mut buff[..];
+        self.serialize(&mut writer)
+            .unwrap_or_else(|_| panic!("Failed to serialize {}", Self::TYPE_NAME));
+        buff
+    }
+}
+
+/// Price data for standard Chainlink types (v3, v7, v8, v9)
+#[derive(Debug, AnchorDeserialize, AnchorSerialize)]
+pub struct ChainlinkStandardPriceData {
+    pub observations_timestamp: u64,
+}
+
+impl ChainlinkStandardPriceData {
+    pub fn new(observations_timestamp: u64) -> Self {
+        Self {
+            observations_timestamp,
+        }
+    }
+}
+
+/// Price data for ChainlinkX type (v10)
+#[derive(Debug, AnchorDeserialize, AnchorSerialize)]
+pub struct ChainlinkXPriceData {
+    pub observations_timestamp: u64,
+    pub suspended: bool,
+    pub activation_date_time: u64,
+}
+
+impl ChainlinkXPriceData {
+    pub fn new(observations_timestamp: u64, suspended: bool, activation_date_time: u64) -> Self {
+        Self {
+            observations_timestamp,
+            suspended,
+            activation_date_time,
+        }
+    }
+}
+
+impl GenericDataConvertible<24> for ChainlinkStandardPriceData {
+    const TYPE_NAME: &'static str = "ChainlinkStandardPriceData";
+}
+
+impl GenericDataConvertible<24> for ChainlinkXPriceData {
+    const TYPE_NAME: &'static str = "ChainlinkXPriceData";
+}
+
+impl GenericDataConvertible<20> for MarketStatusBehavior {
+    const TYPE_NAME: &'static str = "MarketStatusBehavior";
 }
 
 fn validate_report_feed_id(feed_id: &FeedID, mapping: &Pubkey) -> ScopeResult<()> {
@@ -95,15 +159,13 @@ fn validate_report_feed_id(feed_id: &FeedID, mapping: &Pubkey) -> ScopeResult<()
 
 fn validate_observations_timestamp(
     observations_ts: u64,
-    dated_price: &DatedPrice,
+    last_observations_ts: u64,
     clock: &Clock,
-) -> ScopeResult<(u64, u64, [u8; 24])> {
+) -> ScopeResult<(u64, u64, u64)> {
     let current_onchain_ts: u64 = clock
         .unix_timestamp
         .try_into()
         .expect("Invalid clock timestamp");
-    let last_observations_ts =
-        u64::from_le_bytes(dated_price.generic_data[0..8].try_into().unwrap());
 
     if observations_ts <= last_observations_ts {
         warn!("An outdated report was provided");
@@ -111,12 +173,9 @@ fn validate_observations_timestamp(
     }
 
     let price_ts = u64::min(observations_ts, current_onchain_ts);
-
     let last_updated_slot = estimate_slot_update_from_ts(clock, price_ts);
-    let mut generic_data = [0u8; 24];
-    generic_data[..8].copy_from_slice(&observations_ts.to_le_bytes());
 
-    Ok((price_ts, last_updated_slot, generic_data))
+    Ok((price_ts, last_updated_slot, last_observations_ts))
 }
 
 fn validate_report_based_on_market_status(
@@ -173,11 +232,15 @@ pub fn update_price_v3(
     mapping_generic_data: &[u8],
     clock: &Clock,
     chainlink_report: &ReportDataV3,
-) -> ScopeResult<()> {
+) -> ScopeResult<PriceUpdateResult> {
     validate_report_feed_id(&chainlink_report.feed_id, &mapping)?;
-    let (unix_timestamp, last_updated_slot, generic_data) = validate_observations_timestamp(
+
+    // Parse existing price data
+    let existing_price_data =
+        ChainlinkStandardPriceData::from_generic_data(&dated_price.generic_data)?;
+    let (unix_timestamp, last_updated_slot, _) = validate_observations_timestamp(
         chainlink_report.observations_timestamp.into(),
-        dated_price,
+        existing_price_data.observations_timestamp,
         clock,
     )?;
 
@@ -199,15 +262,17 @@ pub fn update_price_v3(
     })?;
 
     let price: Price = price_dec.into();
+    let price_data =
+        ChainlinkStandardPriceData::new(chainlink_report.observations_timestamp.into());
 
     *dated_price = DatedPrice {
         price,
         last_updated_slot,
         unix_timestamp,
-        generic_data,
+        generic_data: price_data.to_generic_data(),
     };
 
-    Ok(())
+    Ok(PriceUpdateResult::Updated)
 }
 
 pub fn update_price_v7(
@@ -215,25 +280,31 @@ pub fn update_price_v7(
     mapping: Pubkey,
     clock: &Clock,
     chainlink_report: &ReportDataV7,
-) -> ScopeResult<()> {
+) -> ScopeResult<PriceUpdateResult> {
     validate_report_feed_id(&chainlink_report.feed_id, &mapping)?;
-    let (unix_timestamp, last_updated_slot, generic_data) = validate_observations_timestamp(
+
+    // Parse existing price data
+    let existing_price_data =
+        ChainlinkStandardPriceData::from_generic_data(&dated_price.generic_data)?;
+    let (unix_timestamp, last_updated_slot, _) = validate_observations_timestamp(
         chainlink_report.observations_timestamp.into(),
-        dated_price,
+        existing_price_data.observations_timestamp,
         clock,
     )?;
 
     let price_dec = chainlink_bigint_value_parse(&chainlink_report.exchange_rate)?;
     let price: Price = price_dec.into();
+    let price_data =
+        ChainlinkStandardPriceData::new(chainlink_report.observations_timestamp.into());
 
     *dated_price = DatedPrice {
         price,
         last_updated_slot,
         unix_timestamp,
-        generic_data,
+        generic_data: price_data.to_generic_data(),
     };
 
-    Ok(())
+    Ok(PriceUpdateResult::Updated)
 }
 
 pub fn update_price_v8(
@@ -242,11 +313,15 @@ pub fn update_price_v8(
     mapping_generic_data: &[u8],
     clock: &Clock,
     chainlink_report: &ReportDataV8,
-) -> ScopeResult<()> {
+) -> ScopeResult<PriceUpdateResult> {
     validate_report_feed_id(&chainlink_report.feed_id, &mapping)?;
-    let (unix_timestamp, last_updated_slot, generic_data) = validate_observations_timestamp(
+
+    // Parse existing price data
+    let existing_price_data =
+        ChainlinkStandardPriceData::from_generic_data(&dated_price.generic_data)?;
+    let (unix_timestamp, last_updated_slot, _) = validate_observations_timestamp(
         chainlink_report.observations_timestamp.into(),
-        dated_price,
+        existing_price_data.observations_timestamp,
         clock,
     )?;
 
@@ -259,15 +334,17 @@ pub fn update_price_v8(
 
     let price_dec = chainlink_bigint_value_parse(&chainlink_report.mid_price)?;
     let price: Price = price_dec.into();
+    let price_data =
+        ChainlinkStandardPriceData::new(chainlink_report.observations_timestamp.into());
 
     *dated_price = DatedPrice {
         price,
         last_updated_slot,
         unix_timestamp,
-        generic_data,
+        generic_data: price_data.to_generic_data(),
     };
 
-    Ok(())
+    Ok(PriceUpdateResult::Updated)
 }
 
 pub fn update_price_v9(
@@ -275,11 +352,15 @@ pub fn update_price_v9(
     mapping: Pubkey,
     clock: &Clock,
     chainlink_report: &ReportDataV9,
-) -> ScopeResult<()> {
+) -> ScopeResult<PriceUpdateResult> {
     validate_report_feed_id(&chainlink_report.feed_id, &mapping)?;
-    let (unix_timestamp, last_updated_slot, generic_data) = validate_observations_timestamp(
+
+    // Parse existing price data
+    let existing_price_data =
+        ChainlinkStandardPriceData::from_generic_data(&dated_price.generic_data)?;
+    let (unix_timestamp, last_updated_slot, _) = validate_observations_timestamp(
         chainlink_report.observations_timestamp.into(),
-        dated_price,
+        existing_price_data.observations_timestamp,
         clock,
     )?;
 
@@ -300,15 +381,17 @@ pub fn update_price_v9(
 
     let price_dec = chainlink_bigint_value_parse(&chainlink_report.nav_per_share)?;
     let price: Price = price_dec.into();
+    let price_data =
+        ChainlinkStandardPriceData::new(chainlink_report.observations_timestamp.into());
 
     *dated_price = DatedPrice {
         price,
         last_updated_slot,
         unix_timestamp,
-        generic_data,
+        generic_data: price_data.to_generic_data(),
     };
 
-    Ok(())
+    Ok(PriceUpdateResult::Updated)
 }
 
 pub fn update_price_v10(
@@ -317,13 +400,64 @@ pub fn update_price_v10(
     mapping_generic_data: &[u8],
     clock: &Clock,
     chainlink_report: &ReportDataV10,
-) -> ScopeResult<()> {
+) -> ScopeResult<PriceUpdateResult> {
     validate_report_feed_id(&chainlink_report.feed_id, &mapping)?;
-    let (unix_timestamp, last_updated_slot, generic_data) = validate_observations_timestamp(
-        chainlink_report.observations_timestamp.into(),
-        dated_price,
-        clock,
-    )?;
+
+    // Parse existing price data
+    let existing_price_data = ChainlinkXPriceData::from_generic_data(&dated_price.generic_data)?;
+    let (unix_timestamp, last_updated_slot, last_observations_ts) =
+        validate_observations_timestamp(
+            chainlink_report.observations_timestamp.into(),
+            existing_price_data.observations_timestamp,
+            clock,
+        )?;
+
+    // Check if this price was suspended
+    if existing_price_data.suspended {
+        warn!(
+            "Price suspended, rejecting update: feed_id={} activation_date_time={} current_multiplier={} new_multiplier={} price={} last_valid_price={:?} market_status={}",
+            chainlink_report.feed_id,
+            existing_price_data.activation_date_time,
+            chainlink_report.current_multiplier,
+            chainlink_report.new_multiplier,
+            chainlink_report.price,
+            dated_price.price,
+            chainlink_report.market_status
+        );
+
+        return Err(ScopeError::PriceNotValid);
+    }
+
+    // Check if the price report contains an activation time, and if we've entered the
+    // blackout period, suspend the price refresh
+    if chainlink_report.activation_date_time > 0 {
+        let activation_time_i64 = i64::from(chainlink_report.activation_date_time);
+        let activation_time_lower_bound = activation_time_i64
+            .checked_sub(V10_TIME_PERIOD_BEFORE_ACTIVATION_TO_SUSPEND_S)
+            .ok_or(ScopeError::BadTimestamp)?;
+
+        if clock.unix_timestamp >= activation_time_lower_bound {
+            warn!(
+                "Entering the blackout period, suspending price: feed_id={} activation_date_time={} current_multiplier={} new_multiplier={} price={} last_valid_price={:?} market_status={}",
+                chainlink_report.feed_id,
+                chainlink_report.activation_date_time,
+                chainlink_report.current_multiplier,
+                chainlink_report.new_multiplier,
+                chainlink_report.price,
+                dated_price.price,
+                chainlink_report.market_status
+            );
+
+            // Suspend the price refresh
+            let price_data = ChainlinkXPriceData::new(
+                last_observations_ts,
+                true,
+                chainlink_report.activation_date_time.into(),
+            );
+            dated_price.generic_data = price_data.to_generic_data();
+            return Ok(PriceUpdateResult::SuspendExistingPrice);
+        }
+    }
 
     validate_report_based_on_market_status(
         chainlink_report.market_status,
@@ -338,14 +472,21 @@ pub fn update_price_v10(
     // TODO(liviuc): once Chainlink has added the `total_return_price`, use that
     let multiplied_price: Price = (price_dec * current_multiplier_dec).into();
 
+    // Create ChainlinkX price data with activation_date_time from current report
+    let price_data = ChainlinkXPriceData::new(
+        chainlink_report.observations_timestamp.into(),
+        false,
+        chainlink_report.activation_date_time.into(),
+    );
+
     *dated_price = DatedPrice {
         price: multiplied_price,
         last_updated_slot,
         unix_timestamp,
-        generic_data,
+        generic_data: price_data.to_generic_data(),
     };
 
-    Ok(())
+    Ok(PriceUpdateResult::Updated)
 }
 
 pub fn validate_mapping_v3(

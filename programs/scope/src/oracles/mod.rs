@@ -1,4 +1,3 @@
-pub mod ctokens;
 #[cfg(feature = "yvaults")]
 pub mod ktokens;
 #[cfg(feature = "yvaults")]
@@ -6,6 +5,7 @@ pub mod ktokens_token_x;
 
 pub mod adrena_lp;
 pub mod capped_floored;
+pub mod capped_most_recent_of;
 pub mod chainlink;
 pub mod discount_to_maturity;
 pub mod fixed_price;
@@ -17,7 +17,6 @@ pub mod most_recent_of;
 pub mod msol_stake;
 pub mod orca_whirlpool;
 pub mod pyth;
-pub mod pyth_ema;
 pub mod pyth_lazer;
 pub mod pyth_pull;
 pub mod pyth_pull_ema;
@@ -26,7 +25,6 @@ pub mod redstone;
 pub mod securitize;
 pub mod spl_stake;
 pub mod switchboard_on_demand;
-pub mod switchboard_v2;
 pub mod twap;
 
 use std::{
@@ -70,17 +68,22 @@ pub fn check_context<T>(ctx: &Context<T>) -> Result<()> {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[repr(u8)]
 pub enum OracleType {
+    /// Deprecated (formerly Pyth)
+    // Do not remove - breaks the typescript idl codegen
     #[default]
-    Pyth = 0,
+    Unused = 0,
     /// Deprecated (formerly SwitchboardV1)
     // Do not remove - breaks the typescript idl codegen
     DeprecatedPlaceholder1 = 1,
-    SwitchboardV2 = 2,
+    /// Deprecated (formerly SwitchboardV2)
+    // Do not remove - breaks the typescript idl codegen
+    DeprecatedPlaceholder2 = 2,
     /// Deprecated (formerly YiToken)
     // Do not remove - breaks the typescript idl codegen
-    DeprecatedPlaceholder2 = 3,
-    /// Solend tokens
-    CToken = 4,
+    DeprecatedPlaceholder3 = 3,
+    /// Deprecated (formerly CToken/Solend tokens)
+    // Do not remove - breaks the typescript idl codegen
+    DeprecatedPlaceholder4 = 4,
     /// SPL Stake Pool token (giving the stake rate in SOL):
     /// This oracle type provide a reference and is not meant to be used directly
     /// to get the value of the token because of different limitations:
@@ -90,8 +93,9 @@ pub enum OracleType {
     SplStake = 5,
     /// KTokens from Kamino
     KToken = 6,
-    /// Pyth Exponentially-Weighted Moving Average
-    PythEMA = 7,
+    /// Deprecated (formerly PythEMA)
+    // Do not remove - breaks the typescript idl codegen
+    DeprecatedPlaceholder5 = 7,
     /// MSOL Stake Pool token
     /// This oracle type provide a reference and is not meant to be used directly
     /// to get the value of the token because of different limitations:
@@ -167,6 +171,9 @@ pub enum OracleType {
     ChainlinkX = 37,
     /// Chainlink exchange rate oracle
     ChainlinkExchangeRate = 38,
+    /// Keeps track of multiple source prices making sure they are recent enough and they don't
+    /// diverge more than a specified limit, while also applying a cap price
+    CappedMostRecentOf = 39,
 }
 
 impl OracleType {
@@ -182,14 +189,14 @@ impl OracleType {
             | OracleType::ChainlinkX
             | OracleType::ChainlinkExchangeRate => true,
 
-            OracleType::Pyth
+            OracleType::Unused
             | OracleType::DeprecatedPlaceholder1
-            | OracleType::SwitchboardV2
             | OracleType::DeprecatedPlaceholder2
-            | OracleType::CToken
+            | OracleType::DeprecatedPlaceholder3
+            | OracleType::DeprecatedPlaceholder4
+            | OracleType::DeprecatedPlaceholder5
             | OracleType::SplStake
             | OracleType::KToken
-            | OracleType::PythEMA
             | OracleType::MsolStake
             | OracleType::KTokenToTokenA
             | OracleType::KTokenToTokenB
@@ -215,7 +222,8 @@ impl OracleType {
             | OracleType::AdrenaLp
             | OracleType::Securitize
             | OracleType::CappedFloored
-            | OracleType::FlashtradeLp => false,
+            | OracleType::FlashtradeLp
+            | OracleType::CappedMostRecentOf => false,
         }
     }
 
@@ -225,13 +233,9 @@ impl OracleType {
             OracleType::FixedPrice => 10_000,
             OracleType::PythPull => 20_000,
             OracleType::PythPullEMA => 20_000,
-            OracleType::Pyth => 30_000,
-            OracleType::SwitchboardV2 => 30_000,
             OracleType::SwitchboardOnDemand => 30_000,
-            OracleType::CToken => 130_000,
             OracleType::SplStake => 20_000,
             OracleType::KToken => 120_000,
-            OracleType::PythEMA => 30_000,
             OracleType::KTokenToTokenA | OracleType::KTokenToTokenB => 100_000,
             OracleType::MsolStake => 20_000,
             OracleType::JupiterLpFetch => 40_000,
@@ -251,11 +255,17 @@ impl OracleType {
             | OracleType::ChainlinkX
             | OracleType::ChainlinkExchangeRate => 0,
             OracleType::MostRecentOf => 35_000,
+            OracleType::CappedMostRecentOf => 40_000,
             OracleType::RedStone => 20_000,
             // PythLazer oracle is not updated through normal refresh ixs
             OracleType::PythLazer => 0,
             OracleType::CappedFloored => 20_000,
-            OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
+            OracleType::Unused
+            | OracleType::DeprecatedPlaceholder1
+            | OracleType::DeprecatedPlaceholder2
+            | OracleType::DeprecatedPlaceholder3
+            | OracleType::DeprecatedPlaceholder4
+            | OracleType::DeprecatedPlaceholder5 => {
                 panic!("DeprecatedPlaceholder is not a valid oracle type")
             }
             OracleType::Securitize => 30_000,
@@ -285,20 +295,16 @@ where
     'a: 'b,
 {
     let price = match price_type {
-        OracleType::Pyth => pyth::get_price(base_account, clock),
         OracleType::PythPull => pyth_pull::get_price(base_account, clock),
         OracleType::PythPullEMA => pyth_pull_ema::get_price(base_account, clock),
-        OracleType::SwitchboardV2 => switchboard_v2::get_price(base_account).map_err(Into::into),
         OracleType::SwitchboardOnDemand => {
             switchboard_on_demand::get_price(base_account, clock).map_err(Into::into)
         }
-        OracleType::CToken => ctokens::get_price(base_account, clock),
         OracleType::SplStake => spl_stake::get_price(base_account, clock),
         #[cfg(not(feature = "yvaults"))]
         OracleType::KToken => {
             panic!("yvaults feature is not enabled, KToken oracle type is not available")
         }
-        OracleType::PythEMA => pyth_ema::get_price(base_account, clock),
         #[cfg(feature = "yvaults")]
         OracleType::KToken => {
             ktokens::get_price(base_account, clock, extra_accounts).map_err(|e| {
@@ -416,13 +422,24 @@ where
             &oracle_mappings.generic[index],
         )
         .map_err(Into::into),
+        OracleType::CappedMostRecentOf => capped_most_recent_of::get_price(
+            oracle_prices.load()?.deref(),
+            &oracle_mappings.generic[index],
+            clock,
+        )
+        .map_err(Into::into),
         OracleType::Securitize => {
             let oracle_prices = oracle_prices.load()?;
             let dated_price = oracle_prices.prices[index];
             securitize::get_sacred_price(base_account, &dated_price, clock, extra_accounts)
                 .map_err(Into::into)
         }
-        OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
+        OracleType::Unused
+        | OracleType::DeprecatedPlaceholder1
+        | OracleType::DeprecatedPlaceholder2
+        | OracleType::DeprecatedPlaceholder3
+        | OracleType::DeprecatedPlaceholder4
+        | OracleType::DeprecatedPlaceholder5 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
         OracleType::AdrenaLp => adrena_lp::get_price(base_account, clock),
@@ -447,25 +464,22 @@ pub fn validate_oracle_cfg(
     generic_data: &[u8; 20],
     clock: &Clock,
 ) -> crate::Result<()> {
+    // we use the default price (formerly Pyth) to indicate removal of a price
     // when we remove something from the config there is no validation needed
-    if price_type == OracleType::Pyth && price_account.is_none() {
+    if price_type == OracleType::default() && price_account.is_none() {
         return Ok(());
     }
 
     match price_type {
-        OracleType::Pyth => pyth::validate_pyth_price_info(price_account),
         OracleType::PythPull => pyth_pull::validate_price_update_v2_info(price_account),
         OracleType::PythPullEMA => pyth_pull::validate_price_update_v2_info(price_account),
         OracleType::SwitchboardOnDemand => {
             switchboard_on_demand::validate_price_account(price_account)
         }
-        OracleType::SwitchboardV2 => Ok(()), // TODO at least check account ownership?
-        OracleType::CToken => Ok(()),        // TODO how shall we validate ctoken account?
         OracleType::SplStake => Ok(()),
         OracleType::KToken => Ok(()), // TODO, should validate ownership of the ktoken account
         OracleType::KTokenToTokenA => Ok(()), // TODO, should validate ownership of the ktoken account
         OracleType::KTokenToTokenB => Ok(()), // TODO, should validate ownership of the ktoken account
-        OracleType::PythEMA => pyth::validate_pyth_price_info(price_account),
         OracleType::MsolStake => Ok(()),
         OracleType::JupiterLpFetch | OracleType::JupiterLpCompute | OracleType::JupiterLpScope => {
             jupiter_lp::validate_jlp_pool(price_account)
@@ -511,8 +525,17 @@ pub fn validate_oracle_cfg(
         OracleType::CappedFloored => {
             capped_floored::validate_mapping_cfg(price_account, generic_data).map_err(Into::into)
         }
+        OracleType::CappedMostRecentOf => {
+            capped_most_recent_of::validate_mapping_cfg(price_account, generic_data)
+                .map_err(Into::into)
+        }
         OracleType::Securitize => Ok(()),
-        OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => {
+        OracleType::Unused
+        | OracleType::DeprecatedPlaceholder1
+        | OracleType::DeprecatedPlaceholder2
+        | OracleType::DeprecatedPlaceholder3
+        | OracleType::DeprecatedPlaceholder4
+        | OracleType::DeprecatedPlaceholder5 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
         OracleType::AdrenaLp => adrena_lp::validate_adrena_pool(price_account, clock),
@@ -522,12 +545,8 @@ pub fn validate_oracle_cfg(
 
 pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
     match price_type {
-        OracleType::Pyth
-        | OracleType::SwitchboardV2
-        | OracleType::CToken
-        | OracleType::SplStake
+        OracleType::SplStake
         | OracleType::KToken
-        | OracleType::PythEMA
         | OracleType::MsolStake
         | OracleType::KTokenToTokenA
         | OracleType::KTokenToTokenB
@@ -556,12 +575,18 @@ pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
         | OracleType::DiscountToMaturity
         | OracleType::MostRecentOf
         | OracleType::CappedFloored
+        | OracleType::CappedMostRecentOf
         | OracleType::Chainlink
         | OracleType::ChainlinkRWA
         | OracleType::ChainlinkX
         | OracleType::PythLazer => true,
 
-        OracleType::DeprecatedPlaceholder1 | OracleType::DeprecatedPlaceholder2 => unreachable!(),
+        OracleType::Unused
+        | OracleType::DeprecatedPlaceholder1
+        | OracleType::DeprecatedPlaceholder2
+        | OracleType::DeprecatedPlaceholder3
+        | OracleType::DeprecatedPlaceholder4
+        | OracleType::DeprecatedPlaceholder5 => unreachable!(),
     }
 }
 
@@ -571,12 +596,8 @@ pub fn debug_format_generic_data(
     generic_data: &[u8; 20],
 ) {
     match price_type {
-        OracleType::Pyth
-        | OracleType::PythEMA
-        | OracleType::PythPull
+        OracleType::PythPull
         | OracleType::PythPullEMA
-        | OracleType::SwitchboardV2
-        | OracleType::CToken
         | OracleType::SplStake
         | OracleType::KToken
         | OracleType::MsolStake
@@ -600,8 +621,12 @@ pub fn debug_format_generic_data(
         | OracleType::ScopeTwap
         | OracleType::ChainlinkNAV
         | OracleType::ChainlinkExchangeRate
+        | OracleType::Unused
         | OracleType::DeprecatedPlaceholder1
-        | OracleType::DeprecatedPlaceholder2 => (), // no generic data to print
+        | OracleType::DeprecatedPlaceholder2
+        | OracleType::DeprecatedPlaceholder3
+        | OracleType::DeprecatedPlaceholder4
+        | OracleType::DeprecatedPlaceholder5 => (), // no generic data to print
 
         OracleType::Chainlink => {
             d.field(
@@ -644,6 +669,13 @@ pub fn debug_format_generic_data(
             d.field(
                 "capped_floored_cfg",
                 &capped_floored::CappedFlooredData::from_generic_data(generic_data).ok(),
+            );
+        }
+        OracleType::CappedMostRecentOf => {
+            d.field(
+                "capped_most_recent_of_cfg",
+                &capped_most_recent_of::CappedMostRecentOfData::from_generic_data(generic_data)
+                    .ok(),
             );
         }
     }
