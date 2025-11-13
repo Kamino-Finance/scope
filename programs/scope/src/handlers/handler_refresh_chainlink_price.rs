@@ -11,6 +11,7 @@ use crate::{
             chainlink_streams_itf::{
                 self, ACCESS_CONTROLLER_PUBKEY, VERIFIER_CONFIG_PUBKEY, VERIFIER_PROGRAM_ID,
             },
+            PriceUpdateResult,
         },
         OracleType,
     },
@@ -28,7 +29,6 @@ pub struct RefreshChainlinkPrice<'info> {
     pub oracle_prices: AccountLoader<'info, OraclePrices>,
 
     /// CHECK: Checked above
-    #[account(owner = crate::ID)]
     pub oracle_mappings: AccountLoader<'info, OracleMappings>,
 
     #[account(mut, has_one = oracle_prices, has_one = oracle_mappings)]
@@ -102,7 +102,8 @@ pub fn refresh_chainlink_price<'info>(
     let mut oracle_twaps = ctx.accounts.oracle_twaps.load_mut()?;
     let mut oracle_prices = ctx.accounts.oracle_prices.load_mut()?;
     let token_idx: usize = token.into();
-    {
+
+    let price_update_result = {
         let oracle_mapping = *oracle_mappings
             .price_info_accounts
             .get(token_idx)
@@ -130,7 +131,9 @@ pub fn refresh_chainlink_price<'info>(
         let clock = Clock::get()?;
 
         // Decode the verified report data before updating the price
-        match price_type {
+        // Note: for ChainlinkX we might just be updating the current price with the `suspended` flag set to true.
+        // In this case we won't be setting a new price (and result will be `SuspendExistingPrice`)
+        let price_update_result = match price_type {
             OracleType::Chainlink => {
                 let chainlink_report = ReportDataV3::decode(&return_data)
                     .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
@@ -140,7 +143,7 @@ pub fn refresh_chainlink_price<'info>(
                     mapping_generic_data,
                     &clock,
                     &chainlink_report,
-                )?;
+                )?
             }
             OracleType::ChainlinkRWA => {
                 let chainlink_report = ReportDataV8::decode(&return_data)
@@ -151,7 +154,7 @@ pub fn refresh_chainlink_price<'info>(
                     mapping_generic_data,
                     &clock,
                     &chainlink_report,
-                )?;
+                )?
             }
             OracleType::ChainlinkNAV => {
                 let chainlink_report = ReportDataV9::decode(&return_data)
@@ -161,7 +164,7 @@ pub fn refresh_chainlink_price<'info>(
                     oracle_mapping,
                     &clock,
                     &chainlink_report,
-                )?;
+                )?
             }
             OracleType::ChainlinkX => {
                 let chainlink_report = ReportDataV10::decode(&return_data)
@@ -172,7 +175,7 @@ pub fn refresh_chainlink_price<'info>(
                     mapping_generic_data,
                     &clock,
                     &chainlink_report,
-                )?;
+                )?
             }
             OracleType::ChainlinkExchangeRate => {
                 let chainlink_report = ReportDataV7::decode(&return_data)
@@ -182,16 +185,22 @@ pub fn refresh_chainlink_price<'info>(
                     oracle_mapping,
                     &clock,
                     &chainlink_report,
-                )?;
+                )?
             }
             _ => return Err(error!(ScopeError::BadTokenType)),
-        }
-
-        if oracle_mappings.is_twap_enabled(token_idx) {
-            let _ =
-                crate::oracles::twap::update_twap(&mut oracle_twaps, token_idx, dated_price_ref)
-                    .map_err(|_| msg!("Twap not found for token {}", token_idx));
         };
+
+        match price_update_result {
+            PriceUpdateResult::Updated if oracle_mappings.is_twap_enabled(token_idx) => {
+                let _ = crate::oracles::twap::update_twap(
+                    &mut oracle_twaps,
+                    token_idx,
+                    dated_price_ref,
+                )
+                .map_err(|_| msg!("Twap not found for token {}", token_idx));
+            }
+            _ => {}
+        }
 
         msg!(
             "tk {}, {:?}: {:?} to {:?} | prev_slot: {:?}, new_slot: {:?}, crt_slot: {:?}",
@@ -203,14 +212,19 @@ pub fn refresh_chainlink_price<'info>(
             dated_price_ref.last_updated_slot,
             clock.slot,
         );
-    }
+
+        price_update_result
+    };
 
     // check that the price is close enough to the ref price if there is a ref price
-    if oracle_mappings.ref_price[token_idx] != u16::MAX {
-        let new_price = oracle_prices.prices[token_idx].price;
-        let ref_price =
-            oracle_prices.prices[usize::from(oracle_mappings.ref_price[token_idx])].price;
-        check_ref_price_difference(new_price, ref_price)?;
+    match price_update_result {
+        PriceUpdateResult::Updated if oracle_mappings.ref_price[token_idx] != u16::MAX => {
+            let new_price = oracle_prices.prices[token_idx].price;
+            let ref_price =
+                oracle_prices.prices[usize::from(oracle_mappings.ref_price[token_idx])].price;
+            check_ref_price_difference(new_price, ref_price)?;
+        }
+        _ => {}
     }
 
     Ok(())

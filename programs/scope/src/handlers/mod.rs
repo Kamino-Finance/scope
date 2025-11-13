@@ -6,6 +6,7 @@ pub mod handler_refresh_chainlink_price;
 pub mod handler_refresh_prices;
 pub mod handler_refresh_pyth_lazer_price;
 pub mod handler_reset_twap;
+pub mod handler_resume_chainlinkx_price;
 pub mod handler_set_admin_cached;
 pub mod handler_update_mapping_and_metadata;
 
@@ -17,5 +18,6 @@ pub use handler_refresh_chainlink_price::*;
 pub use handler_refresh_prices::*;
 pub use handler_refresh_pyth_lazer_price::*;
 pub use handler_reset_twap::*;
+pub use handler_resume_chainlinkx_price::*;
 pub use handler_set_admin_cached::*;
 pub use handler_update_mapping_and_metadata::*;

@@ -177,6 +177,9 @@ pub enum ScopeError {
 
     #[msg("Missing price account for Oracle Mapping update")]
     MissingPriceAccount,
+
+    #[msg("Cannot resume a ChainlinkX price that was not suspended")]
+    ChainlinkXPriceNotSuspended,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

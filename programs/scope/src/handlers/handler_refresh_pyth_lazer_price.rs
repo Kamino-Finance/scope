@@ -25,7 +25,6 @@ pub struct RefreshPythLazerPrice<'info> {
     pub oracle_prices: AccountLoader<'info, OraclePrices>,
 
     /// CHECK: Checked above
-    #[account(owner = crate::ID)]
     pub oracle_mappings: AccountLoader<'info, OracleMappings>,
 
     #[account(mut, has_one = oracle_prices, has_one = oracle_mappings)]

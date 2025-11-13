@@ -121,4 +121,14 @@ pub mod scope {
     pub fn close_mint_map(ctx: Context<CloseMintMap>) -> Result<()> {
         handler_close_mint_map::process(ctx)
     }
+
+    pub fn resume_chainlinkx_price(
+        ctx: Context<ResumeChainlinkXPrice>,
+        token: u16,
+        feed_name: String,
+    ) -> Result<()> {
+        // `feed_name` is used in `ResumeChainlinkXPrice` for computing the seeds of the Configuration account
+        let _ = feed_name;
+        handler_resume_chainlinkx_price::process(ctx, token)
+    }
 }
