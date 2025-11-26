@@ -5,7 +5,7 @@ description = "Types for Scope"
 repository = "https://github.com/Kamino-Finance/scope"
 authors = ["Scope Maintainers <dev@hubbleprotocol.io>"]
 edition = "2021"
-license = "Apache-2.0"
+license = "BUSL-1.1"
 publish = false
 
 [lib]

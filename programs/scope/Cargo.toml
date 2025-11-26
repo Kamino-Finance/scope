@@ -4,7 +4,7 @@ version = "0.26.1"
 description = "Scope is Kamino's oracle aggregator"
 repository = "https://github.com/Kamino-Finance/scope"
 edition = "2021"
-license = "Apache-2.0"
+license = "BUSL-1.1"
 publish = false
 
 [lib]
@@ -75,4 +75,3 @@ chainlink-streams-report = { git = "https://github.com/smartcontractkit/data-str
 num-bigint = "0.4"
 securitize-itf = { path = "../securitize-itf", features = ["no-entrypoint"] }
 flashtrade-perp-itf = { path = "../flashtrade-perp-itf", features = ["no-entrypoint"] }
-
