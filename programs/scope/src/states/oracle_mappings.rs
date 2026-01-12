@@ -3,6 +3,7 @@ use yvaults::scope::MAX_ENTRIES_U16;
 
 use crate::{
     oracles::{debug_format_generic_data, OracleType},
+    states::oracle_twaps::{EmaType, TwapEnabledBitmask},
     utils::consts::*,
     ScopeError, MAX_ENTRIES,
 };
@@ -15,7 +16,7 @@ pub struct OracleMappings {
     pub price_info_accounts: [Pubkey; MAX_ENTRIES],
     pub price_types: [u8; MAX_ENTRIES],
     pub twap_source: [u16; MAX_ENTRIES], // meaningful only if type == TWAP; the index of where we find the TWAP
-    pub twap_enabled: [u8; MAX_ENTRIES], // true or false
+    pub twap_enabled_bitmask: [TwapEnabledBitmask; MAX_ENTRIES], // a bitmask determining the types of twaps we want to calculate
     /// reference price against which we check confidence within 5%
     pub ref_price: [u16; MAX_ENTRIES],
     pub generic: [[u8; 20]; MAX_ENTRIES], // generic data parsed depending on oracle type
@@ -28,25 +29,42 @@ impl OracleMappings {
     }
 
     pub fn is_twap_enabled(&self, entry_id: usize) -> bool {
-        self.twap_enabled[entry_id] > 0
+        self.twap_enabled_bitmask[entry_id].is_twap_enabled()
     }
 
-    pub fn set_twap_enabled(&mut self, entry_id: usize, enabled: bool) {
-        self.twap_enabled[entry_id] = enabled as u8;
+    pub fn is_twap_enabled_for_ema_type(&self, entry_id: usize, ema_type: EmaType) -> bool {
+        self.twap_enabled_bitmask[entry_id].is_twap_enabled_for_ema_type(ema_type)
+    }
+
+    pub fn get_twap_enabled_bitmask(&self, entry_id: usize) -> TwapEnabledBitmask {
+        self.twap_enabled_bitmask[entry_id]
+    }
+
+    pub fn set_twap_enabled_bitmask(
+        &mut self,
+        entry_id: usize,
+        twap_enabled_bitmask: TwapEnabledBitmask,
+    ) {
+        self.twap_enabled_bitmask[entry_id] = twap_enabled_bitmask;
     }
 
     pub fn get_twap_source(&self, entry_id: usize) -> usize {
         usize::from(self.twap_source[entry_id])
     }
 
-    pub fn set_twap_source(&mut self, entry_id: usize, twap_source: u16) -> Result<()> {
+    pub fn set_twap_source(
+        &mut self,
+        entry_id: usize,
+        new_twap_type: OracleType,
+        twap_source: u16,
+    ) -> Result<()> {
         require_gt!(
             MAX_ENTRIES_U16,
             twap_source,
             ScopeError::TwapSourceIndexOutOfRange
         );
         self.price_info_accounts[entry_id] = crate::ID;
-        self.price_types[entry_id] = OracleType::ScopeTwap.into();
+        self.price_types[entry_id] = new_twap_type.into();
         self.twap_source[entry_id] = twap_source;
         self.generic[entry_id].fill(0);
 
@@ -69,7 +87,7 @@ impl OracleMappings {
     pub fn reset_entry(&mut self, entry_id: usize) {
         self.price_info_accounts[entry_id] = Pubkey::default();
         self.price_types[entry_id] = 0;
-        self.twap_enabled[entry_id] = false as u8;
+        self.twap_enabled_bitmask[entry_id] = TwapEnabledBitmask::new();
         self.twap_source[entry_id] = u16::MAX;
         self.ref_price[entry_id] = u16::MAX;
         self.generic[entry_id].fill(0);
@@ -120,7 +138,7 @@ impl std::fmt::Debug for DebugPrintMappingEntry<'_> {
 
         let pk = entry_updates.price_info_accounts[entry_id];
         let price_type = entry_updates.get_entry_type(entry_id).ok();
-        let twap_enabled = entry_updates.twap_enabled[entry_id] > 0;
+        let twap_enabled_bitmask = entry_updates.twap_enabled_bitmask[entry_id];
 
         let ref_price = entry_updates.ref_price[entry_id];
         let generic_data = entry_updates.generic[entry_id];
@@ -149,7 +167,7 @@ impl std::fmt::Debug for DebugPrintMappingEntry<'_> {
             d.field("generic_data", &generic_data);
         }
 
-        d.field("twap_enabled", &twap_enabled)
+        d.field("twap_enabled", &twap_enabled_bitmask.to_debug_print_entry())
             .field(
                 "ref_price_index",
                 if ref_price == u16::MAX {

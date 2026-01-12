@@ -2,7 +2,10 @@ pub use adrena_perp_itf as adrena;
 use anchor_lang::prelude::*;
 
 use crate::{
-    utils::{math::estimate_slot_update_from_ts, zero_copy_deserialize},
+    utils::{
+        math::{clamp_timestamp_to_now, estimate_slot_update_from_ts},
+        zero_copy_deserialize,
+    },
     warn, DatedPrice, Price, Result, ScopeError,
 };
 
@@ -45,8 +48,10 @@ pub fn get_price(pool_acc: &AccountInfo, clock: &Clock) -> Result<DatedPrice> {
         return err!(ScopeError::PriceNotValid);
     }
 
-    let timestamp: u64 = u64::try_from(adrena_pool.last_aum_and_lp_token_price_usd_update)
-        .map_err(|_| ScopeError::BadTimestamp)?;
+    // Clamp timestamp to current time to prevent future timestamps
+    let pool_timestamp = adrena_pool.last_aum_and_lp_token_price_usd_update;
+    let timestamp = clamp_timestamp_to_now(pool_timestamp, clock)?;
+
     // 2. Check the price
     Ok(DatedPrice {
         price: Price {

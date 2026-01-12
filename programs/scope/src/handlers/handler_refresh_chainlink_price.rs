@@ -192,12 +192,14 @@ pub fn refresh_chainlink_price<'info>(
 
         match price_update_result {
             PriceUpdateResult::Updated if oracle_mappings.is_twap_enabled(token_idx) => {
-                let _ = crate::oracles::twap::update_twap(
+                if let Err(e) = crate::oracles::twap::update_twaps(
                     &mut oracle_twaps,
                     token_idx,
                     dated_price_ref,
-                )
-                .map_err(|_| msg!("Twap not found for token {}", token_idx));
+                    oracle_mappings.twap_enabled_bitmask[token_idx],
+                ) {
+                    msg!("Error while updating TWAP of token {token_idx}: {e:?}",);
+                }
             }
             _ => {}
         }

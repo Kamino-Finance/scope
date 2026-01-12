@@ -74,6 +74,7 @@ pub fn validate_payload_data_for_token(
     let mut price_opt: Option<PythLazerPrice> = None;
     let mut best_bid_price_opt: Option<PythLazerPrice> = None;
     let mut best_ask_price_opt: Option<PythLazerPrice> = None;
+    let mut exponent_opt: Option<i16> = None;
 
     for property in payload_data.feeds[feed_idx].properties.iter() {
         match property {
@@ -85,6 +86,9 @@ pub fn validate_payload_data_for_token(
             }
             PayloadPropertyValue::BestAskPrice(Some(price)) => {
                 best_ask_price_opt = Some(*price);
+            }
+            PayloadPropertyValue::Exponent(exponent) => {
+                exponent_opt = Some(*exponent);
             }
             _ => {
                 continue;
@@ -101,6 +105,16 @@ pub fn validate_payload_data_for_token(
         ScopeError::OutOfRangeIntegralConversion
     })?;
 
+    let received_exponent = exponent_opt.ok_or(ScopeError::PythLazerExponentNotPresent)?;
+    // Pyth Lazer sends the exponent as a negative integer, so we need to negate it
+    let received_exponent_neg = received_exponent.checked_neg().ok_or_else(|| {
+        warn!("Pyth Lazer: overflow when negating received exponent {received_exponent}");
+        ScopeError::OutOfRangeIntegralConversion
+    })?;
+    if received_exponent_neg != i16::from(*expected_exponent) {
+        warn!("Pyth Lazer: unexpected exponent received in feed payload {received_exponent}");
+        return Err(ScopeError::PythLazerUnexpectedExponent);
+    }
     let exponent_u64 = u64::from(*expected_exponent);
 
     let new_price = Price {

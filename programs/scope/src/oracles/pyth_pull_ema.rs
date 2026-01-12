@@ -5,7 +5,10 @@ use pyth_solana_receiver_sdk::{
 };
 
 use crate::{
-    utils::{account_deserialize, math::estimate_slot_update_from_ts},
+    utils::{
+        account_deserialize,
+        math::{clamp_timestamp_to_now, estimate_slot_update_from_ts},
+    },
     DatedPrice, ScopeError,
 };
 pub const MAXIMUM_AGE: u64 = 10 * 60; // Ten minutes
@@ -45,12 +48,15 @@ pub fn get_price(price_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
         e
     })?;
 
+    // Clamp publish_time to current time to prevent future timestamps
+    let unix_timestamp = clamp_timestamp_to_now(publish_time, clock)?;
+
     // todo: Discuss how we should handle the time jump that can happen when there is an outage?
-    let last_updated_slot = estimate_slot_update_from_ts(clock, publish_time.try_into().unwrap());
+    let last_updated_slot = estimate_slot_update_from_ts(clock, unix_timestamp);
     Ok(DatedPrice {
         price,
         last_updated_slot,
-        unix_timestamp: publish_time.try_into().unwrap(),
+        unix_timestamp,
         ..Default::default()
     })
 }

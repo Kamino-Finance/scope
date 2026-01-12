@@ -8,8 +8,9 @@ use std::num::TryFromIntError;
 
 pub use anchor_lang;
 use anchor_lang::prelude::*;
+use bytemuck::{Pod, Zeroable};
 pub use num_enum;
-use num_enum::{TryFromPrimitive, TryFromPrimitiveError};
+use num_enum::{IntoPrimitive, TryFromPrimitive, TryFromPrimitiveError};
 use program_id::PROGRAM_ID;
 
 declare_id!(PROGRAM_ID);
@@ -61,6 +62,14 @@ impl Default for DatedPrice {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromPrimitive, IntoPrimitive)]
+#[repr(usize)]
+pub enum EmaType {
+    Ema1h,
+    Ema8h,
+    Ema24h,
+}
+
 // Account to store dated TWAP prices
 #[account(zero_copy)]
 pub struct OracleTwaps {
@@ -83,18 +92,55 @@ pub struct EmaTwap {
     pub last_update_unix_timestamp: u64,
 
     pub current_ema_1h: u128,
+    pub current_ema_8h: u128,
+    pub current_ema_24h: u128,
 
-    pub padding: [u128; 40],
+    pub padding: [u128; 38],
 }
 
 impl Default for EmaTwap {
     fn default() -> Self {
         Self {
             current_ema_1h: 0,
+            current_ema_8h: 0,
+            current_ema_24h: 0,
             last_update_slot: 0,
             last_update_unix_timestamp: 0,
-            padding: [0_u128; 40],
+            padding: [0_u128; 38],
         }
+    }
+}
+
+#[derive(Debug, Clone, Copy, AnchorDeserialize, Zeroable, Pod, PartialEq)]
+#[repr(C)]
+pub struct TwapEnabledBitmask {
+    pub bitmask: u8,
+}
+
+impl TwapEnabledBitmask {
+    pub const fn new() -> Self {
+        Self { bitmask: 0 }
+    }
+
+    pub fn is_twap_enabled(&self) -> bool {
+        self.bitmask > 0
+    }
+
+    pub fn is_twap_enabled_for_ema_type(&self, ema_type: EmaType) -> bool {
+        let ema_type: usize = ema_type.into();
+        self.bitmask & (1 << ema_type) > 0
+    }
+}
+
+impl From<u8> for TwapEnabledBitmask {
+    fn from(bitmask: u8) -> Self {
+        Self { bitmask }
+    }
+}
+
+impl From<TwapEnabledBitmask> for u8 {
+    fn from(val: TwapEnabledBitmask) -> Self {
+        val.bitmask
     }
 }
 
@@ -104,14 +150,18 @@ pub struct OracleMappings {
     pub price_info_accounts: [Pubkey; MAX_ENTRIES],
     pub price_types: [u8; MAX_ENTRIES],
     pub twap_source: [u16; MAX_ENTRIES], // meaningful only if type == TWAP; the index of where we find the TWAP
-    pub twap_enabled: [u8; MAX_ENTRIES], // true or false
+    pub twap_enabled_bitmask: [TwapEnabledBitmask; MAX_ENTRIES], // true or false
     pub _reserved1: [u8; MAX_ENTRIES],
     pub _reserved2: [u32; MAX_ENTRIES],
 }
 
 impl OracleMappings {
     pub fn is_twap_enabled(&self, entry_id: usize) -> bool {
-        self.twap_enabled[entry_id] > 0
+        self.twap_enabled_bitmask[entry_id].is_twap_enabled()
+    }
+
+    pub fn is_twap_enabled_for_ema_type(&self, entry_id: usize, ema_type: EmaType) -> bool {
+        self.twap_enabled_bitmask[entry_id].is_twap_enabled_for_ema_type(ema_type)
     }
 
     pub fn get_twap_source(&self, entry_id: usize) -> usize {

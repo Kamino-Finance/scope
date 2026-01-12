@@ -5,13 +5,17 @@ use chainlink_streams_report::{
         v10::ReportDataV10, v3::ReportDataV3, v7::ReportDataV7, v8::ReportDataV8, v9::ReportDataV9,
     },
 };
-use decimal_wad::decimal::{Decimal, U192};
+use decimal_wad::{
+    common::TryMul,
+    decimal::{Decimal, U192},
+};
 use num_bigint::BigInt;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    debug,
     errors::ScopeError,
     info,
     utils::{
@@ -200,8 +204,8 @@ fn validate_report_based_on_market_status(
             // Reject all prices that are not during market open, or are during market open but price is stale
             // (which means unexpected market pause)
             if market_status != ReportDataMarketStatus::Open {
-                warn!("ChainlinkRWA type DuringOpen: price received outside of market hours, rejecting update");
-                return Err(ScopeError::PriceNotValid);
+                debug!("ChainlinkRWA type DuringOpen: price received outside of market hours, rejecting update");
+                return Err(ScopeError::OutsideMarketHours);
             }
             if price_is_stale {
                 warn!("ChainlinkRWA type DuringOpen: price is stale (unexpected market pause), rejecting update");
@@ -216,8 +220,15 @@ fn validate_report_based_on_market_status(
                 return Err(ScopeError::PriceNotValid);
             }
             if price_is_stale {
-                warn!("ChainlinkRWA type DuringOpenAndPrePost: price is stale, rejecting update");
-                return Err(ScopeError::PriceNotValid);
+                if market_status == ReportDataMarketStatus::Closed {
+                    debug!("ChainlinkRWA type DuringOpenAndPrePost: price is stale during market closed hours");
+                    return Err(ScopeError::OutsideMarketHours);
+                } else {
+                    warn!(
+                        "ChainlinkRWA type DuringOpenAndPrePost: price is stale, rejecting update"
+                    );
+                    return Err(ScopeError::PriceNotValid);
+                }
             }
         }
         MarketStatusBehavior::AllUpdates => (),
@@ -470,7 +481,10 @@ pub fn update_price_v10(
     let current_multiplier_dec =
         chainlink_bigint_value_parse(&chainlink_report.current_multiplier)?;
     // TODO(liviuc): once Chainlink has added the `total_return_price`, use that
-    let multiplied_price: Price = (price_dec * current_multiplier_dec).into();
+    let multiplied_price: Price = price_dec
+        .try_mul(current_multiplier_dec)
+        .map_err(|_| ScopeError::MathOverflow)?
+        .into();
 
     // Create ChainlinkX price data with activation_date_time from current report
     let price_data = ChainlinkXPriceData::new(

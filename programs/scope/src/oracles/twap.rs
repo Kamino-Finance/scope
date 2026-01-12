@@ -3,34 +3,42 @@ use std::cmp::Ordering;
 use anchor_lang::prelude::*;
 use intbits::Bits;
 
-use self::utils::update_ema_twap;
+use self::utils::update_ema_twaps;
 use crate::{
     debug,
-    states::{OracleMappings, OracleTwaps},
+    states::{EmaType, OracleMappings, OracleTwaps, TwapEnabledBitmask},
     DatedPrice, ScopeError, ScopeResult,
 };
 
 const EMA_1H_DURATION_SECONDS: u64 = 60 * 60;
-const MIN_SAMPLES_IN_PERIOD: u32 = 10;
-const NUM_SUB_PERIODS: usize = 3;
+const EMA_8H_DURATION_SECONDS: u64 = 8 * 60 * 60;
+const EMA_24H_DURATION_SECONDS: u64 = 24 * 60 * 60;
+const MIN_SAMPLES_IN_PERIOD_1H: u32 = 10;
+const MIN_SAMPLES_IN_PERIOD_8H: u32 = 24;
+const MIN_SAMPLES_IN_PERIOD_24H: u32 = 48;
+const NUM_SUB_PERIODS_1H: usize = 3;
+const NUM_SUB_PERIODS_8H: usize = 8;
+const NUM_SUB_PERIODS_24H: usize = 24;
 const MIN_SAMPLES_IN_FIRST_AND_LAST_PERIOD: u32 = 1;
 
-pub fn update_twap(
+pub fn update_twaps(
     oracle_twaps: &mut OracleTwaps,
     entry_id: usize,
     price: &DatedPrice,
+    twap_enabled_bitmask: TwapEnabledBitmask,
 ) -> Result<()> {
     let twap = oracle_twaps
         .twaps
         .get_mut(entry_id)
         .ok_or(ScopeError::TwapSourceIndexOutOfRange)?;
 
-    // if there is no previous twap, store the existent
-    update_ema_twap(
+    // if there is no previous twap, store the existing
+    update_ema_twaps(
         twap,
         price.price,
         price.unix_timestamp,
         price.last_updated_slot,
+        twap_enabled_bitmask,
     )?;
     Ok(())
 }
@@ -48,6 +56,7 @@ pub fn get_price(
     oracle_mappings: &OracleMappings,
     oracle_twaps: &OracleTwaps,
     entry_id: usize,
+    twap_type: EmaType,
     clock: &Clock,
 ) -> ScopeResult<DatedPrice> {
     let source_index = usize::from(oracle_mappings.twap_source[entry_id]);
@@ -59,16 +68,19 @@ pub fn get_price(
         .ok_or(ScopeError::TwapSourceIndexOutOfRange)?;
 
     let current_ts = clock.unix_timestamp.try_into().unwrap();
-    utils::validate_ema(twap, current_ts)?;
+    utils::validate_ema(twap_type, twap, current_ts)?;
 
-    Ok(twap.as_dated_price())
+    Ok(twap.as_dated_price(twap_type))
 }
 
 mod utils {
     use decimal_wad::decimal::Decimal;
 
     use super::*;
-    use crate::{states::EmaTwap, warn, Price, ScopeResult};
+    use crate::{
+        states::{EmaTwap, EmaType},
+        warn, Price, ScopeResult,
+    };
 
     /// Get the adjusted smoothing factor (alpha) based on the time between the last two samples.
     ///
@@ -90,7 +102,7 @@ mod utils {
             // Smoothing factor is capped at 1
             Ok(Decimal::one())
         // If the new sample is too close to the last one, we skip it (min 30 seconds)
-        } else if last_sample_delta < ema_period_s / 120 {
+        } else if last_sample_delta < 30 {
             Err(ScopeError::TwapSampleTooFrequent)
         } else {
             let n = Decimal::from(ema_period_s) / last_sample_delta;
@@ -101,72 +113,180 @@ mod utils {
         }
     }
 
-    /// update the EMA  time weighted on how recent the last price is. EMA is calculated as:
+    fn update_ema_twap(
+        twap: &mut EmaTwap,
+        price: Price,
+        price_ts: u64,
+        twap_enabled_bitmask: TwapEnabledBitmask,
+        ema_type: EmaType,
+        ema_duration_seconds: u64,
+    ) -> ScopeResult<bool> {
+        if !twap_enabled_bitmask.is_twap_enabled_for_ema_type(ema_type) {
+            return Ok(false);
+        }
+
+        let (current_ema, updates_tracker) = match ema_type {
+            EmaType::Ema1h => (&mut twap.current_ema_1h, &mut twap.updates_tracker_1h),
+            EmaType::Ema8h => (&mut twap.current_ema_8h, &mut twap.updates_tracker_8h),
+            EmaType::Ema24h => (&mut twap.current_ema_24h, &mut twap.updates_tracker_24h),
+        };
+
+        if twap.last_update_slot == 0 {
+            *current_ema = Decimal::from(price).to_scaled_val().unwrap();
+            return Ok(true);
+        }
+
+        let ema_decimal = Decimal::from_scaled_val(*current_ema);
+        let price_decimal = Decimal::from(price);
+
+        let smoothing_factor = get_adjusted_smoothing_factor(
+            twap.last_update_unix_timestamp,
+            price_ts,
+            ema_duration_seconds,
+        )?;
+        let new_ema =
+            price_decimal * smoothing_factor + (Decimal::one() - smoothing_factor) * ema_decimal;
+
+        let value = new_ema.to_scaled_val().map_err(|e| {
+            msg!("Error when scaling ema value: {e:?}",);
+            ScopeError::IntegerOverflow
+        })?;
+
+        *current_ema = value;
+
+        let mut tracker: EmaTracker = (*updates_tracker).into();
+        tracker.update_tracker(
+            ema_duration_seconds,
+            price_ts,
+            twap.last_update_unix_timestamp,
+        );
+        *updates_tracker = tracker.into();
+
+        Ok(true)
+    }
+
+    /// update the EMAs time weighted on how recent the last price is. EMAs are calculated as:
     /// EMA = (price * smoothing_factor) + (1 - smoothing_factor) * previous_EMA. The smoothing factor is calculated as: (last_sample_delta / sampling_rate_in_seconds) * (2 / (1 + samples_number_per_period)).
-    pub(super) fn update_ema_twap(
+    pub(super) fn update_ema_twaps(
         twap: &mut EmaTwap,
         price: Price,
         price_ts: u64,
         price_slot: u64,
+        twap_enabled_bitmask: TwapEnabledBitmask,
     ) -> ScopeResult<()> {
         // Skip update if the price is the same as the last one
         if price_slot > twap.last_update_slot {
-            if twap.last_update_slot == 0 {
-                twap.current_ema_1h = Decimal::from(price).to_scaled_val().unwrap();
-            } else {
-                let ema_decimal = Decimal::from_scaled_val(twap.current_ema_1h);
-                let price_decimal = Decimal::from(price);
+            let mut performed_update = false;
 
-                let smoothing_factor = get_adjusted_smoothing_factor(
-                    twap.last_update_unix_timestamp,
-                    price_ts,
-                    EMA_1H_DURATION_SECONDS,
-                )?;
-                let new_ema = price_decimal * smoothing_factor
-                    + (Decimal::one() - smoothing_factor) * ema_decimal;
-
-                twap.current_ema_1h = new_ema
-                    .to_scaled_val()
-                    .map_err(|_| ScopeError::IntegerOverflow)?;
-            }
-            let mut tracker: EmaTracker = twap.updates_tracker_1h.into();
-            tracker.update_tracker(
-                EMA_1H_DURATION_SECONDS,
+            performed_update |= update_ema_twap(
+                twap,
+                price,
                 price_ts,
-                twap.last_update_unix_timestamp,
-            );
-            twap.updates_tracker_1h = tracker.into();
-            twap.last_update_slot = price_slot;
-            twap.last_update_unix_timestamp = price_ts;
+                twap_enabled_bitmask,
+                EmaType::Ema1h,
+                EMA_1H_DURATION_SECONDS,
+            )?;
+
+            performed_update |= update_ema_twap(
+                twap,
+                price,
+                price_ts,
+                twap_enabled_bitmask,
+                EmaType::Ema8h,
+                EMA_8H_DURATION_SECONDS,
+            )?;
+
+            performed_update |= update_ema_twap(
+                twap,
+                price,
+                price_ts,
+                twap_enabled_bitmask,
+                EmaType::Ema24h,
+                EMA_24H_DURATION_SECONDS,
+            )?;
+
+            if performed_update {
+                twap.last_update_slot = price_slot;
+                twap.last_update_unix_timestamp = price_ts;
+            }
         }
         Ok(())
     }
 
-    pub(super) fn validate_ema(twap: &EmaTwap, current_ts: u64) -> ScopeResult<()> {
+    pub(super) fn validate_ema(
+        twap_type: EmaType,
+        twap: &EmaTwap,
+        current_ts: u64,
+    ) -> ScopeResult<()> {
         if current_ts < twap.last_update_unix_timestamp {
             warn!("Current timestamp is older than the last update timestamp");
             return Err(ScopeError::BadTimestamp);
         }
-        let mut tracker: EmaTracker = twap.updates_tracker_1h.into();
+        let (mut tracker, ema_duration_seconds, min_samples_in_period) = match twap_type {
+            EmaType::Ema1h => (
+                Into::<EmaTracker>::into(twap.updates_tracker_1h),
+                EMA_1H_DURATION_SECONDS,
+                MIN_SAMPLES_IN_PERIOD_1H,
+            ),
+            EmaType::Ema8h => (
+                Into::<EmaTracker>::into(twap.updates_tracker_8h),
+                EMA_8H_DURATION_SECONDS,
+                MIN_SAMPLES_IN_PERIOD_8H,
+            ),
+            EmaType::Ema24h => (
+                Into::<EmaTracker>::into(twap.updates_tracker_24h),
+                EMA_24H_DURATION_SECONDS,
+                MIN_SAMPLES_IN_PERIOD_24H,
+            ),
+        };
         tracker.erase_old_samples(
-            EMA_1H_DURATION_SECONDS,
+            ema_duration_seconds,
             current_ts,
             twap.last_update_unix_timestamp,
         );
 
-        if tracker.get_samples_count() < MIN_SAMPLES_IN_PERIOD {
+        if tracker.get_samples_count() < min_samples_in_period {
             return Err(ScopeError::TwapNotEnoughSamplesInPeriod);
         }
 
-        let samples_count_per_subperiods = tracker
-            .get_samples_count_per_subperiods::<NUM_SUB_PERIODS>(
-                EMA_1H_DURATION_SECONDS,
-                twap.last_update_unix_timestamp,
-            );
+        let (samples_count_first_subperiod, samples_count_last_subperiod) = match twap_type {
+            EmaType::Ema1h => {
+                let samples_count_per_subperiods = tracker
+                    .get_samples_count_per_subperiods::<NUM_SUB_PERIODS_1H>(
+                        ema_duration_seconds,
+                        twap.last_update_unix_timestamp,
+                    );
+                (
+                    samples_count_per_subperiods[0],
+                    samples_count_per_subperiods[NUM_SUB_PERIODS_1H - 1],
+                )
+            }
+            EmaType::Ema8h => {
+                let samples_count_per_subperiods = tracker
+                    .get_samples_count_per_subperiods::<NUM_SUB_PERIODS_8H>(
+                        ema_duration_seconds,
+                        twap.last_update_unix_timestamp,
+                    );
+                (
+                    samples_count_per_subperiods[0],
+                    samples_count_per_subperiods[NUM_SUB_PERIODS_8H - 1],
+                )
+            }
+            EmaType::Ema24h => {
+                let samples_count_per_subperiods = tracker
+                    .get_samples_count_per_subperiods::<NUM_SUB_PERIODS_24H>(
+                        ema_duration_seconds,
+                        twap.last_update_unix_timestamp,
+                    );
+                (
+                    samples_count_per_subperiods[0],
+                    samples_count_per_subperiods[NUM_SUB_PERIODS_24H - 1],
+                )
+            }
+        };
 
-        if samples_count_per_subperiods[0] < MIN_SAMPLES_IN_FIRST_AND_LAST_PERIOD
-            || samples_count_per_subperiods[NUM_SUB_PERIODS - 1]
-                < MIN_SAMPLES_IN_FIRST_AND_LAST_PERIOD
+        if samples_count_first_subperiod < MIN_SAMPLES_IN_FIRST_AND_LAST_PERIOD
+            || samples_count_last_subperiod < MIN_SAMPLES_IN_FIRST_AND_LAST_PERIOD
         {
             return Err(ScopeError::TwapNotEnoughSamplesInPeriod);
         }
@@ -292,7 +412,9 @@ impl EmaTracker {
         let sorted_points = points_oldest.with_bits(jonction_point..Self::NB_POINTS, points_newest);
 
         // Count the number of samples in each sub-period
-        let sub_period_size = Self::NB_POINTS / N as u64;
+        let n_u64 = N as u64;
+        let sub_period_size = Self::NB_POINTS / n_u64;
+        let mut num_sub_periods_with_greater_size: u64 = Self::NB_POINTS - n_u64 * sub_period_size;
         let mut counts = [0; N];
 
         let count_in_period = |start_point: u64, end_point: u64| -> u32 {
@@ -300,14 +422,16 @@ impl EmaTracker {
         };
 
         let mut start_period_point = 0;
-        for count in counts.iter_mut().take(N - 1) {
-            let end_period_point = start_period_point + sub_period_size;
+        for count in counts.iter_mut() {
+            let end_period_point = if num_sub_periods_with_greater_size > 0 {
+                num_sub_periods_with_greater_size -= 1;
+                start_period_point + sub_period_size + 1
+            } else {
+                start_period_point + sub_period_size
+            };
             *count = count_in_period(start_period_point, end_period_point);
             start_period_point = end_period_point;
         }
-
-        // The last sub-period might be bigger than the others
-        counts[N - 1] = count_in_period(start_period_point, Self::NB_POINTS);
 
         counts
     }

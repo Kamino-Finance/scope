@@ -113,9 +113,15 @@ pub fn refresh_price_list<'info>(
         };
 
         if oracle_mappings.is_twap_enabled(token_idx) {
-            let _ = crate::oracles::twap::update_twap(&mut oracle_twaps, token_idx, &price)
-                .map_err(|_| msg!("Twap not found for token {}", token_idx));
-        };
+            if let Err(e) = crate::oracles::twap::update_twaps(
+                &mut oracle_twaps,
+                token_idx,
+                &price,
+                oracle_mappings.twap_enabled_bitmask[token_idx],
+            ) {
+                msg!("Error while updating TWAP of token {token_idx}: {e:?}",);
+            }
+        }
 
         // Only temporary load as mut to allow prices to be computed based on a scope chain
         // from the price feed that is currently updated

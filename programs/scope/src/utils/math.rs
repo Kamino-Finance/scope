@@ -272,6 +272,23 @@ pub fn estimate_slot_update_from_ts(clock: &solana_program::clock::Clock, ts: u6
     clock.slot.saturating_sub(elapsed_slot_estimate)
 }
 
+/// Clamps a timestamp to the current clock time and converts it to u64.
+/// This prevents future timestamps from being used in DatedPrice.
+///
+/// # Arguments
+/// * `timestamp` - The timestamp to clamp (in seconds since Unix epoch)
+/// * `clock` - The current Solana clock
+///
+/// # Returns
+/// The clamped timestamp as u64, or BadTimestamp error if the clamped timestamp cannot be case to u64
+pub fn clamp_timestamp_to_now(
+    timestamp: i64,
+    clock: &solana_program::clock::Clock,
+) -> ScopeResult<u64> {
+    let clamped_timestamp = timestamp.min(clock.unix_timestamp);
+    u64::try_from(clamped_timestamp).map_err(|_| ScopeError::BadTimestamp)
+}
+
 pub fn mul_div(value: u64, multiplier: u64, divisor: u64) -> ScopeResult<u64> {
     if divisor == 0 {
         return Err(ScopeError::MathOverflow);

@@ -3,7 +3,8 @@ use anchor_lang::prelude::*;
 use crate::{
     oracles::{update_generic_data_must_reset_price, validate_oracle_cfg, OracleType},
     states::{
-        Configuration, OracleMappings, OraclePrices, OracleTwaps, TokenMetadata, TokenMetadatas,
+        Configuration, EmaType, OracleMappings, OraclePrices, OracleTwaps, TokenMetadata,
+        TokenMetadatas, TwapEnabledBitmask,
     },
     utils::{list_set_bit_positions, maybe_account, pdas::seeds},
     ScopeError, MAX_ENTRIES, MAX_ENTRIES_U16,
@@ -23,12 +24,13 @@ pub enum UpdateOracleMappingAndMetadataEntry {
         price_type: OracleType,
         generic_data: [u8; 20],
     },
-    /// Setting the price type to TWAP will reset the price entry
+    /// Setting the price type to one of the TWAP types will reset the price entry
     /// The twap will be enabled automatically on the provided `twap_source` entry
     MappingTwapEntry {
+        price_type: OracleType,
         twap_source: u16,
     },
-    MappingTwapEnabled(bool),
+    MappingTwapEnabledBitmask(u8),
     MappingRefPrice {
         ref_price_index: Option<u16>,
     },
@@ -173,7 +175,7 @@ pub fn process(
                 } => {
                     mapping_updated_check()?;
 
-                    if new_price_type == OracleType::ScopeTwap {
+                    if new_price_type.is_twap() {
                         msg!("Use MappingTwapEntry to set TWAP entries");
                         return err!(ScopeError::InvalidUpdateSequenceOrAccounts);
                     }
@@ -215,42 +217,57 @@ pub fn process(
                         new_generic_data,
                     );
                 }
-                UpdateOracleMappingAndMetadataEntry::MappingTwapEntry { twap_source } => {
+                UpdateOracleMappingAndMetadataEntry::MappingTwapEntry {
+                    price_type: new_price_type,
+                    twap_source,
+                } => {
                     mapping_updated_check()?;
 
                     let target_name =
                         maybe_get_entry_name(&oracle_mappings, metadatas, twap_source.into());
 
-                    if current_type == OracleType::ScopeTwap {
+                    if current_type == new_price_type {
                         let current_twap_source = oracle_mappings.get_twap_source(entry_id);
                         msg!("Set TWAP source from {current_twap_source} to {twap_source} - \"{target_name}\"",);
                     } else {
-                        msg!("Set oracle mapping to ScopeTWAP source {twap_source} - \"{target_name}\"",);
+                        msg!("Set oracle mapping to {new_price_type:?} source {twap_source} - \"{target_name}\"",);
                     }
 
-                    oracle_mappings.set_twap_source(entry_id, twap_source)?;
+                    oracle_mappings.set_twap_source(entry_id, new_price_type, twap_source)?;
 
+                    let new_ema_type = new_price_type.to_ema_type()?;
                     if !oracle_mappings.is_entry_used(twap_source.into()) {
                         msg!("WARNING: TWAP source entry {twap_source} is not defined",);
-                    } else if !oracle_mappings.is_twap_enabled(twap_source.into()) {
-                        msg!("WARNING: TWAP source entry {twap_source} does not have TWAP enabled",);
+                    } else if !oracle_mappings
+                        .is_twap_enabled_for_ema_type(twap_source.into(), new_ema_type)
+                    {
+                        msg!("WARNING: TWAP source entry {twap_source} does not have TWAP type {new_ema_type:?} enabled",);
                     }
 
                     oracle_prices.reset_entry(entry_id);
                     oracle_twaps.reset_entry(entry_id);
                 }
-                UpdateOracleMappingAndMetadataEntry::MappingTwapEnabled(enable) => {
-                    if enable == oracle_mappings.is_twap_enabled(entry_id) {
-                        msg!("Twap enabled is already {enable}, skipping",);
+                UpdateOracleMappingAndMetadataEntry::MappingTwapEnabledBitmask(
+                    twap_enabled_bitmask,
+                ) => {
+                    let twap_enabled_bitmask = TwapEnabledBitmask::try_from(twap_enabled_bitmask)?;
+                    if twap_enabled_bitmask == oracle_mappings.get_twap_enabled_bitmask(entry_id) {
+                        msg!("Twap enabled bitmask is already {twap_enabled_bitmask:?}, skipping",);
                         continue;
                     }
-                    if enable {
-                        msg!("Enabling TWAP");
-                    } else {
-                        msg!("Disabling TWAP");
+                    for ema_type in [EmaType::Ema1h, EmaType::Ema8h, EmaType::Ema24h] {
+                        if !oracle_mappings.is_twap_enabled_for_ema_type(entry_id, ema_type)
+                            && twap_enabled_bitmask.is_twap_enabled_for_ema_type(ema_type)
+                        {
+                            msg!("Enabling {ema_type:?} TWAP",);
+                        } else if oracle_mappings.is_twap_enabled_for_ema_type(entry_id, ema_type)
+                            && !twap_enabled_bitmask.is_twap_enabled_for_ema_type(ema_type)
+                        {
+                            msg!("Disabling {ema_type:?} TWAP",);
+                        }
                     }
 
-                    oracle_mappings.set_twap_enabled(entry_id, enable);
+                    oracle_mappings.set_twap_enabled_bitmask(entry_id, twap_enabled_bitmask);
                     oracle_twaps.reset_entry(entry_id);
                 }
                 UpdateOracleMappingAndMetadataEntry::MappingRefPrice { ref_price_index } => {

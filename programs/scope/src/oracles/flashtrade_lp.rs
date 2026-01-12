@@ -2,7 +2,10 @@ use anchor_lang::prelude::*;
 pub use flashtrade_perp_itf as flashtrade;
 
 use crate::{
-    utils::{account_deserialize, math::estimate_slot_update_from_ts},
+    utils::{
+        account_deserialize,
+        math::{clamp_timestamp_to_now, estimate_slot_update_from_ts},
+    },
     warn, DatedPrice, Price, Result, ScopeError,
 };
 
@@ -48,8 +51,11 @@ pub fn get_price(pool_acc: &AccountInfo, clock: &Clock) -> Result<DatedPrice> {
     // the price is computed from, but instead it is the time at which `compounding_lp_price` was computed
     // When defining a max_age for this price type, we need to take into account the max_age for these
     // source oracles (which is 10s for all assets except USDC for which it is 100s)
-    let unix_timestamp: u64 = u64::try_from(flashtrade_pool.last_updated_timestamp)
-        .map_err(|_| ScopeError::BadTimestamp)?;
+
+    // Clamp timestamp to current time to prevent future timestamps
+    let pool_timestamp = flashtrade_pool.last_updated_timestamp;
+    let unix_timestamp = clamp_timestamp_to_now(pool_timestamp, clock)?;
+
     // 2. Check the price
     Ok(DatedPrice {
         price: Price {

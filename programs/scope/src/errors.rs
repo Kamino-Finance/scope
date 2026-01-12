@@ -64,7 +64,7 @@ pub enum ScopeError {
     #[msg("Invalid slot")]
     BadSlot,
 
-    #[msg("TWAP price account is different than Scope ID")]
+    #[msg("Received a price account when none is expected")]
     PriceAccountNotExpected,
 
     #[msg("TWAP source index out of range")]
@@ -180,6 +180,21 @@ pub enum ScopeError {
 
     #[msg("Cannot resume a ChainlinkX price that was not suspended")]
     ChainlinkXPriceNotSuspended,
+
+    #[msg("Price update rejected as outside of market hours")]
+    OutsideMarketHours,
+
+    #[msg("Property fields in the feed of the PythLazer payload do not contain an exponent")]
+    PythLazerExponentNotPresent,
+
+    #[msg("The exponent provided in the feed of the PythLazer payload is not the expected one")]
+    PythLazerUnexpectedExponent,
+
+    #[msg("Cannot convert oracle type to EMA type")]
+    InvalidConversionToEmaTypeForOracleType,
+
+    #[msg("Invalid TWAP enabled bitmask value")]
+    TwapEnabledBitmaskConversionFailure,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

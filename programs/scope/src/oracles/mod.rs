@@ -40,8 +40,8 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "yvaults")]
 use self::ktokens_token_x::TokenTypes;
 use crate::{
-    states::{DatedPrice, OracleMappings, OraclePrices, OracleTwaps},
-    warn, ScopeError,
+    states::{DatedPrice, EmaType, OracleMappings, OraclePrices, OracleTwaps},
+    warn, ScopeError, ScopeResult,
 };
 
 pub fn check_context<T>(ctx: &Context<T>) -> Result<()> {
@@ -111,8 +111,8 @@ pub enum OracleType {
     /// This oracle type provide a reference and is not meant to be used directly because
     /// the price is just fetched from the Jupiter's pool and can be stalled.
     JupiterLpFetch = 11,
-    /// Scope twap
-    ScopeTwap = 12,
+    /// Scope twap of 1h (also see [`ScopeTwap8h`] and [`ScopeTwap24h`] below)
+    ScopeTwap1h = 12,
     /// Orca's whirlpool price (CLMM) A to B
     OrcaWhirlpoolAtoB = 13,
     /// Orca's whirlpool price (CLMM) B to A
@@ -121,14 +121,16 @@ pub enum OracleType {
     RaydiumAmmV3AtoB = 15,
     /// Raydium's AMM v3 price (CLMM) B to A
     RaydiumAmmV3BtoA = 16,
-    /// Jupiter's perpetual LP tokens computed from current oracle prices
-    JupiterLpCompute = 17,
+    /// Deprecated (formerly JupiterLpCompute)
+    // Do not remove - breaks the typescript idl codegen
+    DeprecatedPlaceholder6 = 17,
     /// Meteora's DLMM A to B
     MeteoraDlmmAtoB = 18,
     /// Meteora's DLMM B to A
     MeteoraDlmmBtoA = 19,
-    /// Jupiter's perpetual LP tokens computed from scope prices
-    JupiterLpScope = 20,
+    /// Deprecated (formerly JupiterLpScope)
+    // Do not remove - breaks the typescript idl codegen
+    DeprecatedPlaceholder7 = 20,
     /// Pyth Pull oracles
     PythPull = 21,
     /// Pyth Pull oracles EMA
@@ -174,11 +176,25 @@ pub enum OracleType {
     /// Keeps track of multiple source prices making sure they are recent enough and they don't
     /// diverge more than a specified limit, while also applying a cap price
     CappedMostRecentOf = 39,
+    ScopeTwap8h = 40,
+    ScopeTwap24h = 41,
 }
 
 impl OracleType {
     pub fn is_twap(self) -> bool {
-        matches!(self, OracleType::ScopeTwap)
+        matches!(
+            self,
+            OracleType::ScopeTwap1h | OracleType::ScopeTwap8h | OracleType::ScopeTwap24h
+        )
+    }
+
+    pub fn to_ema_type(&self) -> ScopeResult<EmaType> {
+        match self {
+            OracleType::ScopeTwap1h => Ok(EmaType::Ema1h),
+            OracleType::ScopeTwap8h => Ok(EmaType::Ema8h),
+            OracleType::ScopeTwap24h => Ok(EmaType::Ema24h),
+            _ => Err(ScopeError::InvalidConversionToEmaTypeForOracleType),
+        }
     }
 
     pub fn is_chainlink_provider(self) -> bool {
@@ -195,21 +211,23 @@ impl OracleType {
             | OracleType::DeprecatedPlaceholder3
             | OracleType::DeprecatedPlaceholder4
             | OracleType::DeprecatedPlaceholder5
+            | OracleType::DeprecatedPlaceholder6
+            | OracleType::DeprecatedPlaceholder7
             | OracleType::SplStake
             | OracleType::KToken
             | OracleType::MsolStake
             | OracleType::KTokenToTokenA
             | OracleType::KTokenToTokenB
             | OracleType::JupiterLpFetch
-            | OracleType::ScopeTwap
+            | OracleType::ScopeTwap1h
+            | OracleType::ScopeTwap8h
+            | OracleType::ScopeTwap24h
             | OracleType::OrcaWhirlpoolAtoB
             | OracleType::OrcaWhirlpoolBtoA
             | OracleType::RaydiumAmmV3AtoB
             | OracleType::RaydiumAmmV3BtoA
-            | OracleType::JupiterLpCompute
             | OracleType::MeteoraDlmmAtoB
             | OracleType::MeteoraDlmmBtoA
-            | OracleType::JupiterLpScope
             | OracleType::PythPull
             | OracleType::PythPullEMA
             | OracleType::FixedPrice
@@ -239,13 +257,12 @@ impl OracleType {
             OracleType::KTokenToTokenA | OracleType::KTokenToTokenB => 100_000,
             OracleType::MsolStake => 20_000,
             OracleType::JupiterLpFetch => 40_000,
-            OracleType::ScopeTwap => 30_000,
+            OracleType::ScopeTwap1h | OracleType::ScopeTwap8h | OracleType::ScopeTwap24h => 30_000,
             OracleType::OrcaWhirlpoolAtoB
             | OracleType::OrcaWhirlpoolBtoA
             | OracleType::RaydiumAmmV3AtoB
             | OracleType::RaydiumAmmV3BtoA => 25_000,
             OracleType::MeteoraDlmmAtoB | OracleType::MeteoraDlmmBtoA => 30_000,
-            OracleType::JupiterLpCompute | OracleType::JupiterLpScope => 120_000,
             OracleType::JitoRestaking => 25_000,
             OracleType::DiscountToMaturity => 30_000,
             // Chainlink oracles are not updated through normal refresh ixs
@@ -265,7 +282,9 @@ impl OracleType {
             | OracleType::DeprecatedPlaceholder2
             | OracleType::DeprecatedPlaceholder3
             | OracleType::DeprecatedPlaceholder4
-            | OracleType::DeprecatedPlaceholder5 => {
+            | OracleType::DeprecatedPlaceholder5
+            | OracleType::DeprecatedPlaceholder6
+            | OracleType::DeprecatedPlaceholder7 => {
                 panic!("DeprecatedPlaceholder is not a valid oracle type")
             }
             OracleType::Securitize => 30_000,
@@ -349,11 +368,19 @@ where
                 e
             })
         }
-        OracleType::ScopeTwap => twap::get_price(oracle_mappings, oracle_twaps, index, clock)
+        OracleType::ScopeTwap1h | OracleType::ScopeTwap8h | OracleType::ScopeTwap24h => {
+            twap::get_price(
+                oracle_mappings,
+                oracle_twaps,
+                index,
+                price_type.to_ema_type()?,
+                clock,
+            )
             .map_err(|e| {
                 warn!("Error getting Scope TWAP price: {:?}", e);
                 e.into()
-            }),
+            })
+        }
         OracleType::OrcaWhirlpoolAtoB => {
             orca_whirlpool::get_price(true, base_account, clock, extra_accounts)
         }
@@ -368,17 +395,6 @@ where
         OracleType::MeteoraDlmmBtoA => {
             meteora_dlmm::get_price(false, base_account, clock, extra_accounts)
         }
-        OracleType::JupiterLpCompute => {
-            jupiter_lp::get_price_recomputed(base_account, clock, extra_accounts)
-        }
-        OracleType::JupiterLpScope => jupiter_lp::get_price_recomputed_scope(
-            index,
-            base_account,
-            clock,
-            &oracle_prices.key(),
-            oracle_prices.load()?.deref(),
-            extra_accounts,
-        ),
         OracleType::FixedPrice => {
             let price = fixed_price::parse_generic_data(&oracle_mappings.generic[index])?;
             Ok(DatedPrice {
@@ -439,7 +455,9 @@ where
         | OracleType::DeprecatedPlaceholder2
         | OracleType::DeprecatedPlaceholder3
         | OracleType::DeprecatedPlaceholder4
-        | OracleType::DeprecatedPlaceholder5 => {
+        | OracleType::DeprecatedPlaceholder5
+        | OracleType::DeprecatedPlaceholder6
+        | OracleType::DeprecatedPlaceholder7 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
         OracleType::AdrenaLp => adrena_lp::get_price(base_account, clock),
@@ -481,10 +499,10 @@ pub fn validate_oracle_cfg(
         OracleType::KTokenToTokenA => Ok(()), // TODO, should validate ownership of the ktoken account
         OracleType::KTokenToTokenB => Ok(()), // TODO, should validate ownership of the ktoken account
         OracleType::MsolStake => Ok(()),
-        OracleType::JupiterLpFetch | OracleType::JupiterLpCompute | OracleType::JupiterLpScope => {
-            jupiter_lp::validate_jlp_pool(price_account)
+        OracleType::JupiterLpFetch => jupiter_lp::validate_jlp_pool(price_account),
+        OracleType::ScopeTwap1h | OracleType::ScopeTwap8h | OracleType::ScopeTwap24h => {
+            panic!("ScopeTwap validation uses a different path")
         }
-        OracleType::ScopeTwap => panic!("ScopeTwap validation uses a different path"),
         OracleType::OrcaWhirlpoolAtoB | OracleType::OrcaWhirlpoolBtoA => {
             orca_whirlpool::validate_pool_account(price_account)
         }
@@ -535,7 +553,9 @@ pub fn validate_oracle_cfg(
         | OracleType::DeprecatedPlaceholder2
         | OracleType::DeprecatedPlaceholder3
         | OracleType::DeprecatedPlaceholder4
-        | OracleType::DeprecatedPlaceholder5 => {
+        | OracleType::DeprecatedPlaceholder5
+        | OracleType::DeprecatedPlaceholder6
+        | OracleType::DeprecatedPlaceholder7 => {
             panic!("DeprecatedPlaceholder is not a valid oracle type")
         }
         OracleType::AdrenaLp => adrena_lp::validate_adrena_pool(price_account, clock),
@@ -551,15 +571,15 @@ pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
         | OracleType::KTokenToTokenA
         | OracleType::KTokenToTokenB
         | OracleType::JupiterLpFetch
-        | OracleType::ScopeTwap
+        | OracleType::ScopeTwap1h
+        | OracleType::ScopeTwap8h
+        | OracleType::ScopeTwap24h
         | OracleType::OrcaWhirlpoolAtoB
         | OracleType::OrcaWhirlpoolBtoA
         | OracleType::RaydiumAmmV3AtoB
         | OracleType::RaydiumAmmV3BtoA
-        | OracleType::JupiterLpCompute
         | OracleType::MeteoraDlmmAtoB
         | OracleType::MeteoraDlmmBtoA
-        | OracleType::JupiterLpScope
         | OracleType::PythPull
         | OracleType::PythPullEMA
         | OracleType::SwitchboardOnDemand
@@ -586,7 +606,9 @@ pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
         | OracleType::DeprecatedPlaceholder2
         | OracleType::DeprecatedPlaceholder3
         | OracleType::DeprecatedPlaceholder4
-        | OracleType::DeprecatedPlaceholder5 => unreachable!(),
+        | OracleType::DeprecatedPlaceholder5
+        | OracleType::DeprecatedPlaceholder6
+        | OracleType::DeprecatedPlaceholder7 => unreachable!(),
     }
 }
 
@@ -608,17 +630,17 @@ pub fn debug_format_generic_data(
         | OracleType::OrcaWhirlpoolBtoA
         | OracleType::RaydiumAmmV3AtoB
         | OracleType::RaydiumAmmV3BtoA
-        | OracleType::JupiterLpCompute
         | OracleType::MeteoraDlmmAtoB
         | OracleType::MeteoraDlmmBtoA
-        | OracleType::JupiterLpScope
         | OracleType::SwitchboardOnDemand
         | OracleType::JitoRestaking
         | OracleType::RedStone
         | OracleType::Securitize
         | OracleType::AdrenaLp
         | OracleType::FlashtradeLp
-        | OracleType::ScopeTwap
+        | OracleType::ScopeTwap1h
+        | OracleType::ScopeTwap8h
+        | OracleType::ScopeTwap24h
         | OracleType::ChainlinkNAV
         | OracleType::ChainlinkExchangeRate
         | OracleType::Unused
@@ -626,7 +648,9 @@ pub fn debug_format_generic_data(
         | OracleType::DeprecatedPlaceholder2
         | OracleType::DeprecatedPlaceholder3
         | OracleType::DeprecatedPlaceholder4
-        | OracleType::DeprecatedPlaceholder5 => (), // no generic data to print
+        | OracleType::DeprecatedPlaceholder5
+        | OracleType::DeprecatedPlaceholder6
+        | OracleType::DeprecatedPlaceholder7 => (), // no generic data to print
 
         OracleType::Chainlink => {
             d.field(

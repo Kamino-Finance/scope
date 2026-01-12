@@ -9,7 +9,7 @@ pub mod token_metadatas;
 pub use configuration::Configuration;
 pub use oracle_mappings::OracleMappings;
 pub use oracle_prices::OraclePrices;
-pub use oracle_twaps::{EmaTwap, OracleTwaps};
+pub use oracle_twaps::{EmaTwap, EmaType, OracleTwaps, TwapEnabledBitmask};
 pub use token_metadatas::{TokenMetadata, TokenMetadatas};
 
 #[zero_copy]
