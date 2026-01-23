@@ -59,7 +59,9 @@ pub fn get_price(
     twap_type: EmaType,
     clock: &Clock,
 ) -> ScopeResult<DatedPrice> {
-    let source_index = usize::from(oracle_mappings.twap_source[entry_id]);
+    let Some(source_index) = oracle_mappings.get_twap_source(entry_id) else {
+        return Err(ScopeError::TwapSourceIndexNotSet);
+    };
     debug!("Get twap price at index {source_index} for tk {entry_id}",);
 
     let twap = oracle_twaps

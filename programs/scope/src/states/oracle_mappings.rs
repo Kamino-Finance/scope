@@ -5,7 +5,7 @@ use crate::{
     oracles::{debug_format_generic_data, OracleType},
     states::oracle_twaps::{EmaType, TwapEnabledBitmask},
     utils::consts::*,
-    ScopeError, MAX_ENTRIES,
+    ScopeError, ScopeResult, MAX_ENTRIES,
 };
 
 static_assertions::const_assert_eq!(ORACLE_MAPPING_SIZE, std::mem::size_of::<OracleMappings>());
@@ -15,17 +15,26 @@ static_assertions::const_assert_eq!(0, std::mem::size_of::<OracleMappings>() % 8
 pub struct OracleMappings {
     pub price_info_accounts: [Pubkey; MAX_ENTRIES],
     pub price_types: [u8; MAX_ENTRIES],
-    pub twap_source: [u16; MAX_ENTRIES], // meaningful only if type == TWAP; the index of where we find the TWAP
+    pub twap_source_or_ref_price_tolerance_bps: [u16; MAX_ENTRIES], //if type == TWAP, then is the index of where we find the TWAP; otherwise, is the tolerance bps for ref price check
     pub twap_enabled_bitmask: [TwapEnabledBitmask; MAX_ENTRIES], // a bitmask determining the types of twaps we want to calculate
-    /// reference price against which we check confidence within 5%
     pub ref_price: [u16; MAX_ENTRIES],
     pub generic: [[u8; 20]; MAX_ENTRIES], // generic data parsed depending on oracle type
 }
 
+pub enum RefPriceToleranceOrTwapSource {
+    None,
+    RefPriceToleranceBps(u16),
+    TwapSource(u16),
+}
+
 impl OracleMappings {
-    pub fn get_entry_type(&self, entry_id: usize) -> Result<OracleType> {
-        OracleType::try_from(self.price_types[entry_id])
-            .map_err(|_| error!(ScopeError::BadTokenType))
+    pub fn get_entry_type(&self, entry_id: usize) -> ScopeResult<OracleType> {
+        OracleType::try_from(self.price_types[entry_id]).map_err(|_| ScopeError::BadTokenType)
+    }
+
+    pub fn is_twap(&self, entry_id: usize) -> ScopeResult<bool> {
+        let price_type = self.get_entry_type(entry_id)?;
+        Ok(price_type.is_twap())
     }
 
     pub fn is_twap_enabled(&self, entry_id: usize) -> bool {
@@ -48,8 +57,38 @@ impl OracleMappings {
         self.twap_enabled_bitmask[entry_id] = twap_enabled_bitmask;
     }
 
-    pub fn get_twap_source(&self, entry_id: usize) -> usize {
-        usize::from(self.twap_source[entry_id])
+    fn get_twap_source_or_ref_price_tolerance_bps(
+        &self,
+        entry_id: usize,
+    ) -> ScopeResult<RefPriceToleranceOrTwapSource> {
+        let tolerance_or_source = self.twap_source_or_ref_price_tolerance_bps[entry_id];
+        let is_twap = self.is_twap(entry_id)?;
+        if is_twap {
+            if tolerance_or_source >= MAX_ENTRIES_U16 {
+                Err(ScopeError::TwapSourceIndexOutOfRange)
+            } else {
+                Ok(RefPriceToleranceOrTwapSource::TwapSource(
+                    tolerance_or_source,
+                ))
+            }
+        } else if self.ref_price[entry_id] < MAX_ENTRIES_U16 {
+            match tolerance_or_source {
+                u16::MAX => Ok(RefPriceToleranceOrTwapSource::None),
+                _ => Ok(RefPriceToleranceOrTwapSource::RefPriceToleranceBps(
+                    tolerance_or_source,
+                )),
+            }
+        } else {
+            Ok(RefPriceToleranceOrTwapSource::None)
+        }
+    }
+    pub fn get_twap_source(&self, entry_id: usize) -> Option<usize> {
+        self.get_twap_source_or_ref_price_tolerance_bps(entry_id)
+            .ok()
+            .and_then(|source| match source {
+                RefPriceToleranceOrTwapSource::TwapSource(index) => Some(usize::from(index)),
+                _ => None,
+            })
     }
 
     pub fn set_twap_source(
@@ -65,10 +104,34 @@ impl OracleMappings {
         );
         self.price_info_accounts[entry_id] = crate::ID;
         self.price_types[entry_id] = new_twap_type.into();
-        self.twap_source[entry_id] = twap_source;
+        self.twap_source_or_ref_price_tolerance_bps[entry_id] = twap_source;
         self.generic[entry_id].fill(0);
-
+        self.twap_source_or_ref_price_tolerance_bps[entry_id] = twap_source;
         Ok(())
+    }
+
+    pub fn get_ref_price_tolerance_bps(&self, entry_id: usize) -> Option<u16> {
+        self.get_twap_source_or_ref_price_tolerance_bps(entry_id)
+            .ok()
+            .and_then(|tolerance| match tolerance {
+                RefPriceToleranceOrTwapSource::RefPriceToleranceBps(bps) => Some(bps),
+                _ => None,
+            })
+    }
+
+    pub fn set_ref_price_tolerance_bps(
+        &mut self,
+        entry_id: usize,
+        ref_price_tolerance_bps: Option<u16>,
+    ) -> ScopeResult<()> {
+        let is_twap = self.is_twap(entry_id)?;
+        if !is_twap {
+            self.twap_source_or_ref_price_tolerance_bps[entry_id] =
+                ref_price_tolerance_bps.unwrap_or(u16::MAX);
+            Ok(())
+        } else {
+            Err(ScopeError::OperationNotSupported)
+        }
     }
 
     pub fn is_entry_used(&self, entry_id: usize) -> bool {
@@ -88,7 +151,7 @@ impl OracleMappings {
         self.price_info_accounts[entry_id] = Pubkey::default();
         self.price_types[entry_id] = 0;
         self.twap_enabled_bitmask[entry_id] = TwapEnabledBitmask::new();
-        self.twap_source[entry_id] = u16::MAX;
+        self.twap_source_or_ref_price_tolerance_bps[entry_id] = u16::MAX;
         self.ref_price[entry_id] = u16::MAX;
         self.generic[entry_id].fill(0);
     }
@@ -156,7 +219,10 @@ impl std::fmt::Debug for DebugPrintMappingEntry<'_> {
                 &chainlink_streams_report::feed_id::ID(pk.to_bytes()).to_hex_string(),
             );
         } else if price_type.map(OracleType::is_twap).unwrap_or(false) {
-            d.field("twap_source", &entry_updates.twap_source[entry_id]);
+            d.field(
+                "twap_source",
+                &entry_updates.twap_source_or_ref_price_tolerance_bps[entry_id],
+            );
         } else {
             d.field("price_info_account", &pk);
         }

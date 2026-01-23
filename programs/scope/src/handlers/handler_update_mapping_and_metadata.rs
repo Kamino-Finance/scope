@@ -33,6 +33,7 @@ pub enum UpdateOracleMappingAndMetadataEntry {
     MappingTwapEnabledBitmask(u8),
     MappingRefPrice {
         ref_price_index: Option<u16>,
+        ref_price_tolerance_bps: Option<u16>,
     },
     MetadataName(String),
     MetadataMaxPriceAgeSlots(u64),
@@ -196,8 +197,8 @@ pub fn process(
                     // Validate the oracle configuration may print more details
                     validate_oracle_cfg(new_price_type, price_info_opt, &new_generic_data, &clock)?;
 
-                    // Reset the twap source (not used for non-TWAP entries)
-                    oracle_mappings.twap_source[entry_id] = u16::MAX;
+                    // Reset the twap source/ref price tolerance bps
+                    oracle_mappings.twap_source_or_ref_price_tolerance_bps[entry_id] = u16::MAX;
 
                     let new_mapping_pk = price_info_opt.map(|a| a.key());
 
@@ -228,7 +229,16 @@ pub fn process(
 
                     if current_type == new_price_type {
                         let current_twap_source = oracle_mappings.get_twap_source(entry_id);
-                        msg!("Set TWAP source from {current_twap_source} to {twap_source} - \"{target_name}\"",);
+                        match current_twap_source {
+                            Some(current_twap_source) => {
+                                msg!(
+                                    "Set TWAP source from {current_twap_source} to {twap_source} - \"{target_name}\"",
+                                );
+                            }
+                            None => {
+                                msg!("WARNING: current TWAP source is not defined; setting it to {twap_source} - \"{target_name}\"",);
+                            }
+                        }
                     } else {
                         msg!("Set oracle mapping to {new_price_type:?} source {twap_source} - \"{target_name}\"",);
                     }
@@ -270,15 +280,21 @@ pub fn process(
                     oracle_mappings.set_twap_enabled_bitmask(entry_id, twap_enabled_bitmask);
                     oracle_twaps.reset_entry(entry_id);
                 }
-                UpdateOracleMappingAndMetadataEntry::MappingRefPrice { ref_price_index } => {
+                UpdateOracleMappingAndMetadataEntry::MappingRefPrice {
+                    ref_price_index,
+                    ref_price_tolerance_bps,
+                } => {
                     let old_ref_price = oracle_mappings.get_ref_price(entry_id);
-                    let target_name = ref_price_index.as_ref().map(|id| {
-                        maybe_get_entry_name(&oracle_mappings, metadatas, usize::from(*id))
-                    });
+                    let old_ref_price_tolerance_bps =
+                        oracle_mappings.get_ref_price_tolerance_bps(entry_id);
                     let old_target_name = old_ref_price.as_ref().map(|id| {
                         maybe_get_entry_name(&oracle_mappings, metadatas, usize::from(*id))
                     });
-                    msg!("Updating ref price from \"{old_target_name:?}\" - {old_ref_price:?} to \"{target_name:?}\" - {ref_price_index:?}",);
+
+                    let target_name = ref_price_index.as_ref().map(|id| {
+                        maybe_get_entry_name(&oracle_mappings, metadatas, usize::from(*id))
+                    });
+                    msg!("Updating ref price from \"{old_target_name:?}\" - {old_ref_price:?} - {old_ref_price_tolerance_bps:?}bps to \"{target_name:?}\" - {ref_price_index:?} - {ref_price_tolerance_bps:?}bps",);
 
                     if let Some(ref_price_index) = ref_price_index {
                         require_gt!(MAX_ENTRIES_U16, ref_price_index, ScopeError::BadTokenNb);
@@ -287,6 +303,11 @@ pub fn process(
                         }
                     }
                     oracle_mappings.set_ref_price(entry_id, ref_price_index);
+                    if let Err(e) = oracle_mappings
+                        .set_ref_price_tolerance_bps(entry_id, ref_price_tolerance_bps)
+                    {
+                        msg!("WARNING: Failed to set reference price tolerance bps: {e:?}",);
+                    }
                 }
                 UpdateOracleMappingAndMetadataEntry::MetadataName(new_name) => {
                     msg!("Setting token metadata name from \"{old_name}\" to \"{new_name}\"",);

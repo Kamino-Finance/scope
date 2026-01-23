@@ -1,13 +1,13 @@
 use std::cmp::Ordering;
 
 use anchor_lang::prelude::*;
-use decimal_wad::{common::PERCENT_SCALER, decimal::Decimal};
+use decimal_wad::decimal::Decimal;
 
 use super::math::ten_pow;
+use crate::utils::consts::FULL_BPS;
 use crate::{warn, Price, ScopeError};
 
-pub const MAX_REF_RATIO_TOLERANCE_PCT: u64 = 5;
-pub const MAX_REF_RATIO_TOLERANCE_SCALED: u64 = MAX_REF_RATIO_TOLERANCE_PCT * PERCENT_SCALER;
+pub const MAX_REF_RATIO_TOLERANCE_BPS: u16 = 500;
 pub const MAX_SAFE_EXP_DIFF: u64 = 19;
 
 #[cfg(not(target_os = "solana"))]
@@ -31,7 +31,11 @@ impl Price {
     }
 }
 
-pub fn check_ref_price_difference(curr_price: Price, ref_price: Price) -> Result<()> {
+pub fn check_ref_price_difference(
+    curr_price: Price,
+    ref_price: Price,
+    ref_price_tolerance_bps: Option<u16>,
+) -> Result<()> {
     let ref_price_decimal = Decimal::from(ref_price);
     let curr_price_decimal = Decimal::from(curr_price);
     let absolute_diff = if ref_price_decimal > curr_price_decimal {
@@ -40,11 +44,12 @@ pub fn check_ref_price_difference(curr_price: Price, ref_price: Price) -> Result
         curr_price_decimal - ref_price_decimal
     };
 
-    if absolute_diff * 100 > ref_price_decimal * MAX_REF_RATIO_TOLERANCE_PCT {
+    let max_ref_ratio_tolerance_bps =
+        u64::from(ref_price_tolerance_bps.unwrap_or(MAX_REF_RATIO_TOLERANCE_BPS));
+    if absolute_diff * FULL_BPS > ref_price_decimal * max_ref_ratio_tolerance_bps {
         warn!(
-            "Price diff is too high: absolute_diff {}, tolerance = {}",
-            absolute_diff,
-            ref_price_decimal * Decimal::from_percent(MAX_REF_RATIO_TOLERANCE_PCT)
+            "Price diff is too high: absolute diff is {} for ref price {};max tolerance in bps = {}",
+            absolute_diff, ref_price_decimal, max_ref_ratio_tolerance_bps
         );
         return Err(ScopeError::PriceNotValid.into());
     }

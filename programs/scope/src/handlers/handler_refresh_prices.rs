@@ -132,7 +132,11 @@ pub fn refresh_price_list<'info>(
         if oracle_mappings.ref_price[token_idx] != u16::MAX {
             let ref_price =
                 oracle_prices.prices[usize::from(oracle_mappings.ref_price[token_idx])].price;
-            if let Err(diff_err) = check_ref_price_difference(price.price, ref_price) {
+
+            let ref_price_tolerance_bps = oracle_mappings.get_ref_price_tolerance_bps(token_idx);
+            if let Err(diff_err) =
+                check_ref_price_difference(price.price, ref_price, ref_price_tolerance_bps)
+            {
                 if fail_tx_on_error {
                     return Err(diff_err);
                 } else {

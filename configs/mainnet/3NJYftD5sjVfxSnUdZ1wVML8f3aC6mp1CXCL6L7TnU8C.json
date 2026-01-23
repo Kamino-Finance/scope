@@ -550,21 +550,6 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
-  "101": {
-    "label": "Raydium ME/JitoSOL",
-    "oracle_mapping": "6NfYa8A3VtrpAauBCMXLjU57yQWzFooLopomJEEYVNPP",
-    "oracle_type": "RaydiumAmmV3AtoB",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "102": {
-    "label": "TWAP Raydium ME/JitoSOL",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 101,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
   "103": {
     "label": "TWAP Raydium WOO/JitoSOL",
     "oracle_type": "ScopeTwap1h",
@@ -1307,21 +1292,6 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
-  "207": {
-    "label": "Raydium GFM/SOL",
-    "oracle_mapping": "41aUQ3Q5qhMJhewU3vK4uyLfAbxXrqyb9mRKkUjPk9yz",
-    "oracle_type": "RaydiumAmmV3BtoA",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "208": {
-    "label": "TWAP Raydium GFM/SOL",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 207,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
   "209": {
     "label": "Orca HXD/SOL",
     "oracle_mapping": "BGYVXtEdycaWHQRSJcxenyUEzbUsb2M9NDDW63g5nJJR",
@@ -1606,9 +1576,9 @@
     "oracle_type": "MostRecentOf",
     "max_age_slot": 165,
     "sources_max_age_s": 7200,
-    "max_divergence_bps": 300,
+    "max_divergence_bps": 1300,
     "source_entries": [ 1, 240, 322 ],
-    "ref_price": 1
+    "group_ids": [ 1, 2 ]
   },
   "247": {
     "label": "CDCSOL/SOL",
@@ -2703,15 +2673,15 @@
     "group_ids": [ 2 ]
   },
   "399": {
-    "label": "Raydium GEOD/SOL",
-    "oracle_mapping": "3RA4PDZAZ49nm6hdDCnCTrnECqQD93ny8oHP4T1CSTcR",
-    "oracle_type": "RaydiumAmmV3BtoA",
+    "label": "Raydium SWTCH/USDC",
+    "oracle_mapping": "BcVqR3Q3jhdBMVf5N8oYASjGseREpa7w7YvJjgMA4F1x",
+    "oracle_type": "RaydiumAmmV3AtoB",
     "twap_enabled": ["1h"],
     "max_age_slot": 375,
     "group_ids": [ 2 ]
   },
   "400": {
-    "label": "TWAP Raydium GEOD/SOL",
+    "label": "TWAP Raydium SWTCH/USDC",
     "oracle_type": "ScopeTwap1h",
     "twap_source": 399,
     "max_age_slot": 380,
