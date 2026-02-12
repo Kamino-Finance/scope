@@ -149,10 +149,10 @@ impl From<TwapEnabledBitmask> for u8 {
 pub struct OracleMappings {
     pub price_info_accounts: [Pubkey; MAX_ENTRIES],
     pub price_types: [u8; MAX_ENTRIES],
-    pub twap_source: [u16; MAX_ENTRIES], // meaningful only if type == TWAP; the index of where we find the TWAP
-    pub twap_enabled_bitmask: [TwapEnabledBitmask; MAX_ENTRIES], // true or false
-    pub _reserved1: [u8; MAX_ENTRIES],
-    pub _reserved2: [u32; MAX_ENTRIES],
+    pub twap_source_or_ref_price_tolerance_bps: [u16; MAX_ENTRIES], //if type == TWAP, then is the index of where we find the TWAP; otherwise, is the tolerance bps for ref price check
+    pub twap_enabled_bitmask: [TwapEnabledBitmask; MAX_ENTRIES], // a bitmask determining the types of twaps we want to calculate
+    pub ref_price: [u16; MAX_ENTRIES],
+    pub generic: [[u8; 20]; MAX_ENTRIES], // generic data parsed depending on oracle type
 }
 
 impl OracleMappings {
@@ -165,7 +165,7 @@ impl OracleMappings {
     }
 
     pub fn get_twap_source(&self, entry_id: usize) -> usize {
-        usize::from(self.twap_source[entry_id])
+        usize::from(self.twap_source_or_ref_price_tolerance_bps[entry_id])
     }
 }
 

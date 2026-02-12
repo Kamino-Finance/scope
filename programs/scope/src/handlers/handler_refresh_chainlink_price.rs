@@ -224,7 +224,8 @@ pub fn refresh_chainlink_price<'info>(
             let new_price = oracle_prices.prices[token_idx].price;
             let ref_price =
                 oracle_prices.prices[usize::from(oracle_mappings.ref_price[token_idx])].price;
-            check_ref_price_difference(new_price, ref_price)?;
+            let ref_price_tolerance_bps = oracle_mappings.get_ref_price_tolerance_bps(token_idx);
+            check_ref_price_difference(new_price, ref_price, ref_price_tolerance_bps)?;
         }
         _ => {}
     }

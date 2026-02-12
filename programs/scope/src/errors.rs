@@ -195,6 +195,12 @@ pub enum ScopeError {
 
     #[msg("Invalid TWAP enabled bitmask value")]
     TwapEnabledBitmaskConversionFailure,
+
+    #[msg("This operation is not supported")]
+    OperationNotSupported,
+
+    #[msg("TWAP source index not set")]
+    TwapSourceIndexNotSet,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError
