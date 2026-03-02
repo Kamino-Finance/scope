@@ -13,7 +13,6 @@
     "oracle_type": "Chainlink",
     "chainlink_feed_id": "0x0003b778d3f6b2ac4991302b89cb313f99a42467d6c9c5f96f57c29c0d2bc24f",
     "confidence_factor": 50,
-    "ref_price": 0,
     "twap_enabled": [ "1h" ]
   },
   "2": {
@@ -21,8 +20,7 @@
     "oracle_type": "PythLazer",
     "pyth_lazer_feed_id": 6,
     "pyth_lazer_exponent": 8,
-    "confidence_factor": 50,
-    "ref_price": 0
+    "confidence_factor": 50
   },
   "3": {
     "label": "Most recent SOL/USD",
@@ -68,7 +66,7 @@
     "label": "Most recent USDC/USD",
     "oracle_type": "MostRecentOf",
     "sources_max_age_s": 7200,
-    "max_divergence_bps": 75,
+    "max_divergence_bps": 50,
     "source_entries": [ 6, 7, 8 ],
     "ref_price": 6
   },
@@ -640,7 +638,8 @@
   "110": {
     "label": "Pyth Pull PST/USDC RR",
     "oracle_mapping": "CBGwQddTeYn3KdvxGWtU95fqCcavzHK9XPFBLENDF5JR",
-    "oracle_type": "PythPull"
+    "oracle_type": "PythPull",
+    "ref_price": 252
   },
   "111": {
     "label": "Pyth Pull EMA PST/USDC RR",
@@ -742,7 +741,7 @@
     "label": "Most recent USDG/USD",
     "oracle_type": "MostRecentOf",
     "sources_max_age_s": 7200,
-    "max_divergence_bps": 75,
+    "max_divergence_bps": 50,
     "source_entries": [ 23, 125 ],
     "ref_price": 23
   },
@@ -872,7 +871,7 @@
     "label": "Most recent PYUSD/USD",
     "oracle_type": "MostRecentOf",
     "sources_max_age_s": 7200,
-    "max_divergence_bps": 75,
+    "max_divergence_bps": 50,
     "source_entries": [ 143, 145, 146 ],
     "ref_price": 143
   },
@@ -1206,17 +1205,20 @@
   "203": {
     "label": "Fixed stablecoin price (1.03)",
     "oracle_type": "FixedPrice",
-    "fixed_price": 1.03
+    "fixed_price": 1.03,
+    "max_age_slot": 12000
   },
   "204": {
     "label": "Fixed stablecoin price (1.05)",
     "oracle_type": "FixedPrice",
-    "fixed_price": 1.05
+    "fixed_price": 1.05,
+    "max_age_slot": 12000
   },
   "205": {
     "label": "Fixed stablecoin price (1.04)",
     "oracle_type": "FixedPrice",
-    "fixed_price": 1.04
+    "fixed_price": 1.04,
+    "max_age_slot": 12000
   },
   "206": {
     "label": "CL FBTC/BTC Exchange Rate",
@@ -1417,7 +1419,7 @@
     "twap_enabled": [ "24h" ]
   },
   "243": {
-    "label": "Chainlink TWAP 24h syrupUSDC/USDC",
+    "label": "Chainlink TWAP24h syrupUSDC/USDC",
     "oracle_type": "ScopeTwap24h",
     "twap_source": 242,
     "max_age_slot": 165
@@ -1438,7 +1440,8 @@
     "max_age_slot": 165,
     "sources_max_age_s": 7200,
     "max_divergence_bps": 100,
-    "source_entries": [ 108, 244 ]
+    "source_entries": [ 108, 244 ],
+    "ref_price": 255
   },
   "247": {
     "label": "Most recent syrupUSDC/USDC",
@@ -1446,7 +1449,8 @@
     "max_age_slot": 165,
     "sources_max_age_s": 7200,
     "max_divergence_bps": 100,
-    "source_entries": [ 240, 242 ]
+    "source_entries": [ 240, 242 ],
+    "ref_price": 253
   },
   "248": {
     "label": "Most recent USCC/USD",
@@ -1454,7 +1458,8 @@
     "max_age_slot": 165,
     "sources_max_age_s": 7200,
     "max_divergence_bps": 100,
-    "source_entries": [ 194, 237 ]
+    "source_entries": [ 194, 237 ],
+    "ref_price": 254
   },
   "249": {
     "label": "Pyth Pull eUSX/USX RR",
@@ -1472,6 +1477,316 @@
     "max_age_slot": 165,
     "sources_max_age_s": 7200,
     "max_divergence_bps": 100,
-    "source_entries": [ 151, 249 ]
+    "source_entries": [ 151, 249 ],
+    "ref_price": 205
+  },
+  "252": {
+    "label": "Fixed price (1.1)",
+    "oracle_type": "FixedPrice",
+    "fixed_price": 1.1,
+    "max_age_slot": 12000
+  },
+  "253": {
+    "label": "Fixed price (1.2)",
+    "oracle_type": "FixedPrice",
+    "fixed_price": 1.2,
+    "max_age_slot": 12000
+  },
+  "254": {
+    "label": "Fixed price (12.0)",
+    "oracle_type": "FixedPrice",
+    "fixed_price": 12.0,
+    "max_age_slot": 12000
+  },
+  "255": {
+    "label": "Fixed price (1.06)",
+    "oracle_type": "FixedPrice",
+    "fixed_price": 1.06,
+    "max_age_slot": 12000
+  },
+  "256": {
+    "label": "Exponent PT-2606/eUSX",
+    "oracle_type": "DiscountToMaturity",
+    "discount_per_year_bps": 2500,
+    "maturity_timestamp": 1780318699
+  },
+  "257": {
+    "label": "Exponent PT-2606/USX",
+    "oracle_type": "DiscountToMaturity",
+    "discount_per_year_bps": 2500,
+    "maturity_timestamp": 1780318699
+  },
+  "258": {
+    "label": "ChainlinkX AAPLx/USD AU",
+    "oracle_type": "ChainlinkX",
+    "chainlink_feed_id": "0x000a7a12270b5a30236bf410679df0c6bb1bba2b40e5d86847748ff1c8f8452b",
+    "market_status_behavior": "AllUpdates",
+    "ref_price": 26,
+    "twap_enabled": ["1h"]
+  },
+  "259": {
+    "label": "ChainlinkX TWAP AAPLx/USD AU",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 258,
+    "max_age_slot": 165
+  },
+  "260": {
+    "label": "ChainlinkX HOODx/USD AU",
+    "oracle_type": "ChainlinkX",
+    "chainlink_feed_id": "0x000a2349781696825299ea1610f3ed0f47c5e7585003a271417f6e94778020fe",
+    "market_status_behavior": "AllUpdates",
+    "ref_price": 94,
+    "twap_enabled": ["1h"]
+  },
+  "261": {
+    "label": "ChainlinkX TWAP HOODx/USD AU",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 260,
+    "max_age_slot": 165
+  },
+  "262": {
+    "label": "ChainlinkX CRCLx/USD AU",
+    "oracle_type": "ChainlinkX",
+    "chainlink_feed_id": "0x000a3e805224064cc156ee2b7459ece9d06446497b3707d807fa630c4b958605",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": ["1h"]
+  },
+  "263": {
+    "label": "ChainlinkX TWAP CRCLx/USD AU",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 262,
+    "max_age_slot": 165
+  },
+  "264": {
+    "label": "ChainlinkX GOOGLx/USD AU",
+    "oracle_type": "ChainlinkX",
+    "chainlink_feed_id": "0x000a724ccab2a885eaeb8d56c54eda31f467564681f6e8dd32c5b64d40110054",
+    "market_status_behavior": "AllUpdates",
+    "ref_price": 34,
+    "twap_enabled": ["1h"]
+  },
+  "265": {
+    "label": "ChainlinkX TWAP GOOGLx/USD AU",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 264,
+    "max_age_slot": 165
+  },
+  "266": {
+    "label": "ChainlinkX METAx/USD AU",
+    "oracle_type": "ChainlinkX",
+    "chainlink_feed_id": "0x000ae7d5a47693fd3871ca444349fcea71a18ce8434a87125479334e4675aa20",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": ["1h"]
+  },
+  "267": {
+    "label": "ChainlinkX TWAP METAx/USD AU",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 266,
+    "max_age_slot": 165
+  },
+  "268": {
+    "label": "ChainlinkX NVDAx/USD AU",
+    "oracle_type": "ChainlinkX",
+    "chainlink_feed_id": "0x000a37a55df2ef907d8fa06af6632bc16da58a62b68be2e1994efaa037a0918a",
+    "market_status_behavior": "AllUpdates",
+    "ref_price": 42,
+    "twap_enabled": ["1h"]
+  },
+  "269": {
+    "label": "ChainlinkX TWAP NVDAx/USD AU",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 268,
+    "max_age_slot": 165
+  },
+  "270": {
+    "label": "ChainlinkX MSTRx/USD AU",
+    "oracle_type": "ChainlinkX",
+    "chainlink_feed_id": "0x000a7b26938f7df83a0bd00f76b0f644a6ef4f28b5cbb9afb800fbcdc8536255",
+    "market_status_behavior": "AllUpdates",
+    "ref_price": 72,
+    "twap_enabled": ["1h"]
+
+  },
+  "271": {
+    "label": "ChainlinkX TWAP MSTRx/USD AU",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 270,
+    "max_age_slot": 165
+  },
+  "272": {
+    "label": "ChainlinkX TSLAx/USD AU",
+    "oracle_type": "ChainlinkX",
+    "chainlink_feed_id": "0x000a80c655069b61d168b887d5e7f4231fe288c6ccb84b1854c9ccead20f3398",
+    "market_status_behavior": "AllUpdates",
+    "ref_price": 56,
+    "twap_enabled": ["1h"]
+  },
+  "273": {
+    "label": "ChainlinkX TWAP TSLAx/USD AU",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 272,
+    "max_age_slot": 165
+  },
+  "274": {
+    "label": "ChainlinkX AMZNx/USD AU",
+    "oracle_type": "ChainlinkX",
+    "chainlink_feed_id": "0x000a67e280bea6fbdb91dd827763f915a62d880bf055c04dcd63a101f1545682",
+    "market_status_behavior": "AllUpdates",
+    "ref_price": 50,
+    "twap_enabled": ["1h"]
+  },
+  "275": {
+    "label": "ChainlinkX TWAP AMZNx/USD AU",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 274,
+    "max_age_slot": 165
+  },
+  "276": {
+    "label": "ChainlinkX COINx/USD AU",
+    "oracle_type": "ChainlinkX",
+    "chainlink_feed_id": "0x000a9811a9bef734e52059c184312bd9ebf24b3ce5f86285f693eacbb7151baa",
+    "market_status_behavior": "AllUpdates",
+    "ref_price": 64,
+    "twap_enabled": ["1h"]
+  },
+  "277": {
+    "label": "ChainlinkX TWAP COINx/USD AU",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 276,
+    "max_age_slot": 165
+  },
+  "278": {
+    "label": "ChainlinkX SPYx/USD AU",
+    "oracle_type": "ChainlinkX",
+    "chainlink_feed_id": "0x000ac6ba1b453a15c1fe9dcd82265ca47bcd04e7b3667de1623617c45cef2a77",
+    "market_status_behavior": "AllUpdates",
+    "ref_price": 284,
+    "twap_enabled": ["1h"]
+  },
+  "279": {
+    "label": "ChainlinkX TWAP SPYx/USD AU",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 278,
+    "max_age_slot": 165
+  },
+  "280": {
+    "label": "ChainlinkX QQQx/USD AU",
+    "oracle_type": "ChainlinkX",
+    "chainlink_feed_id": "0x000a1db22e3e1aa657d910dc90e1f0dbe693d345b7b0b04fd9efc8eb17aef267",
+    "market_status_behavior": "AllUpdates",
+    "ref_price": 90,
+    "twap_enabled": ["1h"]
+  },
+  "281": {
+    "label": "ChainlinkX TWAP QQQx/USD AU",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 280,
+    "max_age_slot": 165
+  },
+  "282": {
+    "label": "ChainlinkX MSFTx/USD AU",
+    "oracle_type": "ChainlinkX",
+    "chainlink_feed_id": "0x000a88f60b2100ec9d6cde6452b4c046f07aa4d158cec82d4ab4bc2a17884f65",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": ["1h"]
+  },
+  "283": {
+    "label": "ChainlinkX TWAP MSFTx/USD AU",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 282,
+    "max_age_slot": 165
+  },
+  "284": {
+    "label": "Pyth Pull SPY/USD",
+    "oracle_mapping": "9owhtgrdLiUMAH9JKxYFt5pUY4Luy4EzzLhdcWPVuDyy",
+    "oracle_type": "PythPull"
+  },
+  "285": {
+    "label": "Chainlink wstUSR/stUSR",
+    "oracle_type": "ChainlinkExchangeRate",
+    "chainlink_feed_id": "0x00071aa59d6af884d1469566fb65df4a02cc96f03956e25e776384ab26aa9aea",
+    "twap_enabled": [ "1h" ]
+  },
+  "286": {
+    "label": "Chainlink USR/USD",
+    "oracle_type": "ChainlinkExchangeRate",
+    "chainlink_feed_id": "0x0007c505034a2b88e6fe4829ae1b559911856a28d0643c6af36c7d7a6de7add6",
+    "twap_enabled": [ "1h" ]
+  },
+  "287": {
+    "label": "Chainlink TWAP wstUSR/stUSR",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 285,
+    "max_age_slot": 165
+  },
+  "288": {
+    "label": "Chainlink TWAP USR/USD",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 286,
+    "max_age_slot": 165
+  },
+  "289": {
+    "label": "Pyth Pull USR/USD RR",
+    "oracle_mapping": "8Wbhnq9YzgFsigwBdDPuCbLCBKyZeQSfmk5XfRByDmcX",
+    "oracle_type": "PythPull"
+  },
+  "290": {
+    "label": "Pyth Pull EMA USR/USD RR",
+    "oracle_mapping": "8Wbhnq9YzgFsigwBdDPuCbLCBKyZeQSfmk5XfRByDmcX",
+    "oracle_type": "PythPullEMA"
+  },
+  "291": {
+    "label": "Pyth Pull wstUSR/USR RR",
+    "oracle_mapping": "8mKWjTDrR3k9pahmJcR7ZyyYThtjGHZeENFRwn4HqhwC",
+    "oracle_type": "PythPull"
+  },
+  "292": {
+    "label": "Pyth Pull EMA wstUSR/USR RR",
+    "oracle_mapping": "8mKWjTDrR3k9pahmJcR7ZyyYThtjGHZeENFRwn4HqhwC",
+    "oracle_type": "PythPullEMA"
+  },
+  "293": {
+    "label": "Chainlink dejAAA/USD NAV",
+    "oracle_type": "ChainlinkExchangeRate",
+    "chainlink_feed_id": "0x00079aadbc16716ae961c11a76ef91ae991eda0e1ae18a721b3ae9639f27cf0d",
+    "twap_enabled": [ "1h" ]
+  },
+  "294": {
+    "label": "Chainlink TWAP dejAAA/USD NAV",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 293,
+    "max_age_slot": 165
+  },
+  "295": {
+    "label": "Pyth Pull dejAAA/USD NAV",
+    "oracle_mapping": "G7ycRzKBSLMfqotmH6kXysEvoK8U3A2rcPsEwZmYghbh",
+    "oracle_type": "PythPull"
+  },
+  "296": {
+    "label": "Pyth Pull EMA dejAAA/USD NAV",
+    "oracle_mapping": "G7ycRzKBSLMfqotmH6kXysEvoK8U3A2rcPsEwZmYghbh",
+    "oracle_type": "PythPullEMA"
+  },
+  "297": {
+    "label": "Chainlink dejTRSY/USD NAV",
+    "oracle_type": "ChainlinkExchangeRate",
+    "chainlink_feed_id": "0x000796a5b7ebf366f729c401de98fa80f43b457ae7163e54018ddb2d83959eec",
+    "twap_enabled": [ "1h" ]
+  },
+  "298": {
+    "label": "Chainlink TWAP dejTRSY/USD NAV",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 297,
+    "max_age_slot": 165
+  },
+  "299": {
+    "label": "Pyth Pull dejTRSY/USD NAV",
+    "oracle_mapping": "7eWZ4sEsVqN56VHGu5tNrFEA4q6HKpzN9s89kRM85F1E",
+    "oracle_type": "PythPull"
+  },
+  "300": {
+    "label": "Pyth Pull EMA dejTRSY/USD NAV",
+    "oracle_mapping": "7eWZ4sEsVqN56VHGu5tNrFEA4q6HKpzN9s89kRM85F1E",
+    "oracle_type": "PythPullEMA"
   }
 }
