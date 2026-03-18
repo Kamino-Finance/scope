@@ -1,15 +1,14 @@
 use anchor_lang::prelude::*;
-use yvaults::scope::MAX_ENTRIES_U16;
 
+use super::{
+    oracle_twaps::{EmaType, TwapEnabledBitmask},
+    oracle_type::OracleType,
+};
 use crate::{
-    oracles::{debug_format_generic_data, OracleType},
-    states::oracle_twaps::{EmaType, TwapEnabledBitmask},
-    utils::consts::*,
-    ScopeError, ScopeResult, MAX_ENTRIES,
+    errors::{ScopeError, ScopeResult},
+    MAX_ENTRIES, MAX_ENTRIES_U16,
 };
 
-static_assertions::const_assert_eq!(ORACLE_MAPPING_SIZE, std::mem::size_of::<OracleMappings>());
-static_assertions::const_assert_eq!(0, std::mem::size_of::<OracleMappings>() % 8);
 #[account(zero_copy)]
 #[derive(Debug, AnchorDeserialize)]
 pub struct OracleMappings {
@@ -106,7 +105,6 @@ impl OracleMappings {
         self.price_types[entry_id] = new_twap_type.into();
         self.twap_source_or_ref_price_tolerance_bps[entry_id] = twap_source;
         self.generic[entry_id].fill(0);
-        self.twap_source_or_ref_price_tolerance_bps[entry_id] = twap_source;
         Ok(())
     }
 
@@ -125,13 +123,17 @@ impl OracleMappings {
         ref_price_tolerance_bps: Option<u16>,
     ) -> ScopeResult<()> {
         let is_twap = self.is_twap(entry_id)?;
-        if !is_twap {
+        if is_twap {
+            // For TWAP entries, the field stores the twap source, not the tolerance.
+            // Setting a tolerance on a TWAP entry is not supported, but None is a no-op.
+            if ref_price_tolerance_bps.is_some() {
+                return Err(ScopeError::OperationNotSupported);
+            }
+        } else {
             self.twap_source_or_ref_price_tolerance_bps[entry_id] =
                 ref_price_tolerance_bps.unwrap_or(u16::MAX);
-            Ok(())
-        } else {
-            Err(ScopeError::OperationNotSupported)
         }
+        Ok(())
     }
 
     pub fn is_entry_used(&self, entry_id: usize) -> bool {
@@ -179,69 +181,5 @@ impl OracleMappings {
 
     pub fn set_ref_price(&mut self, entry_id: usize, ref_price_index: Option<u16>) {
         self.ref_price[entry_id] = ref_price_index.unwrap_or(u16::MAX);
-    }
-
-    pub fn to_debug_print_entry(&self, entry_id: usize) -> DebugPrintMappingEntry {
-        DebugPrintMappingEntry {
-            entry_id,
-            entry_updates: self,
-        }
-    }
-}
-
-pub struct DebugPrintMappingEntry<'a> {
-    pub entry_id: usize,
-    pub entry_updates: &'a OracleMappings,
-}
-
-impl std::fmt::Debug for DebugPrintMappingEntry<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let entry_id = self.entry_id;
-        let entry_updates = self.entry_updates;
-
-        let pk = entry_updates.price_info_accounts[entry_id];
-        let price_type = entry_updates.get_entry_type(entry_id).ok();
-        let twap_enabled_bitmask = entry_updates.twap_enabled_bitmask[entry_id];
-
-        let ref_price = entry_updates.ref_price[entry_id];
-        let generic_data = entry_updates.generic[entry_id];
-
-        let mut d = f.debug_struct("OracleMappingEntry");
-        d.field("entry_id", &entry_id)
-            .field("price_type", &price_type);
-
-        if price_type
-            .map(OracleType::is_chainlink_provider)
-            .unwrap_or(false)
-        {
-            d.field(
-                "chainlink_feed_id",
-                &chainlink_streams_report::feed_id::ID(pk.to_bytes()).to_hex_string(),
-            );
-        } else if price_type.map(OracleType::is_twap).unwrap_or(false) {
-            d.field(
-                "twap_source",
-                &entry_updates.twap_source_or_ref_price_tolerance_bps[entry_id],
-            );
-        } else {
-            d.field("price_info_account", &pk);
-        }
-
-        if let Some(price_type) = price_type {
-            debug_format_generic_data(&mut d, price_type, &generic_data);
-        } else {
-            d.field("generic_data", &generic_data);
-        }
-
-        d.field("twap_enabled", &twap_enabled_bitmask.to_debug_print_entry())
-            .field(
-                "ref_price_index",
-                if ref_price == u16::MAX {
-                    &"None"
-                } else {
-                    &ref_price
-                },
-            )
-            .finish()
     }
 }

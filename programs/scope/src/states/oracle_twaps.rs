@@ -1,14 +1,15 @@
 use anchor_lang::prelude::*;
 use bytemuck::{Pod, Zeroable};
-use decimal_wad::decimal::Decimal;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+use strum::{EnumCount, EnumIter, IntoEnumIterator};
 
-use super::DatedPrice;
-use crate::{utils::consts::*, ScopeError, MAX_ENTRIES};
+use crate::{errors::ScopeError, MAX_ENTRIES};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromPrimitive, IntoPrimitive)]
+#[derive(
+    Debug, PartialEq, Eq, Clone, Copy, TryFromPrimitive, IntoPrimitive, EnumIter, EnumCount,
+)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[repr(usize)]
 pub enum EmaType {
@@ -18,6 +19,8 @@ pub enum EmaType {
     Ema8h,
     #[cfg_attr(feature = "serde", serde(rename = "24h"))]
     Ema24h,
+    #[cfg_attr(feature = "serde", serde(rename = "7d"))]
+    Ema7d,
 }
 
 #[zero_copy]
@@ -29,14 +32,16 @@ pub struct EmaTwap {
     pub current_ema_1h: u128,
     /// The sample tracker is a 64 bit number where each bit represents a point in time.
     pub updates_tracker_1h: u64,
-    pub padding_0: u64,
+    pub updates_tracker_7d: u64,
 
     pub current_ema_8h: u128,
     pub current_ema_24h: u128,
     pub updates_tracker_8h: u64,
     pub updates_tracker_24h: u64,
 
-    pub padding_1: [u128; 36],
+    pub current_ema_7d: u128,
+
+    pub padding_1: [u128; 35],
 }
 
 impl Default for EmaTwap {
@@ -50,41 +55,28 @@ impl Default for EmaTwap {
             updates_tracker_1h: 0,
             updates_tracker_8h: 0,
             updates_tracker_24h: 0,
-            padding_0: 0,
-            padding_1: [0_u128; 36],
+            current_ema_7d: 0,
+            updates_tracker_7d: 0,
+            padding_1: [0_u128; 35],
         }
     }
 }
 
 impl EmaTwap {
-    pub fn as_dated_price(&self, ema_type: EmaType) -> DatedPrice {
-        let ema_to_use = match ema_type {
-            EmaType::Ema1h => self.current_ema_1h,
-            EmaType::Ema8h => self.current_ema_8h,
-            EmaType::Ema24h => self.current_ema_24h,
-        };
-        DatedPrice {
-            price: Decimal::from_scaled_val(ema_to_use).into(),
-            last_updated_slot: self.last_update_slot,
-            unix_timestamp: self.last_update_unix_timestamp,
-            generic_data: Default::default(),
-        }
-    }
-
     pub fn reset(&mut self) {
         self.current_ema_1h = 0;
         self.current_ema_8h = 0;
         self.current_ema_24h = 0;
+        self.current_ema_7d = 0;
         self.updates_tracker_1h = 0;
         self.updates_tracker_8h = 0;
         self.updates_tracker_24h = 0;
+        self.updates_tracker_7d = 0;
         self.last_update_slot = 0;
         self.last_update_unix_timestamp = 0;
     }
 }
 
-static_assertions::const_assert_eq!(ORACLE_TWAPS_SIZE, std::mem::size_of::<OracleTwaps>());
-static_assertions::const_assert_eq!(0, std::mem::size_of::<OracleTwaps>() % 8);
 // Account to store dated TWAP prices
 #[account(zero_copy)]
 pub struct OracleTwaps {
@@ -99,15 +91,10 @@ impl OracleTwaps {
     }
 }
 
-static_assertions::const_assert_eq!(std::mem::size_of::<TwapEnabledBitmask>(), 1);
 #[derive(Debug, Clone, Copy, AnchorSerialize, AnchorDeserialize, Zeroable, Pod, PartialEq)]
 #[repr(C)]
 pub struct TwapEnabledBitmask {
     bitmask: u8,
-}
-
-pub struct DebugPrintTwapEnabledBitmaskEntry {
-    pub bitmask: TwapEnabledBitmask,
 }
 
 impl TwapEnabledBitmask {
@@ -129,9 +116,10 @@ impl TwapEnabledBitmask {
         //      .enable(EmaType::Ema1h)
         //      .enable(EmaType::Ema8h)
         //      .enable(EmaType::Ema24h)
+        //      .enable(EmaType::Ema7d)
         // but need to be able to declare it as const
-        // Bits 0, 1, 2 enabled = 0b111 = 7
-        Self { bitmask: 7 }
+        // Bits 0, 1, 2, 3 enabled = 0b1111
+        Self { bitmask: 0b1111 }
     }
 
     pub fn is_twap_enabled(&self) -> bool {
@@ -142,17 +130,13 @@ impl TwapEnabledBitmask {
         let ema_type: usize = ema_type.into();
         self.bitmask & (1 << ema_type) > 0
     }
-
-    pub fn to_debug_print_entry(&self) -> DebugPrintTwapEnabledBitmaskEntry {
-        DebugPrintTwapEnabledBitmaskEntry { bitmask: *self }
-    }
 }
 
 impl TryFrom<u8> for TwapEnabledBitmask {
     type Error = ScopeError;
 
     fn try_from(bitmask: u8) -> std::result::Result<Self, Self::Error> {
-        if bitmask < 8 {
+        if bitmask < (1 << EmaType::COUNT) {
             Ok(Self { bitmask })
         } else {
             Err(ScopeError::TwapEnabledBitmaskConversionFailure)
@@ -179,35 +163,12 @@ impl From<Vec<EmaType>> for TwapEnabledBitmask {
 impl From<TwapEnabledBitmask> for Vec<EmaType> {
     fn from(val: TwapEnabledBitmask) -> Self {
         let mut res = Vec::with_capacity(val.bitmask.count_ones() as usize);
-        [EmaType::Ema1h, EmaType::Ema8h, EmaType::Ema24h]
-            .iter()
-            .for_each(|ema_type| {
-                let ema_type_usize: usize = (*ema_type).into();
-                if val.bitmask & (1 << ema_type_usize) > 0 {
-                    res.push(*ema_type);
-                }
-            });
+        EmaType::iter().for_each(|ema_type| {
+            let ema_type_usize: usize = ema_type.into();
+            if val.bitmask & (1 << ema_type_usize) > 0 {
+                res.push(ema_type);
+            }
+        });
         res
-    }
-}
-
-impl std::fmt::Debug for DebugPrintTwapEnabledBitmaskEntry {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut enabled_types = Vec::new();
-        if self.bitmask.is_twap_enabled_for_ema_type(EmaType::Ema1h) {
-            enabled_types.push("1h");
-        }
-        if self.bitmask.is_twap_enabled_for_ema_type(EmaType::Ema8h) {
-            enabled_types.push("8h");
-        }
-        if self.bitmask.is_twap_enabled_for_ema_type(EmaType::Ema24h) {
-            enabled_types.push("24h");
-        }
-
-        if enabled_types.is_empty() {
-            write!(f, "[]")
-        } else {
-            write!(f, "[{}]", enabled_types.join(", "))
-        }
     }
 }

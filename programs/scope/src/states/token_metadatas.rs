@@ -1,12 +1,7 @@
 use anchor_lang::prelude::*;
 
-use crate::{
-    utils::{consts::*, list_set_bit_positions},
-    MAX_ENTRIES,
-};
+use crate::MAX_ENTRIES;
 
-static_assertions::const_assert_eq!(TOKEN_METADATA_SIZE, std::mem::size_of::<TokenMetadatas>());
-static_assertions::const_assert_eq!(0, std::mem::size_of::<TokenMetadatas>() % 8);
 #[account(zero_copy)]
 pub struct TokenMetadatas {
     pub metadatas_array: [TokenMetadata; MAX_ENTRIES],
@@ -51,4 +46,17 @@ impl std::fmt::Debug for TokenMetadata {
             )
             .finish()
     }
+}
+
+// Function placed here to allow usage in both scope and scope-types.
+/// Lists the bit positions (where LSB == 0) of all the set bits (i.e. `1`s) in the given number's
+/// binary representation.
+pub fn list_set_bit_positions(mut bits: u64) -> Vec<u8> {
+    let mut positions = Vec::with_capacity(usize::try_from(bits.count_ones()).unwrap());
+    while bits != 0 {
+        let position = u8::try_from(bits.trailing_zeros()).unwrap();
+        positions.push(position);
+        bits &= bits.wrapping_sub(1);
+    }
+    positions
 }

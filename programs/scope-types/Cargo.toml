@@ -1,9 +1,8 @@
 [package]
 name = "scope-types"
-version = "1.0.0"
+version = "2.0.0"
 description = "Types for Scope"
 repository = "https://github.com/Kamino-Finance/scope"
-authors = ["Scope Maintainers <dev@hubbleprotocol.io>"]
 edition = "2021"
 license = "BUSL-1.1"
 publish = false
@@ -26,3 +25,4 @@ solana-program = ">= 1.16.18"
 num_enum = ">0.5.7"
 cfg-if = "1.0.0"
 bytemuck = { version = "1.14.0", features = ["min_const_generics", "derive"] }
+strum = { version = "0.27", features = ["derive"] }

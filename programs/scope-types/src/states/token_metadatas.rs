@@ -1,0 +1,1 @@
+../../../scope/src/states/token_metadatas.rs
