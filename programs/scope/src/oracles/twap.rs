@@ -13,12 +13,15 @@ use crate::{
 const EMA_1H_DURATION_SECONDS: u64 = 60 * 60;
 const EMA_8H_DURATION_SECONDS: u64 = 8 * 60 * 60;
 const EMA_24H_DURATION_SECONDS: u64 = 24 * 60 * 60;
+const EMA_7D_DURATION_SECONDS: u64 = 7 * 24 * 60 * 60;
 const MIN_SAMPLES_IN_PERIOD_1H: u32 = 10;
 const MIN_SAMPLES_IN_PERIOD_8H: u32 = 24;
 const MIN_SAMPLES_IN_PERIOD_24H: u32 = 48;
-const NUM_SUB_PERIODS_1H: usize = 3;
-const NUM_SUB_PERIODS_8H: usize = 8;
-const NUM_SUB_PERIODS_24H: usize = 24;
+const MIN_SAMPLES_IN_PERIOD_7D: u32 = 60;
+const NUM_SUB_PERIODS_1H: usize = 3; // 20min sub-periods
+const NUM_SUB_PERIODS_8H: usize = 8; // 1h sub-periods
+const NUM_SUB_PERIODS_24H: usize = 24; // 1h sub-periods
+const NUM_SUB_PERIODS_7D: usize = 21; // 8h sub-periods
 const MIN_SAMPLES_IN_FIRST_AND_LAST_PERIOD: u32 = 1;
 
 pub fn update_twaps(
@@ -131,6 +134,7 @@ mod utils {
             EmaType::Ema1h => (&mut twap.current_ema_1h, &mut twap.updates_tracker_1h),
             EmaType::Ema8h => (&mut twap.current_ema_8h, &mut twap.updates_tracker_8h),
             EmaType::Ema24h => (&mut twap.current_ema_24h, &mut twap.updates_tracker_24h),
+            EmaType::Ema7d => (&mut twap.current_ema_7d, &mut twap.updates_tracker_7d),
         };
 
         if twap.last_update_slot == 0 {
@@ -168,7 +172,7 @@ mod utils {
     }
 
     /// update the EMAs time weighted on how recent the last price is. EMAs are calculated as:
-    /// EMA = (price * smoothing_factor) + (1 - smoothing_factor) * previous_EMA. The smoothing factor is calculated as: (last_sample_delta / sampling_rate_in_seconds) * (2 / (1 + samples_number_per_period)).
+    /// EMA = (price * smoothing_factor) + (1 - smoothing_factor) * previous_EMA. The smoothing factor is calculated as: (2 / (1 + samples_number_per_period)).
     pub(super) fn update_ema_twaps(
         twap: &mut EmaTwap,
         price: Price,
@@ -207,6 +211,15 @@ mod utils {
                 EMA_24H_DURATION_SECONDS,
             )?;
 
+            performed_update |= update_ema_twap(
+                twap,
+                price,
+                price_ts,
+                twap_enabled_bitmask,
+                EmaType::Ema7d,
+                EMA_7D_DURATION_SECONDS,
+            )?;
+
             if performed_update {
                 twap.last_update_slot = price_slot;
                 twap.last_update_unix_timestamp = price_ts;
@@ -239,6 +252,11 @@ mod utils {
                 Into::<EmaTracker>::into(twap.updates_tracker_24h),
                 EMA_24H_DURATION_SECONDS,
                 MIN_SAMPLES_IN_PERIOD_24H,
+            ),
+            EmaType::Ema7d => (
+                Into::<EmaTracker>::into(twap.updates_tracker_7d),
+                EMA_7D_DURATION_SECONDS,
+                MIN_SAMPLES_IN_PERIOD_7D,
             ),
         };
         tracker.erase_old_samples(
@@ -283,6 +301,17 @@ mod utils {
                 (
                     samples_count_per_subperiods[0],
                     samples_count_per_subperiods[NUM_SUB_PERIODS_24H - 1],
+                )
+            }
+            EmaType::Ema7d => {
+                let samples_count_per_subperiods = tracker
+                    .get_samples_count_per_subperiods::<NUM_SUB_PERIODS_7D>(
+                        ema_duration_seconds,
+                        twap.last_update_unix_timestamp,
+                    );
+                (
+                    samples_count_per_subperiods[0],
+                    samples_count_per_subperiods[NUM_SUB_PERIODS_7D - 1],
                 )
             }
         };

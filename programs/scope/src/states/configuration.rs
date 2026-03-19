@@ -1,9 +1,5 @@
 use anchor_lang::prelude::*;
 
-use crate::utils::consts::CONFIGURATION_SIZE;
-
-static_assertions::const_assert_eq!(CONFIGURATION_SIZE, std::mem::size_of::<Configuration>());
-static_assertions::const_assert_eq!(0, std::mem::size_of::<Configuration>() % 8);
 // Configuration account of the program
 #[account(zero_copy)]
 pub struct Configuration {

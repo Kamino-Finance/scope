@@ -1,10 +1,8 @@
 use anchor_lang::prelude::*;
 
 use super::DatedPrice;
-use crate::{utils::consts::*, MAX_ENTRIES};
+use crate::MAX_ENTRIES;
 
-static_assertions::const_assert_eq!(ORACLE_PRICES_SIZE, std::mem::size_of::<OraclePrices>());
-static_assertions::const_assert_eq!(0, std::mem::size_of::<OraclePrices>() % 8);
 // Account to store dated prices
 #[account(zero_copy)]
 pub struct OraclePrices {

@@ -1,12 +1,13 @@
 use anchor_lang::prelude::*;
+use strum::IntoEnumIterator;
 
 use crate::{
     oracles::{update_generic_data_must_reset_price, validate_oracle_cfg, OracleType},
     states::{
-        Configuration, EmaType, OracleMappings, OraclePrices, OracleTwaps, TokenMetadata,
-        TokenMetadatas, TwapEnabledBitmask,
+        token_metadatas::list_set_bit_positions, Configuration, EmaType, OracleMappings,
+        OraclePrices, OracleTwaps, TokenMetadata, TokenMetadatas, TwapEnabledBitmask,
     },
-    utils::{list_set_bit_positions, maybe_account, pdas::seeds},
+    utils::{maybe_account, pdas::seeds},
     ScopeError, MAX_ENTRIES, MAX_ENTRIES_U16,
 };
 
@@ -265,7 +266,7 @@ pub fn process(
                         msg!("Twap enabled bitmask is already {twap_enabled_bitmask:?}, skipping",);
                         continue;
                     }
-                    for ema_type in [EmaType::Ema1h, EmaType::Ema8h, EmaType::Ema24h] {
+                    for ema_type in EmaType::iter() {
                         if !oracle_mappings.is_twap_enabled_for_ema_type(entry_id, ema_type)
                             && twap_enabled_bitmask.is_twap_enabled_for_ema_type(ema_type)
                         {
@@ -303,11 +304,8 @@ pub fn process(
                         }
                     }
                     oracle_mappings.set_ref_price(entry_id, ref_price_index);
-                    if let Err(e) = oracle_mappings
-                        .set_ref_price_tolerance_bps(entry_id, ref_price_tolerance_bps)
-                    {
-                        msg!("WARNING: Failed to set reference price tolerance bps: {e:?}",);
-                    }
+                    oracle_mappings
+                        .set_ref_price_tolerance_bps(entry_id, ref_price_tolerance_bps)?;
                 }
                 UpdateOracleMappingAndMetadataEntry::MetadataName(new_name) => {
                     msg!("Setting token metadata name from \"{old_name}\" to \"{new_name}\"",);
