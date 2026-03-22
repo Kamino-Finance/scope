@@ -2,7 +2,6 @@ use anchor_lang::{prelude::*, InstructionData};
 use pyth_lazer_protocol::{message::SolanaMessage, payload::PayloadData};
 use pyth_lazer_solana_contract::{
     self, ID as PYTH_LAZER_PROGRAM_ID, STORAGE_ID as PYTH_LAZER_STORAGE_ID,
-    TREASURY_ID as PYTH_LAZER_TREASURY_ID,
 };
 use solana_program::{
     instruction::Instruction, program::invoke, sysvar::instructions::ID as SYSVAR_INSTRUCTIONS_ID,
@@ -38,8 +37,8 @@ pub struct RefreshPythLazerPrice<'info> {
     #[account(address = PYTH_LAZER_STORAGE_ID)]
     pub pyth_storage: Account<'info, pyth_lazer_solana_contract::Storage>,
 
-    /// CHECK: This is the Pyth treasury account
-    #[account(mut, address = PYTH_LAZER_TREASURY_ID)]
+    /// CHECK: This is the Pyth treasury account, validated against the Storage account
+    #[account(mut, address = pyth_storage.treasury)]
     pub pyth_treasury: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
