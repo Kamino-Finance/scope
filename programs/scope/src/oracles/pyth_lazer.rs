@@ -1,7 +1,8 @@
 use anchor_lang::prelude::*;
 use pyth_lazer_protocol::{
     payload::{PayloadData, PayloadPropertyValue},
-    router::{channel_ids::FIXED_RATE_200, Price as PythLazerPrice},
+    time::TimestampUs,
+    ChannelId, Price as PythLazerPrice,
 };
 
 use crate::{
@@ -41,7 +42,7 @@ pub fn validate_payload_data_for_group(
     num_tokens_in_group: usize,
 ) -> ScopeResult<()> {
     // Check that the channel is what we expect
-    if payload_data.channel_id != FIXED_RATE_200 {
+    if payload_data.channel_id != ChannelId::FIXED_RATE_200 {
         return Err(ScopeError::PythLazerInvalidChannel);
     }
 
@@ -57,7 +58,7 @@ pub fn validate_payload_data_for_token(
     payload_data: &PayloadData,
     feed_idx: usize,
     pyth_lazer_data: &PythLazerData,
-) -> ScopeResult<Price> {
+) -> ScopeResult<(Price, TimestampUs)> {
     let PythLazerData {
         feed_id: expected_feed_id,
         exponent: expected_exponent,
@@ -75,6 +76,7 @@ pub fn validate_payload_data_for_token(
     let mut best_bid_price_opt: Option<PythLazerPrice> = None;
     let mut best_ask_price_opt: Option<PythLazerPrice> = None;
     let mut exponent_opt: Option<i16> = None;
+    let mut feed_update_timestamp_opt: Option<TimestampUs> = None;
 
     for property in payload_data.feeds[feed_idx].properties.iter() {
         match property {
@@ -90,6 +92,9 @@ pub fn validate_payload_data_for_token(
             PayloadPropertyValue::Exponent(exponent) => {
                 exponent_opt = Some(*exponent);
             }
+            PayloadPropertyValue::FeedUpdateTimestamp(Some(ts)) => {
+                feed_update_timestamp_opt = Some(*ts);
+            }
             _ => {
                 continue;
             }
@@ -98,8 +103,7 @@ pub fn validate_payload_data_for_token(
 
     let pyth_lazer_price: i64 = price_opt
         .ok_or(ScopeError::PythLazerPriceNotPresent)?
-        .into_inner()
-        .into();
+        .mantissa_i64();
     let pyth_lazer_price = u64::try_from(pyth_lazer_price).map_err(|_| {
         warn!("Pyth Lazer: error converting price to u64");
         ScopeError::OutOfRangeIntegralConversion
@@ -124,8 +128,7 @@ pub fn validate_payload_data_for_token(
 
     let best_bid_price: i64 = best_bid_price_opt
         .ok_or(ScopeError::PythLazerBestBidPriceNotPresent)?
-        .into_inner()
-        .into();
+        .mantissa_i64();
     let best_bid_price = u64::try_from(best_bid_price).map_err(|_| {
         warn!("Pyth Lazer: error converting best bid price to u64");
         ScopeError::OutOfRangeIntegralConversion
@@ -137,8 +140,7 @@ pub fn validate_payload_data_for_token(
 
     let best_ask_price: i64 = best_ask_price_opt
         .ok_or(ScopeError::PythLazerBestAskPriceNotPresent)?
-        .into_inner()
-        .into();
+        .mantissa_i64();
     let best_ask_price = u64::try_from(best_ask_price).map_err(|_| {
         warn!("Pyth Lazer: error converting best ask price to u64");
         ScopeError::OutOfRangeIntegralConversion
@@ -169,7 +171,10 @@ pub fn validate_payload_data_for_token(
         e
     })?;
 
-    Ok(new_price)
+    let feed_update_timestamp =
+        feed_update_timestamp_opt.ok_or(ScopeError::PythLazerFeedUpdateTimestampNotPresent)?;
+
+    Ok((new_price, feed_update_timestamp))
 }
 
 pub fn update_price(
@@ -184,16 +189,26 @@ pub fn update_price(
     // `generic_data` from a previous price, because `generic_data` can be either:
     // - uninitialized with a 0 default value
     // - used by a previous price, with a smaller timestamp (because pyth lazer timestamps are in microseconds)
+    let pyth_lazer_data = PythLazerData::from_generic_data(generic_data)?;
+    let (new_price, feed_update_timestamp) =
+        validate_payload_data_for_token(data, feed_idx, &pyth_lazer_data)?;
+
     let last_pyth_lazer_timestamp_us =
         u64::from_le_bytes(dated_price.generic_data[0..8].try_into().unwrap());
-    let curr_pyth_lazer_timestamp_us = data.timestamp_us.0;
-    if curr_pyth_lazer_timestamp_us <= last_pyth_lazer_timestamp_us {
+    let curr_feed_update_timestamp = feed_update_timestamp.as_micros();
+    if curr_feed_update_timestamp <= last_pyth_lazer_timestamp_us {
         warn!("Refreshing pyth lazer price: an outdated report was provided");
         return Err(ScopeError::BadTimestamp);
     }
 
-    let pyth_lazer_data = PythLazerData::from_generic_data(generic_data)?;
-    let new_price = validate_payload_data_for_token(data, feed_idx, &pyth_lazer_data)?;
+    let curr_timestamp_us = data.timestamp_us.as_micros();
+    if curr_feed_update_timestamp > curr_timestamp_us {
+        warn!(
+            "Pyth lazer feed_update_timestamp ({}) is newer than payload timestamp ({})",
+            curr_feed_update_timestamp,
+            data.timestamp_us.as_micros()
+        );
+    }
 
     let current_onchain_timestamp_s: u64 = clock
         .unix_timestamp
@@ -201,11 +216,11 @@ pub fn update_price(
         .expect("Invalid clock timestamp");
     // `curr_pyth_lazer_ts` is in microseconds, so we convert into seconds
     let price_timestamp_s = u64::min(
-        curr_pyth_lazer_timestamp_us / 1_000_000,
+        u64::min(curr_feed_update_timestamp, curr_timestamp_us) / 1_000_000,
         current_onchain_timestamp_s,
     );
     let mut generic_data = [0u8; 24];
-    generic_data[..8].copy_from_slice(&curr_pyth_lazer_timestamp_us.to_le_bytes());
+    generic_data[..8].copy_from_slice(&curr_feed_update_timestamp.to_le_bytes());
 
     *dated_price = DatedPrice {
         price: new_price,

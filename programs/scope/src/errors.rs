@@ -200,6 +200,9 @@ pub enum ScopeError {
 
     #[msg("TWAP source index not set")]
     TwapSourceIndexNotSet,
+
+    #[msg("Property fields in the feed of the PythLazer payload do not contain a feed update timestamp")]
+    PythLazerFeedUpdateTimestampNotPresent,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

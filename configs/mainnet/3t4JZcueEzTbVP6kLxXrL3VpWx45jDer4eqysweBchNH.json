@@ -1141,7 +1141,7 @@
     "oracle_type": "ChainlinkExchangeRate",
     "chainlink_feed_id": "0x0007a3d8f2c1e6b9d4a7f3c8e2b5d9a6f1c4e7b2d8a3f6c9e1b4d7a2f5c8e1b6",
     "twap_enabled": ["1h", "24h"],
-    "ref_price": 204,
+    "ref_price": 304,
     "ref_price_tolerance_bps": 500
   },
   "191": {
@@ -1827,5 +1827,48 @@
     "label": "Chainlink USX/USD NAV",
     "oracle_type": "ChainlinkExchangeRate",
     "chainlink_feed_id": "0x0007083d49820e260592dec2b5acf0c1c9b778bc78e9c7c7853a0767e4937364"
+  },
+  "302": {
+    "label": "ChainlinkX STRCx/USD AU",
+    "oracle_type": "ChainlinkX",
+    "chainlink_feed_id": "0x000a968f79058f73e24ba7d546882160d440634412e5ac2dc491f58bea5bea38",
+    "market_status_behavior": "AllUpdates",
+    "twap_enabled": ["1h"]
+  },
+  "303": {
+    "label": "ChainlinkX TWAP STRCx/USD AU",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 302,
+    "max_age_slot": 165
+  },
+  "304": {
+    "label": "Fixed 1.07 price",
+    "oracle_type": "FixedPrice",
+    "fixed_price": 1.07,
+    "max_age_slot": 12000
+  },
+  "305": {
+    "label": "Fixed 1.1 price",
+    "oracle_type": "FixedPrice",
+    "fixed_price": 1.1,
+    "max_age_slot": 12000
+  },
+  "306": {
+    "label": "Fixed 1.2 price",
+    "oracle_type": "FixedPrice",
+    "fixed_price": 1.2,
+    "max_age_slot": 12000
+  },
+  "307": {
+    "label": "Fixed 1.3 price",
+    "oracle_type": "FixedPrice",
+    "fixed_price": 1.3,
+    "max_age_slot": 12000
+  },
+  "308": {
+    "label": "Fixed 100 price",
+    "oracle_type": "FixedPrice",
+    "fixed_price": 100,
+    "max_age_slot": 12000
   }
 }
