@@ -1870,5 +1870,410 @@
     "oracle_type": "FixedPrice",
     "fixed_price": 100,
     "max_age_slot": 12000
+  },
+  "309": {
+    "label": "Raydium PRIME/CASH",
+    "oracle_mapping": "3CiG1JsPHfwQFwbVPSArgvGH1soZy7ikef5m4gBcvxvE",
+    "oracle_type": "RaydiumAmmV3AtoB"
+  },
+  "310": {
+    "label": "MostRecent PRIME/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [190, 309],
+    "max_divergence_bps": 300,
+    "sources_max_age_s": 60
+  },
+  "311": {
+    "label": "Checked PRIME/wYLDS",
+    "oracle_type": "CappedFloored",
+    "source_entry": 310,
+    "cap_entry": 190,
+    "floor_entry": 355
+  },
+  "312": {
+    "label": "PythLazer syrupUSDC/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 2941,
+    "pyth_lazer_exponent": 8,
+    "confidence_factor": 50
+  },
+  "313": {
+    "label": "MostRecent syrupUSDC/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [247, 312],
+    "max_divergence_bps": 300,
+    "sources_max_age_s": 60
+  },
+  "314": {
+    "label": "Checked syrupUSDC/USDC",
+    "oracle_type": "CappedFloored",
+    "source_entry": 313,
+    "cap_entry": 247,
+    "floor_entry": 356
+  },
+  "315": {
+    "label": "PythLazer AAPLx/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1792,
+    "pyth_lazer_exponent": 8,
+    "confidence_factor": 50
+  },
+  "316": {
+    "label": "MostRecent AAPLx/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [258, 315],
+    "max_divergence_bps": 300,
+    "sources_max_age_s": 60
+  },
+  "317": {
+    "label": "Checked AAPLx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 316,
+    "cap_entry": 258,
+    "floor_entry": 357
+  },
+  "318": {
+    "label": "PythLazer HOODx/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1815,
+    "pyth_lazer_exponent": 8,
+    "confidence_factor": 50
+  },
+  "319": {
+    "label": "MostRecent HOODx/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [260, 318],
+    "max_divergence_bps": 300,
+    "sources_max_age_s": 60
+  },
+  "320": {
+    "label": "Checked HOODx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 319,
+    "cap_entry": 260,
+    "floor_entry": 358
+  },
+  "321": {
+    "label": "PythLazer CRCLx/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1798,
+    "pyth_lazer_exponent": 8,
+    "confidence_factor": 50
+  },
+  "322": {
+    "label": "MostRecent CRCLx/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [262, 321],
+    "max_divergence_bps": 300,
+    "sources_max_age_s": 60
+  },
+  "323": {
+    "label": "Checked CRCLx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 322,
+    "cap_entry": 262,
+    "floor_entry": 359
+  },
+  "324": {
+    "label": "PythLazer GOOGLx/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1808,
+    "pyth_lazer_exponent": 8,
+    "confidence_factor": 50
+  },
+  "325": {
+    "label": "MostRecent GOOGLx/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [264, 324],
+    "max_divergence_bps": 300,
+    "sources_max_age_s": 60
+  },
+  "326": {
+    "label": "Checked GOOGLx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 325,
+    "cap_entry": 264,
+    "floor_entry": 360
+  },
+  "327": {
+    "label": "PythLazer METAx/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1824,
+    "pyth_lazer_exponent": 8,
+    "confidence_factor": 50
+  },
+  "328": {
+    "label": "MostRecent METAx/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [266, 327],
+    "max_divergence_bps": 300,
+    "sources_max_age_s": 60
+  },
+  "329": {
+    "label": "Checked METAx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 328,
+    "cap_entry": 266,
+    "floor_entry": 361
+  },
+  "330": {
+    "label": "PythLazer NVDAx/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1833,
+    "pyth_lazer_exponent": 8,
+    "confidence_factor": 50
+  },
+  "331": {
+    "label": "MostRecent NVDAx/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [268, 330],
+    "max_divergence_bps": 300,
+    "sources_max_age_s": 60
+  },
+  "332": {
+    "label": "Checked NVDAx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 331,
+    "cap_entry": 268,
+    "floor_entry": 362
+  },
+  "333": {
+    "label": "PythLazer MSTRx/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1827,
+    "pyth_lazer_exponent": 8,
+    "confidence_factor": 50
+  },
+  "334": {
+    "label": "MostRecent MSTRx/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [270, 333],
+    "max_divergence_bps": 300,
+    "sources_max_age_s": 60
+  },
+  "335": {
+    "label": "Checked MSTRx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 334,
+    "cap_entry": 270,
+    "floor_entry": 363
+  },
+  "336": {
+    "label": "PythLazer TSLAx/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1847,
+    "pyth_lazer_exponent": 8,
+    "confidence_factor": 50
+  },
+  "337": {
+    "label": "MostRecent TSLAx/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [272, 336],
+    "max_divergence_bps": 300,
+    "sources_max_age_s": 60
+  },
+  "338": {
+    "label": "Checked TSLAx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 337,
+    "cap_entry": 272,
+    "floor_entry": 364
+  },
+  "339": {
+    "label": "PythLazer COINx/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1796,
+    "pyth_lazer_exponent": 8,
+    "confidence_factor": 50
+  },
+  "340": {
+    "label": "MostRecent COINx/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [276, 339],
+    "max_divergence_bps": 300,
+    "sources_max_age_s": 60
+  },
+  "341": {
+    "label": "Checked COINx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 340,
+    "cap_entry": 276,
+    "floor_entry": 365
+  },
+  "342": {
+    "label": "PythLazer SPYx/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1843,
+    "pyth_lazer_exponent": 8,
+    "confidence_factor": 50
+  },
+  "343": {
+    "label": "MostRecent SPYx/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [278, 342],
+    "max_divergence_bps": 300,
+    "sources_max_age_s": 60
+  },
+  "344": {
+    "label": "Checked SPYx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 343,
+    "cap_entry": 278,
+    "floor_entry": 366
+  },
+  "345": {
+    "label": "PythLazer QQQx/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1837,
+    "pyth_lazer_exponent": 8,
+    "confidence_factor": 50
+  },
+  "346": {
+    "label": "MostRecent QQQx/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [280, 345],
+    "max_divergence_bps": 300,
+    "sources_max_age_s": 60
+  },
+  "347": {
+    "label": "Checked QQQx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 346,
+    "cap_entry": 280,
+    "floor_entry": 367
+  },
+  "348": {
+    "label": "Orca ONyc/USDC",
+    "oracle_mapping": "7jhhyxPUKpu42hPGSYwgMXbR2dtVJHKhs8DW3sAAgAvX",
+    "oracle_type": "OrcaWhirlpoolAtoB"
+  },
+  "349": {
+    "label": "MostRecent ONyc/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [246, 348],
+    "max_divergence_bps": 300,
+    "sources_max_age_s": 60
+  },
+  "350": {
+    "label": "Checked ONyc/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 349,
+    "cap_entry": 246,
+    "floor_entry": 368
+  },
+  "351": {
+    "label": "Orca PST/USDC",
+    "oracle_mapping": "FCdB84kbytrT8JHsWLrWxPoquetmtcF1NZw7LYcgrQJE",
+    "oracle_type": "OrcaWhirlpoolAtoB"
+  },
+  "352": {
+    "label": "MostRecent PST/USDC",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [110, 351],
+    "max_divergence_bps": 300,
+    "sources_max_age_s": 60
+  },
+  "353": {
+    "label": "Checked PST/USDC",
+    "oracle_type": "CappedFloored",
+    "source_entry": 352,
+    "cap_entry": 110,
+    "floor_entry": 369
+  },
+  "354": {
+    "label": "Fixed 1000000000 price",
+    "oracle_type": "FixedPrice",
+    "fixed_price": 1000000000,
+    "max_age_slot": 12000
+  },
+  "355": {
+    "label": "Duplicate PRIME/wYLDS",
+    "oracle_type": "CappedFloored",
+    "source_entry": 190,
+    "cap_entry": 354
+  },
+  "356": {
+    "label": "Duplicate syrupUSDC/USDC",
+    "oracle_type": "CappedFloored",
+    "source_entry": 247,
+    "cap_entry": 354
+  },
+  "357": {
+    "label": "Duplicate AAPLx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 258,
+    "cap_entry": 354
+  },
+  "358": {
+    "label": "Duplicate HOODx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 260,
+    "cap_entry": 354
+  },
+  "359": {
+    "label": "Duplicate CRCLx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 262,
+    "cap_entry": 354
+  },
+  "360": {
+    "label": "Duplicate GOOGLx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 264,
+    "cap_entry": 354
+  },
+  "361": {
+    "label": "Duplicate METAx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 266,
+    "cap_entry": 354
+  },
+  "362": {
+    "label": "Duplicate NVDAx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 268,
+    "cap_entry": 354
+  },
+  "363": {
+    "label": "Duplicate MSTRx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 270,
+    "cap_entry": 354
+  },
+  "364": {
+    "label": "Duplicate TSLAx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 272,
+    "cap_entry": 354
+  },
+  "365": {
+    "label": "Duplicate COINx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 276,
+    "cap_entry": 354
+  },
+  "366": {
+    "label": "Duplicate SPYx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 278,
+    "cap_entry": 354
+  },
+  "367": {
+    "label": "Duplicate QQQx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 280,
+    "cap_entry": 354
+  },
+  "368": {
+    "label": "Duplicate ONyc/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 246,
+    "cap_entry": 354
+  },
+  "369": {
+    "label": "Duplicate PST/USDC",
+    "oracle_type": "CappedFloored",
+    "source_entry": 110,
+    "cap_entry": 354
   }
 }

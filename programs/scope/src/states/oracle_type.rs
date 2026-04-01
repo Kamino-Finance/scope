@@ -132,9 +132,30 @@ pub enum OracleType {
     ScopeTwap8h = 40,
     ScopeTwap24h = 41,
     ScopeTwap7d = 42,
+    /// Multiplies prices from multiple source entries together.
+    /// Uses the oldest timestamp/slot among the sources.
+    MultiplicationChain = 43,
+    /// SPL token account balance oracle
+    /// Returns the token balance from an SPL token account
+    /// The balance is expressed as a "UI amount": value / 10^exp
+    SplBalance = 44,
+    /// Staked SOL account balance oracle
+    /// Returns the delegation stake from a stake account
+    StakedSolBalance = 45,
 }
 
 impl OracleType {
+    /// Whether this oracle type can legitimately report a zero value.
+    pub fn allows_zero_price(self) -> bool {
+        matches!(
+            self,
+            OracleType::FixedPrice
+                | OracleType::MultiplicationChain
+                | OracleType::SplBalance
+                | OracleType::StakedSolBalance
+        )
+    }
+
     pub fn is_twap(self) -> bool {
         matches!(
             self,
@@ -200,7 +221,10 @@ impl OracleType {
             | OracleType::Securitize
             | OracleType::CappedFloored
             | OracleType::FlashtradeLp
-            | OracleType::CappedMostRecentOf => false,
+            | OracleType::CappedMostRecentOf
+            | OracleType::MultiplicationChain
+            | OracleType::SplBalance
+            | OracleType::StakedSolBalance => false,
         }
     }
 }

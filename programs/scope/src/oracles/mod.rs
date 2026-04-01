@@ -15,6 +15,7 @@ pub mod jupiter_lp;
 pub mod meteora_dlmm;
 pub mod most_recent_of;
 pub mod msol_stake;
+pub mod multiplication_chain;
 pub mod orca_whirlpool;
 pub mod pyth;
 pub mod pyth_lazer;
@@ -23,7 +24,9 @@ pub mod pyth_pull_ema;
 pub mod raydium_ammv3;
 pub mod redstone;
 pub mod securitize;
+pub mod spl_balance;
 pub mod spl_stake;
+pub mod staked_sol_balance;
 pub mod switchboard_on_demand;
 pub mod twap;
 
@@ -81,6 +84,7 @@ impl OracleType {
             | OracleType::ChainlinkExchangeRate => 0,
             OracleType::MostRecentOf => 35_000,
             OracleType::CappedMostRecentOf => 40_000,
+            OracleType::MultiplicationChain => 50_000,
             OracleType::RedStone => 20_000,
             // PythLazer oracle is not updated through normal refresh ixs
             OracleType::PythLazer => 0,
@@ -98,6 +102,8 @@ impl OracleType {
             OracleType::Securitize => 30_000,
             OracleType::AdrenaLp => 20_000,
             OracleType::FlashtradeLp => 20_000,
+            OracleType::SplBalance => 20_000,
+            OracleType::StakedSolBalance => 15_000,
         }
     }
 }
@@ -253,6 +259,12 @@ where
             clock,
         )
         .map_err(Into::into),
+        OracleType::MultiplicationChain => multiplication_chain::get_price(
+            oracle_prices.load()?.deref(),
+            &oracle_mappings.generic[index],
+            clock,
+        )
+        .map_err(Into::into),
         OracleType::Securitize => {
             let oracle_prices = oracle_prices.load()?;
             let dated_price = oracle_prices.prices[index];
@@ -271,10 +283,13 @@ where
         }
         OracleType::AdrenaLp => adrena_lp::get_price(base_account, clock),
         OracleType::FlashtradeLp => flashtrade_lp::get_price(base_account, clock),
+        OracleType::SplBalance => spl_balance::get_price(base_account, clock, extra_accounts),
+        OracleType::StakedSolBalance => staked_sol_balance::get_price(base_account, clock),
     }?;
-    // The price providers above are performing their type-specific validations, but are still free
-    // to return 0, which we can only tolerate in case of explicit fixed price:
-    if price.price.value == 0 && price_type != OracleType::FixedPrice {
+    // The price providers above are performing their type-specific validations, but are still free to return 0,
+    // which we can only tolerate for certain oracle types (e.g. explicit fixed price, multiplication chains
+    // or balance oracles where an empty token account is a legitimate real-world state):
+    if price.price.value == 0 && !price_type.allows_zero_price() {
         warn!("Price is 0 (token {index}, type {price_type:?}): {price:?}",);
         return err!(ScopeError::PriceNotValid);
     }
@@ -359,6 +374,10 @@ pub fn validate_oracle_cfg(
             capped_most_recent_of::validate_mapping_cfg(price_account, generic_data)
                 .map_err(Into::into)
         }
+        OracleType::MultiplicationChain => {
+            multiplication_chain::validate_mapping_cfg(price_account, generic_data)
+                .map_err(Into::into)
+        }
         OracleType::Securitize => Ok(()),
         OracleType::Unused
         | OracleType::DeprecatedPlaceholder1
@@ -372,6 +391,8 @@ pub fn validate_oracle_cfg(
         }
         OracleType::AdrenaLp => adrena_lp::validate_adrena_pool(price_account, clock),
         OracleType::FlashtradeLp => flashtrade_lp::validate_flashtrade_pool(price_account, clock),
+        OracleType::SplBalance => spl_balance::validate_account(price_account),
+        OracleType::StakedSolBalance => staked_sol_balance::validate_account(price_account),
     }
 }
 
@@ -402,13 +423,16 @@ pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
         | OracleType::Securitize
         | OracleType::ChainlinkNAV
         | OracleType::FlashtradeLp
-        | OracleType::ChainlinkExchangeRate => false,
+        | OracleType::ChainlinkExchangeRate
+        | OracleType::SplBalance
+        | OracleType::StakedSolBalance => false,
 
         OracleType::FixedPrice
         | OracleType::DiscountToMaturity
         | OracleType::MostRecentOf
         | OracleType::CappedFloored
         | OracleType::CappedMostRecentOf
+        | OracleType::MultiplicationChain
         | OracleType::Chainlink
         | OracleType::ChainlinkRWA
         | OracleType::ChainlinkX
@@ -457,6 +481,8 @@ pub fn debug_format_generic_data(
         | OracleType::ScopeTwap7d
         | OracleType::ChainlinkNAV
         | OracleType::ChainlinkExchangeRate
+        | OracleType::SplBalance
+        | OracleType::StakedSolBalance
         | OracleType::Unused
         | OracleType::DeprecatedPlaceholder1
         | OracleType::DeprecatedPlaceholder2
@@ -513,6 +539,13 @@ pub fn debug_format_generic_data(
             d.field(
                 "capped_most_recent_of_cfg",
                 &capped_most_recent_of::CappedMostRecentOfData::from_generic_data(generic_data)
+                    .ok(),
+            );
+        }
+        OracleType::MultiplicationChain => {
+            d.field(
+                "multiplication_chain_cfg",
+                &multiplication_chain::MultiplicationChainData::from_generic_data(generic_data)
                     .ok(),
             );
         }

@@ -49,7 +49,9 @@ pub fn refresh_price_list<'info>(
     if tokens.len() > crate::MAX_ENTRIES {
         return Err(ProgramError::InvalidArgument.into());
     }
-    // Check the received token list is at least as long as the number of provided accounts
+
+    // Each token needs at least one provided base account.
+    // Check the received token list is at most as long as the number of provided remaining accounts
     if tokens.len() > ctx.remaining_accounts.len() {
         return err!(ScopeError::AccountsAndTokenMismatch);
     }

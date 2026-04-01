@@ -75,7 +75,7 @@ pub fn get_price(
     let current_ts = clock.unix_timestamp.try_into().unwrap();
     utils::validate_ema(twap_type, twap, current_ts)?;
 
-    Ok(twap.as_dated_price(twap_type))
+    twap.as_dated_price(twap_type)
 }
 
 mod utils {

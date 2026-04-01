@@ -150,8 +150,8 @@ impl From<TwapEnabledBitmask> for u8 {
     }
 }
 
-impl From<Vec<EmaType>> for TwapEnabledBitmask {
-    fn from(ema_types: Vec<EmaType>) -> Self {
+impl From<&[EmaType]> for TwapEnabledBitmask {
+    fn from(ema_types: &[EmaType]) -> Self {
         let bitmask = ema_types.iter().fold(0, |acc, ema_type| {
             let ema_type_usize: usize = (*ema_type).into();
             acc | (1 << ema_type_usize)

@@ -1,17 +1,15 @@
 use anchor_lang::prelude::*;
 
 use crate::{
-    oracles::most_recent_of::{
-        get_most_recent_price_from_sources, validate_most_recent_of_params,
-        MOST_RECENT_OF_CHAIN_SIZE,
-    },
+    oracles::most_recent_of::{get_most_recent_price_from_sources, validate_most_recent_of_params},
     states::OraclePrices,
+    utils::consts::SOURCE_ENTRIES_CHAIN_SIZE,
     warn, DatedPrice, ScopeError, ScopeResult, MAX_ENTRIES_U16,
 };
 
 #[derive(Debug, Default, AnchorDeserialize, AnchorSerialize)]
 pub struct CappedMostRecentOfData {
-    pub source_entries: [u16; MOST_RECENT_OF_CHAIN_SIZE],
+    pub source_entries: [u16; SOURCE_ENTRIES_CHAIN_SIZE],
     pub max_divergence_bps: u16,
     pub sources_max_age_s: u64,
     pub cap_entry: u16,

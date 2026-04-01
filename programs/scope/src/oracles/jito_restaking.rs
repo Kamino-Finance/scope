@@ -3,7 +3,7 @@ use decimal_wad::decimal::Decimal;
 
 use crate::{
     utils::{consts::FULL_BPS, math, zero_copy_deserialize},
-    warn, DatedPrice, Price,
+    warn, DatedPrice, Price, ScopeResult,
 };
 
 /// Jito restaking price oracle gives the amount of JitoSOL per VRT token on withdrawal
@@ -12,7 +12,7 @@ pub fn get_price(jito_vault: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
     let vault = zero_copy_deserialize::<jito_vault_core::Vault>(jito_vault)?;
 
     let dated_price = DatedPrice {
-        price: get_price_int(&vault),
+        price: get_price_int(&vault)?,
         last_updated_slot: clock.slot,
         unix_timestamp: u64::try_from(clock.unix_timestamp).unwrap(),
         ..Default::default()
@@ -21,10 +21,10 @@ pub fn get_price(jito_vault: &AccountInfo, clock: &Clock) -> Result<DatedPrice> 
     Ok(dated_price)
 }
 
-fn get_price_int(vault: &jito_vault_core::Vault) -> Price {
+fn get_price_int(vault: &jito_vault_core::Vault) -> ScopeResult<Price> {
     let vrt_supply = vault.vrt_supply.get();
     if vrt_supply == 0 {
-        return Price::default();
+        return Ok(Price::default());
     }
 
     let total_deposits = vault.tokens_deposited.get();
@@ -34,7 +34,7 @@ fn get_price_int(vault: &jito_vault_core::Vault) -> Price {
     let withdrawable_amount = math::mul_bps(total_deposits, FULL_BPS.saturating_sub(total_fee_bps));
 
     let price_dec = Decimal::from(withdrawable_amount) / vrt_supply;
-    price_dec.into()
+    price_dec.try_into()
 }
 
 pub fn validate_account(vault: Option<&AccountInfo>) -> Result<()> {

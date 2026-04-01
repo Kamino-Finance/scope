@@ -43,7 +43,7 @@ where
 
     let price_dec = Decimal::from(lp_value) / lp_token_supply;
     let dated_price = DatedPrice {
-        price: price_dec.into(),
+        price: price_dec.try_into()?,
         // TODO: find a way to get the last update time
         last_updated_slot: clock.slot,
         unix_timestamp: u64::try_from(clock.unix_timestamp).unwrap(),
