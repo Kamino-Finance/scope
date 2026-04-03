@@ -20,9 +20,10 @@ pub const MAX_ENTRIES: usize = 512;
 // Re-exports for backward compat
 pub use errors::{ScopeError, ScopeResult};
 pub use states::{
-    token_metadatas::TokenMetadatas as TokensMetadata, Configuration, DatedPrice, EmaTwap, EmaType,
-    OracleMappings, OraclePrices, OracleTwaps, OracleType, Price, TokenMetadata,
-    TwapEnabledBitmask,
+    oracle_mappings::{strip_frozen_flag, FROZEN_FLAG},
+    token_metadatas::TokenMetadatas as TokensMetadata,
+    Configuration, DatedPrice, EmaTwap, EmaType, OracleMappings, OraclePrices, OracleTwaps,
+    OracleType, Price, TokenMetadata, TwapEnabledBitmask,
 };
 
 #[derive(TryFromPrimitive, PartialEq, Eq, Clone, Copy, Debug)]

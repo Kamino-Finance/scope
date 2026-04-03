@@ -4,6 +4,7 @@ pub mod math;
 pub mod pdas;
 pub mod price_impl;
 pub mod scope_chain;
+pub mod source_entries;
 
 use std::cell::{Ref, RefMut};
 

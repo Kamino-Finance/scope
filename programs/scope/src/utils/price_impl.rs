@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use decimal_wad::decimal::Decimal;
 
 use super::math::ten_pow;
-use crate::{utils::consts::FULL_BPS, warn, Price, ScopeError};
+use crate::{utils::consts::FULL_BPS, warn, Price, ScopeError, ScopeResult};
 
 pub const MAX_REF_RATIO_TOLERANCE_BPS: u16 = 500;
 
@@ -53,14 +53,14 @@ pub fn check_ref_price_difference(
     Ok(())
 }
 
-fn decimal_to_price(decimal: Decimal) -> Price {
+fn decimal_to_price(decimal: Decimal) -> ScopeResult<Price> {
     // this implementation aims to keep as much precision as possible
     // choose exp to be as big as possible (minimize what is needed for the integer part)
 
     // Use a match instead of log10 to save some CUs
     let (exp, ten_pow_exp) = match decimal
         .try_round::<u64>()
-        .expect("Decimal integer part is too big")
+        .map_err(|_| ScopeError::MathOverflow)?
     {
         0_u64 => (18, 10_u64.pow(18)),
         1..=9 => (17, 10_u64.pow(17)),
@@ -84,14 +84,14 @@ fn decimal_to_price(decimal: Decimal) -> Price {
     };
     let value = (decimal * ten_pow_exp)
         .try_round::<u64>()
-        .unwrap_or_else(|e| {
-            panic!("Decimal {decimal} conversion to price failed (exp:{exp}): {e:?}");
-        });
-    Price { value, exp }
+        .map_err(|_| ScopeError::MathOverflow)?;
+    Ok(Price { value, exp })
 }
 
-impl From<Decimal> for Price {
-    fn from(val: Decimal) -> Self {
+impl TryFrom<Decimal> for Price {
+    type Error = ScopeError;
+
+    fn try_from(val: Decimal) -> std::result::Result<Self, Self::Error> {
         decimal_to_price(val)
     }
 }

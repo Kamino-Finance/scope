@@ -4,7 +4,10 @@ use super::{
     dated_price::DatedPrice,
     oracle_twaps::{EmaTwap, EmaType, TwapEnabledBitmask},
 };
-use crate::{errors::ScopeError, utils::consts::*};
+use crate::{
+    errors::{ScopeError, ScopeResult},
+    utils::consts::*,
+};
 
 impl From<DecimalError> for ScopeError {
     fn from(err: DecimalError) -> ScopeError {
@@ -52,19 +55,19 @@ static_assertions::const_assert_eq!(
 
 // --- EmaTwap::as_dated_price (needs Decimal) ---
 impl EmaTwap {
-    pub fn as_dated_price(&self, ema_type: EmaType) -> DatedPrice {
+    pub fn as_dated_price(&self, ema_type: EmaType) -> ScopeResult<DatedPrice> {
         let ema_to_use = match ema_type {
             EmaType::Ema1h => self.current_ema_1h,
             EmaType::Ema8h => self.current_ema_8h,
             EmaType::Ema24h => self.current_ema_24h,
             EmaType::Ema7d => self.current_ema_7d,
         };
-        DatedPrice {
-            price: Decimal::from_scaled_val(ema_to_use).into(),
+        Ok(DatedPrice {
+            price: Decimal::from_scaled_val(ema_to_use).try_into()?,
             last_updated_slot: self.last_update_slot,
             unix_timestamp: self.last_update_unix_timestamp,
             generic_data: Default::default(),
-        }
+        })
     }
 }
 

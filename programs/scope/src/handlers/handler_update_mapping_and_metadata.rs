@@ -119,6 +119,12 @@ pub fn process(
         let entry_id: usize = entry_id.into();
         require_gt!(MAX_ENTRIES, entry_id, ScopeError::BadTokenNb);
 
+        // Block updates on frozen entries
+        require!(
+            !oracle_mappings.is_frozen(entry_id),
+            ScopeError::PriceFrozen
+        );
+
         let current_type = oracle_mappings.get_entry_type(entry_id)?;
         let current_mapping_pk = oracle_mappings.get_entry_mapping_pk(entry_id);
 

@@ -7,15 +7,17 @@ use anchor_lang::prelude::*;
 
 use crate::{
     states::OraclePrices,
-    utils::{consts::FULL_BPS, math},
-    warn, DatedPrice, Price, ScopeError, ScopeResult, MAX_ENTRIES_U16,
+    utils::{
+        consts::{FULL_BPS, SOURCE_ENTRIES_CHAIN_SIZE},
+        math,
+        source_entries::validate_source_entries,
+    },
+    warn, DatedPrice, Price, ScopeError, ScopeResult,
 };
-
-pub const MOST_RECENT_OF_CHAIN_SIZE: usize = 4;
 
 #[derive(Debug, Default, AnchorDeserialize, AnchorSerialize)]
 pub struct MostRecentOfData {
-    pub source_entries: [u16; MOST_RECENT_OF_CHAIN_SIZE],
+    pub source_entries: [u16; SOURCE_ENTRIES_CHAIN_SIZE],
     pub max_divergence_bps: u16,
     pub sources_max_age_s: u64,
 }
@@ -86,7 +88,7 @@ pub fn get_most_recent_price_from_sources(
         max_price = max(dated_price.price, max_price);
 
         if now.saturating_sub(dated_price.unix_timestamp) > sources_max_age_s {
-            return Err(ScopeError::MostRecentOfMaxAgeViolated);
+            return Err(ScopeError::CompositeOracleMaxAgeViolated);
         }
 
         if dated_price.unix_timestamp > most_recent_price.unix_timestamp {
@@ -119,10 +121,8 @@ pub fn validate_most_recent_of_params(
     max_divergence_bps: u16,
     sources_max_age_s: u64,
 ) -> ScopeResult<()> {
-    // Validate source entries
-    if source_entries[0] >= MAX_ENTRIES_U16 {
-        return Err(ScopeError::MostRecentOfInvalidSourceIndices);
-    }
+    // Validate at least one valid entry, sentinels only at the end
+    validate_source_entries(source_entries)?;
 
     // Validate max divergence
     if max_divergence_bps == 0 || max_divergence_bps > FULL_BPS {
@@ -131,7 +131,7 @@ pub fn validate_most_recent_of_params(
 
     // Validate max age
     if sources_max_age_s == 0 {
-        return Err(ScopeError::MostRecentOfInvalidMaxAge);
+        return Err(ScopeError::CompositeOracleInvalidMaxAge);
     }
 
     Ok(())

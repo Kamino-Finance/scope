@@ -140,7 +140,7 @@ where
         holdings.total_sum,
         strategy_account_ref.shares_issued,
         strategy_account_ref.shares_mint_decimals,
-    );
+    )?;
 
     // Get the least-recently updated component price from both scope chains
     let (last_updated_slot, unix_timestamp) = get_component_px_last_update(
@@ -326,15 +326,15 @@ fn get_price_per_full_share(
     total_holdings_value_scaled: U128,
     shares_issued: u64,
     shares_decimals: u64,
-) -> Price {
+) -> ScopeResult<Price> {
     if shares_issued == 0 {
         // Assume price is 0 without shares issued
-        Price { value: 0, exp: 1 }
+        Ok(Price { value: 0, exp: 1 })
     } else {
         let price_decimal = Decimal::from(underlying_unit(shares_decimals))
             * total_holdings_value_scaled
             / (u128::from(SCALE_FACTOR) * u128::from(shares_issued));
-        (price_decimal).into()
+        price_decimal.try_into()
     }
 }
 
@@ -384,7 +384,7 @@ pub(super) mod price_utils {
 
         let price_a_to_b_dec = price_a_dec / price_b_dec;
 
-        let price_a_to_b: crate::Price = price_a_to_b_dec.into();
+        let price_a_to_b: crate::Price = price_a_to_b_dec.try_into()?;
 
         Ok(yvaults::utils::price::Price {
             value: price_a_to_b.value,

@@ -9,5 +9,6 @@ pub struct Configuration {
     pub tokens_metadata: Pubkey,
     pub oracle_twaps: Pubkey,
     pub admin_cached: Pubkey,
-    _padding: [u64; 1255],
+    pub emergency_council: Pubkey,
+    _padding: [u64; 1251],
 }

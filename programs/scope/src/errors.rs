@@ -111,17 +111,17 @@ pub enum ScopeError {
     #[msg("Invalid Chainlink report data format")]
     InvalidChainlinkReportData,
 
-    #[msg("MostRecentOf config must contain at least one valid source index")]
-    MostRecentOfInvalidSourceIndices,
+    #[msg("Oracle config must contain at least one valid source index")]
+    OracleConfigInvalidSourceIndices,
 
     #[msg("Invalid max divergence (bps) for MostRecentOf oracle")]
     MostRecentOfInvalidMaxDivergence,
 
-    #[msg("Invalid max age (s) for MostRecentOf oracle")]
-    MostRecentOfInvalidMaxAge,
+    #[msg("Invalid max age (s) for composite oracle")]
+    CompositeOracleInvalidMaxAge,
 
-    #[msg("Max age diff constraint violated for MostRecentOf oracle")]
-    MostRecentOfMaxAgeViolated,
+    #[msg("Max age constraint violated for composite oracle")]
+    CompositeOracleMaxAgeViolated,
 
     #[msg("Max divergence bps constraint violated for MostRecentOf oracle")]
     MostRecentOfMaxDivergenceBpsViolated,
@@ -200,9 +200,20 @@ pub enum ScopeError {
 
     #[msg("TWAP source index not set")]
     TwapSourceIndexNotSet,
-
     #[msg("Property fields in the feed of the PythLazer payload do not contain a feed update timestamp")]
     PythLazerFeedUpdateTimestampNotPresent,
+
+    #[msg("Cannot update a frozen price entry")]
+    PriceFrozen,
+
+    #[msg("Price entry is already frozen")]
+    PriceAlreadyFrozen,
+
+    #[msg("Price entry is not frozen")]
+    PriceNotFrozen,
+
+    #[msg("Signer is not authorized to freeze/unfreeze")]
+    UnauthorizedFreeze,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

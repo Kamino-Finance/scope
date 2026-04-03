@@ -272,7 +272,7 @@ pub fn update_price_v3(
         e
     })?;
 
-    let price: Price = price_dec.into();
+    let price: Price = price_dec.try_into()?;
     let price_data =
         ChainlinkStandardPriceData::new(chainlink_report.observations_timestamp.into());
 
@@ -304,7 +304,7 @@ pub fn update_price_v7(
     )?;
 
     let price_dec = chainlink_bigint_value_parse(&chainlink_report.exchange_rate)?;
-    let price: Price = price_dec.into();
+    let price: Price = price_dec.try_into()?;
     let price_data =
         ChainlinkStandardPriceData::new(chainlink_report.observations_timestamp.into());
 
@@ -344,7 +344,7 @@ pub fn update_price_v8(
     )?;
 
     let price_dec = chainlink_bigint_value_parse(&chainlink_report.mid_price)?;
-    let price: Price = price_dec.into();
+    let price: Price = price_dec.try_into()?;
     let price_data =
         ChainlinkStandardPriceData::new(chainlink_report.observations_timestamp.into());
 
@@ -391,7 +391,7 @@ pub fn update_price_v9(
     }
 
     let price_dec = chainlink_bigint_value_parse(&chainlink_report.nav_per_share)?;
-    let price: Price = price_dec.into();
+    let price: Price = price_dec.try_into()?;
     let price_data =
         ChainlinkStandardPriceData::new(chainlink_report.observations_timestamp.into());
 
@@ -484,7 +484,7 @@ pub fn update_price_v10(
     let multiplied_price: Price = price_dec
         .try_mul(current_multiplier_dec)
         .map_err(|_| ScopeError::MathOverflow)?
-        .into();
+        .try_into()?;
 
     // Create ChainlinkX price data with activation_date_time from current report
     let price_data = ChainlinkXPriceData::new(
