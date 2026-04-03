@@ -878,21 +878,6 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
-  "161": {
-    "label": "Orca BLOCK/SOL",
-    "oracle_mapping": "DpRTn6DsBMVMkW2s9DaT4EGHBFSXx6vs7gVpw7niFJLY",
-    "oracle_type": "OrcaWhirlpoolAtoB",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "162": {
-    "label": "TWAP Orca BLOCK/SOL",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 161,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
   "167": {
     "label": "Orca GP/USDC",
     "oracle_mapping": "9vNKzrrHAjqjuTGLjCBo9Ai4edMYgP9dsG4tFZ2hF251",
@@ -1589,36 +1574,6 @@
     "source_entries": [ 174, 310 ],
     "group_ids": [ 1, 2 ]
   },
-  "313": {
-    "label": "Orca GME/USDC",
-    "oracle_type": "OrcaWhirlpoolAtoB",
-    "oracle_mapping": "73RuhPFsKghKV88WvupQGEqqVjtYvVQpB1eTni9Ya7tz",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "314": {
-    "label": "TWAP Orca GME/USDC",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 313,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
-  "315": {
-    "label": "Orca FOXY/SOL",
-    "oracle_type": "OrcaWhirlpoolBtoA",
-    "oracle_mapping": "ErPANq1pCtAXCmcUDBttNKzihEESo5EDcTw5FkNnP1De",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "316": {
-    "label": "TWAP Orca FOXY/SOL",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 315,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
   "319": {
     "label": "pSOL/SOL",
     "oracle_mapping": "pSPcvR8GmG9aKDUbn9nbKYjkxt9hxMS7kF1qqKJaPqJ",
@@ -1684,20 +1639,6 @@
     "oracle_mapping": "CtMyWsrUtAwXWiGr9WjHT5fC3p3fgV8cyGpLTo2LJzG1",
     "oracle_type": "SplStake",
     "group_ids": [ 1, 2 ]
-  },
-  "328": {
-    "label": "Adrena ALP/USD",
-    "oracle_mapping": "4bQRutgDJs6vuh6ZcWaPVXiQaBzbHketjbCDjL4oRN34",
-    "oracle_type": "AdrenaLp",
-    "twap_enabled": ["1h"],
-    "group_ids": [ 1 ]
-  },
-  "329": {
-    "label": "TWAP Adrena ALP/USD",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 328,
-    "max_age_slot": 165,
-    "group_ids": [ 1 ]
   },
   "330": {
     "label": "Exponent PT-2509/kySOL",
@@ -1842,21 +1783,6 @@
     "group_ids": [ 1 ],
     "chainlink_feed_id": "0x0008adc184847ba8d17f0030c15e78f61b83eda2e190f30346c4ea3babed647d",
     "market_status_behavior": "Open"
-  },
-  "352": {
-    "label": "Orca LOCKIN/SOL",
-    "oracle_type": "OrcaWhirlpoolBtoA",
-    "oracle_mapping": "HU4mukYu86NQBg5XW3FwVUu3Y5oFResowkeUryi8D6eN",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "353": {
-    "label": "TWAP Orca LOCKIN/SOL",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 352,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
   },
   "354": {
     "label": "TWAP CL NVDAx/USD AllUpdates",
@@ -2176,21 +2102,6 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
-  "405": {
-    "label": "Orca MICHI/SOL",
-    "oracle_mapping": "CATK9eqtn8Qwv95JF6JS4xdC4AYRFqPiuswG7fwsnVN1",
-    "oracle_type": "OrcaWhirlpoolBtoA",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "406": {
-    "label": "TWAP Orca MICHI/SOL",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 405,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
   "412": {
     "label": "Raydium PRIME/CASH",
     "oracle_mapping": "3CiG1JsPHfwQFwbVPSArgvGH1soZy7ikef5m4gBcvxvE",
@@ -2218,44 +2129,6 @@
     "oracle_type": "PythPull",
     "group_ids": [ 2 ]
   },
-  "417": {
-    "label": "Orca xSTEP/STEP",
-    "oracle_mapping": "HiQH86BCjopcDy9gE9R3VURYobBdAvPXr5kJbkfaeTZ8",
-    "oracle_type": "OrcaWhirlpoolBtoA",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "418": {
-    "label": "TWAP Orca xSTEP/STEP",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 417,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
-  "419": {
-    "label": "Orca GUN/SOL",
-    "oracle_mapping": "DnkcwshapxAKLmLpMVgwEMj1BdBQ2nERDpiQcnPQevie",
-    "oracle_type": "OrcaWhirlpoolBtoA",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "420": {
-    "label": "TWAP Orca GUN/SOL",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 419,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
-  "421": {
-    "label": "Orca STEP/SOL",
-    "oracle_mapping": "5AX84BrKDWpUZ87fbQpkm7XsSx8bWwANePRmAx17tQjM",
-    "oracle_type": "OrcaWhirlpoolBtoA",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
   "422": {
     "label": "TWAP Orca STEP/SOL",
     "oracle_type": "ScopeTwap1h",
@@ -2276,36 +2149,6 @@
     "twap_source": 425,
     "max_age_slot": 165,
     "group_ids": [ 1, 2 ]
-  },
-  "431": {
-    "label": "Orca HXRO/SOL",
-    "oracle_mapping": "ByfAnXV2DkKSjCrT8RGVD6xJfgyN6CSXV8mh6PELUmQX",
-    "oracle_type": "OrcaWhirlpoolBtoA",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "432": {
-    "label": "TWAP Orca HXRO/SOL",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 431,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
-  "433": {
-    "label": "Orca EUROE/USDC",
-    "oracle_mapping": "5JYVSXAkbZNmikmFbdkvgY8z3bLoAGBZTjx5nqs29eQS",
-    "oracle_type": "OrcaWhirlpoolAtoB",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "434": {
-    "label": "TWAP Orca EUROE/USDC",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 433,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
   },
   "435": {
     "label": "Orca ACS/SOL",
@@ -2412,19 +2255,6 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
-  "452": {
-    "label": "Pyth Pull DRIFT/USD",
-    "oracle_mapping": "9iGAnDv9JbAfV5PUPif7mNu55FoBtJcysYWjfXPAy6ho",
-    "oracle_type": "PythPull",
-    "group_ids": [ 1, 2 ]
-  },
-  "453": {
-    "label": "Pyth Pull EMA DRIFT/USD",
-    "oracle_mapping": "9iGAnDv9JbAfV5PUPif7mNu55FoBtJcysYWjfXPAy6ho",
-    "oracle_type": "PythPullEMA",
-    "max_age_slot": 200,
-    "group_ids": [ 1, 2 ]
-  },
   "454": {
     "label": "Pyth Pull KMNO/USD",
     "oracle_mapping": "ArjngUHXrQPr1wH9Bqrji9hdDQirM6ijbzc1Jj1fXUk7",
@@ -2497,21 +2327,6 @@
     "max_age_slot": 2000,
     "group_ids": [ 4 ]
   },
-  "471": {
-    "label": "Raydium GIGA/SOL",
-    "oracle_mapping": "6B41cUWYZnHxFaFZ6pryQJJPuv636NPTqVrD8YABZtM8",
-    "oracle_type": "RaydiumAmmV3BtoA",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "472": {
-    "label": "TWAP Raydium GIGA/SOL",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 471,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
   "473": {
     "label": "Pyth Pull ZEX/USD",
     "oracle_mapping": "DmwH9ci4qANMpzxavzNEeE9bWtoouBbv89R8tNNHks4k",
@@ -2534,21 +2349,6 @@
     "max_age_slot": 375,
     "group_ids": [ 2 ]
   },
-  "476": {
-    "label": "Raydium FRAG/SOL",
-    "oracle_mapping": "AbyqFbdTJ9X1hz6MQw33FRLT7GDNxEWSmZcM83qXvMRW",
-    "oracle_type": "RaydiumAmmV3BtoA",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "477": {
-    "label": "TWAP Raydium FRAG/SOL",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 476,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
   "478": {
     "label": "Orca mPST/USDC",
     "oracle_mapping": "AAtnicLL2uyhRWeMxm79ierLXmsYcyFRjGQzbiaURHmm",
@@ -2562,13 +2362,6 @@
     "oracle_type": "ScopeTwap1h",
     "twap_source": 478,
     "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
-  "480": {
-    "label": "stepSOL/SOL",
-    "oracle_type": "SplStake",
-    "oracle_mapping": "7yQNEvbzH6KffCY7iYFrKCKXv8c9zB9jJREmPK6gBVYz",
-    "max_age_slot": 375,
     "group_ids": [ 2 ]
   },
   "481": {
@@ -2614,21 +2407,6 @@
     "oracle_mapping": "ECRqn7gaNASuvTyC5xfCUjehWZCSowMXstZiM5DNweyB",
     "oracle_type": "SplStake",
     "group_ids": [ 1, 2 ]
-  },
-  "488": {
-    "label": "Orca 21BTC/USDC",
-    "oracle_mapping": "9ouJ3Y4toMZZWJ44XA1yoZBw9nYrjgb7uqb3hCUa7bgp",
-    "oracle_type": "OrcaWhirlpoolAtoB",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "489": {
-    "label": "TWAP Orca 21BTC/USDC",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 488,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
   },
   "490": {
     "label": "Raydium XBG/SOL",

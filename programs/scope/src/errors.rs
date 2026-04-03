@@ -200,9 +200,20 @@ pub enum ScopeError {
 
     #[msg("TWAP source index not set")]
     TwapSourceIndexNotSet,
-
     #[msg("Property fields in the feed of the PythLazer payload do not contain a feed update timestamp")]
     PythLazerFeedUpdateTimestampNotPresent,
+
+    #[msg("Cannot update a frozen price entry")]
+    PriceFrozen,
+
+    #[msg("Price entry is already frozen")]
+    PriceAlreadyFrozen,
+
+    #[msg("Price entry is not frozen")]
+    PriceNotFrozen,
+
+    #[msg("Signer is not authorized to freeze/unfreeze")]
+    UnauthorizedFreeze,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

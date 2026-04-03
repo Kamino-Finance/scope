@@ -17,7 +17,7 @@ use crate::{
     },
     states::{OracleMappings, OraclePrices, OracleTwaps},
     utils::price_impl::check_ref_price_difference,
-    ScopeError,
+    ScopeError, MAX_ENTRIES,
 };
 
 #[derive(Accounts)]
@@ -103,15 +103,14 @@ pub fn refresh_chainlink_price<'info>(
     let mut oracle_prices = ctx.accounts.oracle_prices.load_mut()?;
     let token_idx: usize = token.into();
 
-    let price_update_result = {
-        let oracle_mapping = *oracle_mappings
-            .price_info_accounts
-            .get(token_idx)
-            .ok_or(ScopeError::BadTokenNb)?;
+    require_gt!(MAX_ENTRIES, token_idx, ScopeError::BadTokenNb);
 
-        let price_type: OracleType = oracle_mappings.price_types[token_idx]
-            .try_into()
-            .map_err(|_| ScopeError::BadTokenType)?;
+    let is_frozen = oracle_mappings.is_frozen(token_idx);
+
+    let price_update_result = {
+        let oracle_mapping = oracle_mappings.price_info_accounts[token_idx];
+
+        let price_type: OracleType = oracle_mappings.get_entry_type(token_idx)?;
         require!(
             [
                 OracleType::Chainlink,
@@ -189,6 +188,18 @@ pub fn refresh_chainlink_price<'info>(
             }
             _ => return Err(error!(ScopeError::BadTokenType)),
         };
+
+        // Frozen entries: log the fetched price but don't update state
+        if is_frozen {
+            msg!(
+                "tk {} ({:?}) is frozen, fetched price {:?} but not updating",
+                token_idx,
+                price_type,
+                dated_price_ref.price.value,
+            );
+            *dated_price_ref = old_price;
+            return Ok(());
+        }
 
         match price_update_result {
             PriceUpdateResult::Updated if oracle_mappings.is_twap_enabled(token_idx) => {

@@ -131,4 +131,22 @@ pub mod scope {
         let _ = feed_name;
         handler_resume_chainlinkx_price::process(ctx, token)
     }
+
+    pub fn freeze_price(
+        ctx: Context<FreezePrice>,
+        token: u16,
+        feed_name: String,
+        freeze: bool,
+    ) -> Result<()> {
+        let _ = feed_name;
+        handler_freeze_price::process(ctx, token, freeze)
+    }
+
+    pub fn set_emergency_council(
+        ctx: Context<SetEmergencyCouncil>,
+        new_emergency_council: Pubkey,
+        feed_name: String,
+    ) -> Result<()> {
+        handler_set_emergency_council::process(ctx, new_emergency_council, feed_name)
+    }
 }

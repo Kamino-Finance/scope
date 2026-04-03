@@ -10,7 +10,7 @@ pub mod token_metadatas;
 
 pub use configuration::Configuration;
 pub use dated_price::{DatedPrice, Price};
-pub use oracle_mappings::OracleMappings;
+pub use oracle_mappings::{strip_frozen_flag, OracleMappings, FROZEN_FLAG};
 pub use oracle_prices::OraclePrices;
 pub use oracle_twaps::{EmaTwap, EmaType, OracleTwaps, TwapEnabledBitmask};
 pub use oracle_type::OracleType;

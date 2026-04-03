@@ -85,6 +85,7 @@ pub fn refresh_pyth_lazer_price<'info>(
 
     for (i, &token) in tokens.iter().enumerate() {
         let token_idx: usize = token.into();
+
         let oracle_mapping = *oracle_mappings
             .price_info_accounts
             .get(token_idx)
@@ -93,13 +94,13 @@ pub fn refresh_pyth_lazer_price<'info>(
             oracle_mapping == crate::id(),
             ScopeError::PriceAccountNotExpected
         );
-        let price_type: OracleType = oracle_mappings.price_types[token_idx]
-            .try_into()
-            .map_err(|_| ScopeError::BadTokenType)?;
+        let price_type: OracleType = oracle_mappings.get_entry_type(token_idx)?;
         require!(
             price_type == OracleType::PythLazer,
             ScopeError::BadTokenType
         );
+
+        let is_frozen = oracle_mappings.is_frozen(token_idx);
 
         {
             let dated_price_ref = &mut oracle_prices.prices[token_idx];
@@ -122,6 +123,18 @@ pub fn refresh_pyth_lazer_price<'info>(
                     );
                     continue;
                 }
+            }
+
+            // Frozen entries: log the fetched price but don't update state
+            if is_frozen {
+                msg!(
+                    "tk {} ({:?}) is frozen, fetched price {:?} but not updating",
+                    token_idx,
+                    price_type,
+                    dated_price_ref.price.value,
+                );
+                *dated_price_ref = old_price;
+                continue;
             }
 
             msg!(

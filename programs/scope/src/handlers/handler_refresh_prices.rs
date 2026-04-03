@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use anchor_lang::prelude::*;
 use solana_program::{
     instruction::{get_stack_height, TRANSACTION_LEVEL_STACK_HEIGHT},
@@ -69,9 +67,10 @@ pub fn refresh_price_list<'info>(
             .price_info_accounts
             .get(token_idx)
             .ok_or(ScopeError::BadTokenNb)?;
-        let price_type: OracleType = oracle_mappings.price_types[token_idx]
-            .try_into()
-            .map_err(|_| ScopeError::BadTokenType)?;
+
+        let is_frozen = oracle_mappings.is_frozen(token_idx);
+
+        let price_type: OracleType = oracle_mappings.get_entry_type(token_idx)?;
         let received_account = accounts_iter
             .next()
             .ok_or(ScopeError::AccountsAndTokenMismatch)?;
@@ -113,6 +112,17 @@ pub fn refresh_price_list<'info>(
                 }
             }
         };
+
+        // Frozen entries: log the fetched price but don't update state
+        if is_frozen {
+            msg!(
+                "tk {} ({:?}) is frozen, fetched price {:?} but not updating",
+                token_idx,
+                price_type,
+                price.price.value,
+            );
+            continue;
+        }
 
         if oracle_mappings.is_twap_enabled(token_idx) {
             if let Err(e) = crate::oracles::twap::update_twaps(

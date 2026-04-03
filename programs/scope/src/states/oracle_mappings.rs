@@ -26,9 +26,41 @@ pub enum RefPriceToleranceOrTwapSource {
     TwapSource(u16),
 }
 
+/// Frozen flag stored in bit 7 of `OracleMappings::price_types[i]`.
+///
+/// When set, the price entry at index `i` is **frozen**: refresh instructions
+/// will skip updating its price and TWAP, and mapping updates are blocked.
+/// The underlying oracle type is preserved in bits 0–6. Mask this flag off
+/// before converting `price_types[i]` to an [`OracleType`]:
+///
+/// ```ignore
+/// let oracle_type = OracleType::try_from(strip_frozen_flag(raw_type));
+/// let is_frozen = raw_type & FROZEN_FLAG != 0;
+/// ```
+pub const FROZEN_FLAG: u8 = 0x80;
+
+/// Strip the frozen flag (bit 7) from a raw `price_types` byte,
+/// returning only the oracle type bits (0–6).
+pub const fn strip_frozen_flag(raw_type: u8) -> u8 {
+    raw_type & !FROZEN_FLAG
+}
+
 impl OracleMappings {
     pub fn get_entry_type(&self, entry_id: usize) -> ScopeResult<OracleType> {
-        OracleType::try_from(self.price_types[entry_id]).map_err(|_| ScopeError::BadTokenType)
+        OracleType::try_from(strip_frozen_flag(self.price_types[entry_id]))
+            .map_err(|_| ScopeError::BadTokenType)
+    }
+
+    pub fn is_frozen(&self, entry_id: usize) -> bool {
+        self.price_types[entry_id] & FROZEN_FLAG != 0
+    }
+
+    pub fn freeze(&mut self, entry_id: usize) {
+        self.price_types[entry_id] |= FROZEN_FLAG;
+    }
+
+    pub fn unfreeze(&mut self, entry_id: usize) {
+        self.price_types[entry_id] &= !FROZEN_FLAG;
     }
 
     pub fn is_twap(&self, entry_id: usize) -> ScopeResult<bool> {
@@ -90,6 +122,8 @@ impl OracleMappings {
             })
     }
 
+    /// Note: this writes `price_types` without the frozen flag.
+    /// Callers must ensure frozen entries are rejected before calling this.
     pub fn set_twap_source(
         &mut self,
         entry_id: usize,
@@ -137,7 +171,8 @@ impl OracleMappings {
     }
 
     pub fn is_entry_used(&self, entry_id: usize) -> bool {
-        self.price_types[entry_id] != 0 || self.price_info_accounts[entry_id] != Pubkey::default()
+        strip_frozen_flag(self.price_types[entry_id]) != 0
+            || self.price_info_accounts[entry_id] != Pubkey::default()
     }
 
     pub fn get_entry_mapping_pk(&self, entry_id: usize) -> Option<Pubkey> {
@@ -149,6 +184,8 @@ impl OracleMappings {
         }
     }
 
+    /// Note: this writes `price_types` without the frozen flag.
+    /// Callers must ensure frozen entries are rejected before calling this.
     pub fn reset_entry(&mut self, entry_id: usize) {
         self.price_info_accounts[entry_id] = Pubkey::default();
         self.price_types[entry_id] = 0;
@@ -158,6 +195,8 @@ impl OracleMappings {
         self.generic[entry_id].fill(0);
     }
 
+    /// Note: this writes `price_types` without the frozen flag.
+    /// Callers must ensure frozen entries are rejected before calling this.
     pub fn set_entry_mapping(
         &mut self,
         entry_id: usize,

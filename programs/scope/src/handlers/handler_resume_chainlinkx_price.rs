@@ -43,13 +43,7 @@ pub fn process(ctx: Context<ResumeChainlinkXPrice>, token: u16) -> Result<()> {
     msg!("ResumeChainlinkxPrice, token: {} ({})", token, str_name);
 
     // Check that the token at entry_id is a ChainlinkX oracle type
-    let price_type_u8 = *oracle_mappings
-        .price_types
-        .get(entry_id)
-        .ok_or(ScopeError::BadTokenNb)?;
-    let price_type: OracleType = price_type_u8
-        .try_into()
-        .map_err(|_| ScopeError::BadTokenType)?;
+    let price_type: OracleType = oracle_mappings.get_entry_type(entry_id)?;
     require!(
         price_type == OracleType::ChainlinkX,
         ScopeError::BadTokenType

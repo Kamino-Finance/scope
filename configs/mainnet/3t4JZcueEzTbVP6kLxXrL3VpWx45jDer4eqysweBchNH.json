@@ -1922,7 +1922,7 @@
     "label": "MostRecent AAPLx/USD",
     "oracle_type": "MostRecentOf",
     "source_entries": [258, 315],
-    "max_divergence_bps": 300,
+    "max_divergence_bps": 500,
     "sources_max_age_s": 60
   },
   "317": {
@@ -1943,7 +1943,7 @@
     "label": "MostRecent HOODx/USD",
     "oracle_type": "MostRecentOf",
     "source_entries": [260, 318],
-    "max_divergence_bps": 300,
+    "max_divergence_bps": 500,
     "sources_max_age_s": 60
   },
   "320": {
@@ -1964,7 +1964,7 @@
     "label": "MostRecent CRCLx/USD",
     "oracle_type": "MostRecentOf",
     "source_entries": [262, 321],
-    "max_divergence_bps": 300,
+    "max_divergence_bps": 500,
     "sources_max_age_s": 60
   },
   "323": {
@@ -1985,7 +1985,7 @@
     "label": "MostRecent GOOGLx/USD",
     "oracle_type": "MostRecentOf",
     "source_entries": [264, 324],
-    "max_divergence_bps": 300,
+    "max_divergence_bps": 500,
     "sources_max_age_s": 60
   },
   "326": {
@@ -2006,7 +2006,7 @@
     "label": "MostRecent METAx/USD",
     "oracle_type": "MostRecentOf",
     "source_entries": [266, 327],
-    "max_divergence_bps": 300,
+    "max_divergence_bps": 500,
     "sources_max_age_s": 60
   },
   "329": {
@@ -2027,7 +2027,7 @@
     "label": "MostRecent NVDAx/USD",
     "oracle_type": "MostRecentOf",
     "source_entries": [268, 330],
-    "max_divergence_bps": 300,
+    "max_divergence_bps": 500,
     "sources_max_age_s": 60
   },
   "332": {
@@ -2048,7 +2048,7 @@
     "label": "MostRecent MSTRx/USD",
     "oracle_type": "MostRecentOf",
     "source_entries": [270, 333],
-    "max_divergence_bps": 300,
+    "max_divergence_bps": 500,
     "sources_max_age_s": 60
   },
   "335": {
@@ -2069,7 +2069,7 @@
     "label": "MostRecent TSLAx/USD",
     "oracle_type": "MostRecentOf",
     "source_entries": [272, 336],
-    "max_divergence_bps": 300,
+    "max_divergence_bps": 500,
     "sources_max_age_s": 60
   },
   "338": {
@@ -2090,7 +2090,7 @@
     "label": "MostRecent COINx/USD",
     "oracle_type": "MostRecentOf",
     "source_entries": [276, 339],
-    "max_divergence_bps": 300,
+    "max_divergence_bps": 500,
     "sources_max_age_s": 60
   },
   "341": {
@@ -2111,7 +2111,7 @@
     "label": "MostRecent SPYx/USD",
     "oracle_type": "MostRecentOf",
     "source_entries": [278, 342],
-    "max_divergence_bps": 300,
+    "max_divergence_bps": 500,
     "sources_max_age_s": 60
   },
   "344": {
@@ -2132,7 +2132,7 @@
     "label": "MostRecent QQQx/USD",
     "oracle_type": "MostRecentOf",
     "source_entries": [280, 345],
-    "max_divergence_bps": 300,
+    "max_divergence_bps": 500,
     "sources_max_age_s": 60
   },
   "347": {
