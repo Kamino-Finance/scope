@@ -1,10 +1,9 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token::spl_token::native_mint::DECIMALS as SOL_DECIMALS;
 use solana_program::{
     borsh0_10::try_from_slice_unchecked,
     stake::{self, state::StakeState},
 };
-
-use anchor_spl::token::spl_token::native_mint::DECIMALS as SOL_DECIMALS;
 
 use crate::{warn, DatedPrice, Price, ScopeError, ScopeResult};
 

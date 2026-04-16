@@ -1472,7 +1472,7 @@
     "sources_max_age_s": 7200,
     "max_divergence_bps": 100,
     "source_entries": [240, 242],
-    "ref_price": 253,
+    "ref_price": 370,
     "ref_price_tolerance_bps": 500
   },
   "248": {
@@ -1880,7 +1880,7 @@
     "label": "MostRecent PRIME/USD",
     "oracle_type": "MostRecentOf",
     "source_entries": [190, 309],
-    "max_divergence_bps": 300,
+    "max_divergence_bps": 30,
     "sources_max_age_s": 60
   },
   "311": {
@@ -1901,7 +1901,7 @@
     "label": "MostRecent syrupUSDC/USD",
     "oracle_type": "MostRecentOf",
     "source_entries": [247, 312],
-    "max_divergence_bps": 300,
+    "max_divergence_bps": 30,
     "sources_max_age_s": 60
   },
   "314": {
@@ -2151,7 +2151,7 @@
     "label": "MostRecent ONyc/USD",
     "oracle_type": "MostRecentOf",
     "source_entries": [246, 348],
-    "max_divergence_bps": 300,
+    "max_divergence_bps": 100,
     "sources_max_age_s": 60
   },
   "350": {
@@ -2170,7 +2170,7 @@
     "label": "MostRecent PST/USDC",
     "oracle_type": "MostRecentOf",
     "source_entries": [110, 351],
-    "max_divergence_bps": 300,
+    "max_divergence_bps": 100,
     "sources_max_age_s": 60
   },
   "353": {
@@ -2275,5 +2275,56 @@
     "oracle_type": "CappedFloored",
     "source_entry": 110,
     "cap_entry": 354
+  },
+  "370": {
+    "label": "Fixed 1.21 price",
+    "oracle_type": "FixedPrice",
+    "fixed_price": 1.21,
+    "max_age_slot": 12000
+  },
+  "371": {
+    "label": "rkSOL/SOL",
+    "oracle_mapping": "6LXCxeyQZqdAL4yLCtgATFYF6dcayWvsiwjtBFYVfb1N",
+    "oracle_type": "SplStake"
+  },
+  "372": {
+    "label": "pdSOL/SOL",
+    "oracle_mapping": "aero2ePURjuEgLKTzcUmF6RypBncBGd7pMUYCoSsVJ6",
+    "oracle_type": "SplStake"
+  },
+  "373": {
+    "label": "bulkSOL/SOL",
+    "oracle_mapping": "3aUmJDNpMHjkxunQEkHTj2chzyryKoH2uQj6YACLD174",
+    "oracle_type": "SplStake"
+  },
+  "374": {
+    "label": "digitSOL/SOL",
+    "oracle_mapping": "4qYufFsPQETukkXd5z9fxDsdwm8AEaSqzYpuzmZzCJxR",
+    "oracle_type": "SplStake"
+  },
+  "375": {
+    "label": "Orca PRIME/USDC",
+    "oracle_mapping": "CYjJbTRCHFMxgyjwMgLnVir72fWwtRnaiZBwXghLUSkq",
+    "oracle_type": "OrcaWhirlpoolAtoB"
+  },
+  "376": {
+    "label": "Raydium PST/USDC",
+    "oracle_mapping": "EExtLXdrSmRJ6uRZntorayiaF2kr6hPew2BQFiKSgLcj",
+    "oracle_type": "RaydiumAmmV3AtoB"
+  },
+  "377": {
+    "label": "Raydium ONyc/USDG",
+    "oracle_mapping": "A9RdNEf4T9x1eNPnEHFX1ABHS7J4e9kxBm43S3o5r9Kw",
+    "oracle_type": "RaydiumAmmV3BtoA"
+  },
+  "378": {
+    "label": "Orca syrupUSDC/USDC",
+    "oracle_mapping": "6fteKNvMdv7tYmBoJHhj1jx6rHcEwC6RdSEmVpyS613J",
+    "oracle_type": "OrcaWhirlpoolAtoB"
+  },
+  "379": {
+    "label": "Orca syrupUSDC/USDG",
+    "oracle_mapping": "9goWMLg5ZxayhTinjtfNQLCZg2VBzdwERqHqP5tYSP9Z",
+    "oracle_type": "OrcaWhirlpoolBtoA"
   }
 }

@@ -4,10 +4,12 @@ use anchor_lang::prelude::*;
 use decimal_wad::{common::TryMul, decimal::Decimal};
 
 use crate::{
-    states::OraclePrices,
-    utils::{consts::SOURCE_ENTRIES_CHAIN_SIZE, source_entries::validate_source_entries},
-    warn, DatedPrice, Price, ScopeError, ScopeResult, MAX_ENTRIES_U16,
+    states::OraclePrices, utils::source_entries::validate_source_entries, warn, DatedPrice, Price,
+    ScopeError, ScopeResult, MAX_ENTRIES_U16,
 };
+
+/// Max number of source entries for MultiplicationChain.
+pub const MULTIPLICATION_CHAIN_SOURCE_ENTRIES_SIZE: usize = 6;
 
 /// Multiply two prices together using Decimal
 fn mul_prices(price1: Price, price2: Price) -> ScopeResult<Price> {
@@ -19,7 +21,7 @@ fn mul_prices(price1: Price, price2: Price) -> ScopeResult<Price> {
 
 #[derive(Debug, Default, AnchorDeserialize, AnchorSerialize)]
 pub struct MultiplicationChainData {
-    pub source_entries: [u16; SOURCE_ENTRIES_CHAIN_SIZE],
+    pub source_entries: [u16; MULTIPLICATION_CHAIN_SOURCE_ENTRIES_SIZE],
     pub sources_max_age_s: u64,
 }
 

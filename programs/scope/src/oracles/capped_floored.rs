@@ -114,13 +114,6 @@ pub fn validate_mapping_cfg(mapping: Option<&AccountInfo>, generic_data: &[u8]) 
             warn!("Invalid floor source index {floor_entry} for CappedFloored oracle, source_entry = {source_entry}",);
             return Err(ScopeError::CompositeOracleInvalidSourceIndex);
         }
-
-        if let Some(cap_entry) = cap_entry_opt {
-            if floor_entry == cap_entry {
-                warn!("Invalid floor source index {floor_entry} and cap source index {cap_entry} for CappedFloored oracle",);
-                return Err(ScopeError::CompositeOracleInvalidSourceIndex);
-            }
-        }
     }
 
     if cap_entry_opt.is_none() && floor_entry_opt.is_none() {
