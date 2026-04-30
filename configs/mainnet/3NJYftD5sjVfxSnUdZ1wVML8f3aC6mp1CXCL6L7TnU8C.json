@@ -384,6 +384,14 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
+  "79": {
+    "label": "Chainlink ONyc",
+    "oracle_type": "ChainlinkNAV",
+    "chainlink_feed_id": "0x0009a5831badbd7ca44834d9943b0d4a7ea28ebad0e5119f6855b80acb84ec25",
+    "max_age_slot": 375,
+    "twap_enabled": ["1h"],
+    "group_ids": [ 2 ]
+  },
   "80": {
     "label": "CGNTSOL/SOL",
     "oracle_mapping": "CgntPoLka5pD5fesJYhGmUCF8KU1QS1ZmZiuAuMZr2az",
@@ -507,18 +515,10 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
-  "101": {
-    "label": "Raydium DONT/SOL",
-    "oracle_mapping": "6EEMuNhtgWdnXVnznjfWFYReogNb5a2Lgtm42x58kAvw",
-    "oracle_type": "RaydiumAmmV3BtoA",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "102": {
-    "label": "TWAP Raydium DONT/SOL",
+  "97": {
+    "label": "TWAP Chainlink ONyc",
     "oracle_type": "ScopeTwap1h",
-    "twap_source": 101,
+    "twap_source": 79,
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
@@ -570,14 +570,6 @@
     "oracle_type": "PythPull",
     "group_ids": [ 1, 2 ]
   },
-  "110": {
-    "label": "Orca BORGY/SOL",
-    "oracle_mapping": "D6TvjSQh4KC8tT236m9NwUtAysi563oskMZpJwtb2bbL",
-    "oracle_type": "OrcaWhirlpoolAtoB",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
   "111": {
     "label": "Pyth Pull EMA PENGU/USD",
     "oracle_mapping": "27zzC5wXCeZeuJ3h9uAJzV5tGn6r5Tzo98S1ZceYKEb8",
@@ -591,6 +583,21 @@
     "max_age_slot": 250,
     "twap_enabled": ["1h"],
     "group_ids": [ 1 ]
+  },
+  "113": {
+    "label": "Raydium BORGY/BORG",
+    "oracle_mapping": "7my3JeD3jugd52TerjQMFNt3fNK3tgZTH4A5nhQCwK47",
+    "oracle_type": "RaydiumAmmV3AtoB",
+    "twap_enabled": ["1h"],
+    "max_age_slot": 375,
+    "group_ids": [ 2 ]
+  },
+  "114": {
+    "label": "TWAP Raydium BORGY/BORG",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 113,
+    "max_age_slot": 380,
+    "group_ids": [ 2 ]
   },
   "115": {
     "label": "Raydium kyJTO/JTO",
@@ -630,32 +637,11 @@
     "twap_enabled": ["1h"],
     "group_ids": [ 1 ]
   },
-  "120": {
-    "label": "Pyth Pull MOTHER/USD",
-    "oracle_mapping": "BEjeHct4eWskZBin2Nhv4LXqzHKeVQGdF66r1Ucvr1xp",
-    "oracle_type": "PythPull",
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "121": {
-    "label": "Pyth Pull EMA MOTHER/USD",
-    "oracle_mapping": "BEjeHct4eWskZBin2Nhv4LXqzHKeVQGdF66r1Ucvr1xp",
-    "oracle_type": "PythPullEMA",
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
   "122": {
     "label": "MSOL/SOL",
     "oracle_mapping": "8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC",
     "oracle_type": "MsolStake",
     "group_ids": [ 1, 2 ]
-  },
-  "123": {
-    "label": "TWAP Raydium BORGY/SOL",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 110,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
   },
   "124": {
     "label": "Fetched JLP/USD",
@@ -764,21 +750,6 @@
     "twap_source": 137,
     "max_age_slot": 160,
     "group_ids": [ 1, 2 ]
-  },
-  "143": {
-    "label": "Orca SOLID/SOL",
-    "oracle_type": "OrcaWhirlpoolBtoA",
-    "oracle_mapping": "AXubWB6n4dSv8yQsNDDNQDJSMGcPL7WEWRwjCXHpan4D",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "144": {
-    "label": "TWAP Orca SOLID/SOL",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 143,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
   },
   "146": {
     "label": "JTO/USD",
@@ -1302,21 +1273,6 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
-  "257": {
-    "label": "Meteora ROCK/USDC",
-    "oracle_type": "MeteoraDlmmAtoB",
-    "oracle_mapping": "4SywU8juPknS3jBmxiNKmz8hhk9Yz2vn9HYCC6KN6XzW",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "258": {
-    "label": "TWAP Meteora ROCK/USDC",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 257,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
   "259": {
     "label": "Orca DOOD/SOL",
     "oracle_mapping": "ZSwYf4YGm1L2JKWVS8KjHo1B6tUC9ZSsS16CTQvLDpw",
@@ -1484,21 +1440,6 @@
     "oracle_mapping": "6gyQ2TKvvV1JB5oWDobndv6BLRWcJzeBNk9PLQ5uPQms",
     "group_ids": [ 1 ]
   },
-  "297": {
-    "label": "Orca vEUR/USDC",
-    "oracle_type": "OrcaWhirlpoolAtoB",
-    "oracle_mapping": "25q3qfHDpRq53HjPsxYEqnLg47rbMH5JiwTRY8HX9mP9",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "298": {
-    "label": "TWAP Orca vEUR/USDC",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 297,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
   "299": {
     "label": "Orca vCHF/USDC",
     "oracle_type": "OrcaWhirlpoolAtoB",
@@ -1528,21 +1469,6 @@
     "pyth_lazer_exponent": 8,
     "confidence_factor": 100,
     "group_ids": [ 1 ]
-  },
-  "303": {
-    "label": "Orca zippySOL/SOL",
-    "oracle_type": "OrcaWhirlpoolBtoA",
-    "oracle_mapping": "HH7gGLknh2WAW3aGw16Z2ovhxLkXdXUizRBSygxLW3wd",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "304": {
-    "label": "TWAP Orca zippySOL/SOL",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 303,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
   },
   "309": {
     "label": "Pyth Pull FX EUR/USD",
@@ -2129,13 +2055,6 @@
     "oracle_type": "PythPull",
     "group_ids": [ 2 ]
   },
-  "422": {
-    "label": "TWAP Orca STEP/SOL",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 421,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
   "425": {
     "label": "Orca UXD/USDC",
     "oracle_mapping": "GLNvG5Ly4cK512oQeJqnwLftwfoPZ4skyDwZWzxorYQ9",
@@ -2162,21 +2081,6 @@
     "label": "TWAP Orca ACS/SOL",
     "oracle_type": "ScopeTwap1h",
     "twap_source": 435,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
-  "437": {
-    "label": "Orca HBB/USDH",
-    "oracle_mapping": "7GZXejXCyJ3R78d71328wqMWT7Ejwu7pxxWRWvHSeVfb",
-    "oracle_type": "OrcaWhirlpoolBtoA",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "438": {
-    "label": "TWAP Orca HBB/USDH",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 437,
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
