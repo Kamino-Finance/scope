@@ -351,7 +351,7 @@ impl EmaTracker {
     const fn ts_to_point(ts: u64, ema_period: u64) -> u64 {
         assert!(
             ema_period >= Self::NB_POINTS,
-            "EMA period must be bigger than 64 seconds"
+            "EMA period must be greater than or equal to 64 seconds"
         );
         // point_window_size = ema_period / 64
         // points_since_epoch = ts / point_window_size
@@ -368,7 +368,7 @@ impl EmaTracker {
     ) {
         assert!(
             current_update_ts >= last_update_ts,
-            "current_update_ts must be bigger than last_update_ts"
+            "current_update_ts must be greater than or equal to last_update_ts"
         );
         let sample_tracker = &mut self.0;
 
