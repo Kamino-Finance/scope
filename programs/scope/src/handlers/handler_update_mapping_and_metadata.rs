@@ -202,7 +202,13 @@ pub fn process(
                     }
 
                     // Validate the oracle configuration may print more details
-                    validate_oracle_cfg(new_price_type, price_info_opt, &new_generic_data, &clock)?;
+                    validate_oracle_cfg(
+                        new_price_type,
+                        price_info_opt,
+                        &new_generic_data,
+                        &clock,
+                        u16::try_from(entry_id).map_err(|_| ScopeError::BadTokenNb)?,
+                    )?;
 
                     // Reset the twap source/ref price tolerance bps
                     oracle_mappings.twap_source_or_ref_price_tolerance_bps[entry_id] = u16::MAX;

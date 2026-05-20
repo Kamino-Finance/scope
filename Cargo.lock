@@ -222,7 +222,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78f860599da1c2354e7234c768783049eb42e2f54509ecfc942d2e0076a2da7b"
 dependencies = [
  "anchor-lang",
- "mpl-token-metadata 1.13.2",
+ "mpl-token-metadata",
  "serum_dex",
  "solana-program",
  "spl-associated-token-account 1.1.3",
@@ -1469,17 +1469,18 @@ dependencies = [
 
 [[package]]
 name = "lb_clmm"
-version = "0.5.0"
-source = "git+ssh://git@github.com/hubbleprotocol/lb-clmm.git#0eabb9945419a1f0f51837823a3505864c7636d3"
+version = "0.8.6"
+source = "git+ssh://git@github.com/Kamino-Finance/lb-clmm.git#01584e9011a4c715a9a522b894a6d37a6eccdcbe"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "bytemuck",
- "mpl-token-metadata 3.2.3",
  "num-integer",
  "num-traits",
+ "num_enum 0.7.1",
  "ruint",
  "solana-program",
+ "static_assertions",
  "uint 0.8.5",
 ]
 
@@ -1625,19 +1626,6 @@ dependencies = [
  "solana-program",
  "spl-associated-token-account 2.2.0",
  "spl-token 4.0.0",
- "thiserror 1.0.50",
-]
-
-[[package]]
-name = "mpl-token-metadata"
-version = "3.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba8ee05284d79b367ae8966d558e1a305a781fc80c9df51f37775169117ba64f"
-dependencies = [
- "borsh 0.10.3",
- "num-derive 0.3.3",
- "num-traits",
- "solana-program",
  "thiserror 1.0.50",
 ]
 
@@ -2259,7 +2247,7 @@ dependencies = [
  "anchor-spl",
  "arrayref",
  "bytemuck",
- "mpl-token-metadata 1.13.2",
+ "mpl-token-metadata",
  "solana-program",
  "spl-memo 4.0.0",
  "uint 0.9.5",
@@ -2507,7 +2495,7 @@ dependencies = [
 
 [[package]]
 name = "scope"
-version = "0.33.0"
+version = "0.37.0"
 dependencies = [
  "adrena-perp-itf",
  "anchor-lang",
@@ -2539,7 +2527,7 @@ dependencies = [
  "strum 0.27.2",
  "switchboard-program",
  "tracing",
- "whirlpool 0.2.0 (git+https://github.com/Kamino-Finance/whirlpools?branch=anchor/0.28.0)",
+ "whirlpool",
  "yvaults",
 ]
 
@@ -3342,7 +3330,7 @@ checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 [[package]]
 name = "strum"
 version = "0.24.0"
-source = "git+https://github.com/hubbleprotocol/strum?branch=checked_arithmetics#95f44367da40546bc94f4ff565268f45fb68ed5e"
+source = "git+https://github.com/Kamino-Finance/strum?branch=checked_arithmetics#95f44367da40546bc94f4ff565268f45fb68ed5e"
 dependencies = [
  "strum_macros 0.24.0",
 ]
@@ -3359,7 +3347,7 @@ dependencies = [
 [[package]]
 name = "strum_macros"
 version = "0.24.0"
-source = "git+https://github.com/hubbleprotocol/strum?branch=checked_arithmetics#95f44367da40546bc94f4ff565268f45fb68ed5e"
+source = "git+https://github.com/Kamino-Finance/strum?branch=checked_arithmetics#95f44367da40546bc94f4ff565268f45fb68ed5e"
 dependencies = [
  "heck 0.4.1",
  "proc-macro2",
@@ -3844,29 +3832,13 @@ dependencies = [
 [[package]]
 name = "whirlpool"
 version = "0.2.0"
-source = "git+https://github.com/hubbleprotocol/whirlpools?branch=anchor/0.28.0#c77e1e4c87dde54bfdaaaae3b806c9b660cefdc3"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "borsh 0.9.3",
- "bytemuck",
- "mpl-token-metadata 1.13.2",
- "solana-program",
- "spl-token 3.5.0",
- "thiserror 1.0.50",
- "uint 0.9.5",
-]
-
-[[package]]
-name = "whirlpool"
-version = "0.2.0"
 source = "git+https://github.com/Kamino-Finance/whirlpools?branch=anchor/0.28.0#c77e1e4c87dde54bfdaaaae3b806c9b660cefdc3"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "borsh 0.9.3",
  "bytemuck",
- "mpl-token-metadata 1.13.2",
+ "mpl-token-metadata",
  "solana-program",
  "spl-token 3.5.0",
  "thiserror 1.0.50",
@@ -4007,14 +3979,14 @@ dependencies = [
 [[package]]
 name = "yvaults"
 version = "0.1.0"
-source = "git+ssh://git@github.com/Kamino-Finance/yvaults.git?branch=scope-public-compat#096fe93b90007118980085ba3b6707f252ef1136"
+source = "git+ssh://git@github.com/Kamino-Finance/yvaults.git?branch=scope-public-compat#53ebf186b5e81d1f8cb5b5b0cb69e58262dedef5"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "bytemuck",
  "decimal-wad",
  "lb_clmm",
- "mpl-token-metadata 1.13.2",
+ "mpl-token-metadata",
  "num",
  "num-derive 0.4.1",
  "num-traits",
@@ -4028,7 +4000,7 @@ dependencies = [
  "static-pubkey",
  "strum 0.24.0",
  "uint 0.9.5",
- "whirlpool 0.2.0 (git+https://github.com/hubbleprotocol/whirlpools?branch=anchor/0.28.0)",
+ "whirlpool",
 ]
 
 [[package]]

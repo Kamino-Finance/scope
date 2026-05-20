@@ -142,6 +142,15 @@ pub enum OracleType {
     /// Staked SOL account balance oracle
     /// Returns the delegation stake from a stake account
     StakedSolBalance = 45,
+    /// SPL mint total supply oracle
+    /// Returns the current total minted supply from an SPL mint account
+    TotalMintSupply = 46,
+    /// Conditional oracle: evaluates a configurable predicate over 1-3 source prices
+    /// and returns 1 (true) or 0 (false). Supported conditions include pairwise
+    /// comparisons (Gt, Gte, Lt, Lte, Eq, Neq), absolute range checks
+    /// (WithinRangeAbs, OutsideRangeAbs), proportional tolerance checks
+    /// (WithinRangeBps, OutsideRangeBps), and a single-source NonZero check.
+    Conditional = 47,
 }
 
 impl OracleType {
@@ -153,6 +162,8 @@ impl OracleType {
                 | OracleType::MultiplicationChain
                 | OracleType::SplBalance
                 | OracleType::StakedSolBalance
+                | OracleType::TotalMintSupply
+                | OracleType::Conditional
         )
     }
 
@@ -224,7 +235,9 @@ impl OracleType {
             | OracleType::CappedMostRecentOf
             | OracleType::MultiplicationChain
             | OracleType::SplBalance
-            | OracleType::StakedSolBalance => false,
+            | OracleType::StakedSolBalance
+            | OracleType::TotalMintSupply
+            | OracleType::Conditional => false,
         }
     }
 }
