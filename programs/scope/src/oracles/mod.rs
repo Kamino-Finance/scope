@@ -7,6 +7,7 @@ pub mod adrena_lp;
 pub mod capped_floored;
 pub mod capped_most_recent_of;
 pub mod chainlink;
+pub mod conditional;
 pub mod discount_to_maturity;
 pub mod fixed_price;
 pub mod flashtrade_lp;
@@ -28,6 +29,7 @@ pub mod spl_balance;
 pub mod spl_stake;
 pub mod staked_sol_balance;
 pub mod switchboard_on_demand;
+pub mod total_mint_supply;
 pub mod twap;
 
 use std::{fmt::DebugStruct, ops::Deref};
@@ -104,6 +106,8 @@ impl OracleType {
             OracleType::FlashtradeLp => 20_000,
             OracleType::SplBalance => 20_000,
             OracleType::StakedSolBalance => 15_000,
+            OracleType::TotalMintSupply => 15_000,
+            OracleType::Conditional => 20_000,
         }
     }
 }
@@ -285,6 +289,12 @@ where
         OracleType::FlashtradeLp => flashtrade_lp::get_price(base_account, clock),
         OracleType::SplBalance => spl_balance::get_price(base_account, clock, extra_accounts),
         OracleType::StakedSolBalance => staked_sol_balance::get_price(base_account, clock),
+        OracleType::TotalMintSupply => total_mint_supply::get_price(base_account, clock),
+        OracleType::Conditional => conditional::get_price(
+            oracle_prices.load()?.deref(),
+            &oracle_mappings.generic[index],
+        )
+        .map_err(Into::into),
     }?;
     // The price providers above are performing their type-specific validations, but are still free to return 0,
     // which we can only tolerate for certain oracle types (e.g. explicit fixed price, multiplication chains
@@ -305,6 +315,7 @@ pub fn validate_oracle_cfg(
     price_account: Option<&AccountInfo>,
     generic_data: &[u8; 20],
     clock: &Clock,
+    entry_id: u16,
 ) -> crate::Result<()> {
     // we use the default price (formerly Pyth) to indicate removal of a price
     // when we remove something from the config there is no validation needed
@@ -393,6 +404,11 @@ pub fn validate_oracle_cfg(
         OracleType::FlashtradeLp => flashtrade_lp::validate_flashtrade_pool(price_account, clock),
         OracleType::SplBalance => spl_balance::validate_account(price_account),
         OracleType::StakedSolBalance => staked_sol_balance::validate_account(price_account),
+        OracleType::TotalMintSupply => total_mint_supply::validate_account(price_account),
+        OracleType::Conditional => {
+            conditional::validate_mapping_cfg(price_account, generic_data, entry_id)
+                .map_err(Into::into)
+        }
     }
 }
 
@@ -425,7 +441,8 @@ pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
         | OracleType::FlashtradeLp
         | OracleType::ChainlinkExchangeRate
         | OracleType::SplBalance
-        | OracleType::StakedSolBalance => false,
+        | OracleType::StakedSolBalance
+        | OracleType::TotalMintSupply => false,
 
         OracleType::FixedPrice
         | OracleType::DiscountToMaturity
@@ -436,7 +453,8 @@ pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
         | OracleType::Chainlink
         | OracleType::ChainlinkRWA
         | OracleType::ChainlinkX
-        | OracleType::PythLazer => true,
+        | OracleType::PythLazer
+        | OracleType::Conditional => true,
 
         OracleType::Unused
         | OracleType::DeprecatedPlaceholder1
@@ -483,6 +501,7 @@ pub fn debug_format_generic_data(
         | OracleType::ChainlinkExchangeRate
         | OracleType::SplBalance
         | OracleType::StakedSolBalance
+        | OracleType::TotalMintSupply
         | OracleType::Unused
         | OracleType::DeprecatedPlaceholder1
         | OracleType::DeprecatedPlaceholder2
@@ -547,6 +566,12 @@ pub fn debug_format_generic_data(
                 "multiplication_chain_cfg",
                 &multiplication_chain::MultiplicationChainData::from_generic_data(generic_data)
                     .ok(),
+            );
+        }
+        OracleType::Conditional => {
+            d.field(
+                "conditional_cfg",
+                &conditional::ConditionalData::from_generic_data(generic_data).ok(),
             );
         }
     }
