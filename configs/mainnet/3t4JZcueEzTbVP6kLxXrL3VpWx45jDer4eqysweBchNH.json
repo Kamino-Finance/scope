@@ -28,7 +28,7 @@
     "max_age_slot": 165,
     "sources_max_age_s": 7200,
     "max_divergence_bps": 1600,
-    "source_entries": [0, 1, 2]
+    "source_entries": [1, 2]
   },
   "4": {
     "label": "Pyth Pull EMA SOL/USD",
@@ -69,9 +69,7 @@
     "oracle_type": "MostRecentOf",
     "sources_max_age_s": 7200,
     "max_divergence_bps": 50,
-    "source_entries": [6, 7, 8],
-    "ref_price": 6,
-    "ref_price_tolerance_bps": 500
+    "source_entries": [7, 8]
   },
   "10": {
     "label": "Pyth Pull EMA USDC/USD",
@@ -616,18 +614,6 @@
     "twap_source": 104,
     "max_age_slot": 165
   },
-  "106": {
-    "label": "RateX PT-2508/fragSOL",
-    "oracle_type": "DiscountToMaturity",
-    "discount_per_year_bps": 2500,
-    "maturity_timestamp": 1756425600
-  },
-  "107": {
-    "label": "RateX PT-2508/fragBTC",
-    "oracle_type": "DiscountToMaturity",
-    "discount_per_year_bps": 2500,
-    "maturity_timestamp": 1756425600
-  },
   "108": {
     "label": "Chainlink ONyc",
     "oracle_type": "ChainlinkNAV",
@@ -712,9 +698,7 @@
     "max_age_slot": 120,
     "sources_max_age_s": 7200,
     "max_divergence_bps": 50,
-    "source_entries": [14, 119, 129],
-    "ref_price": 14,
-    "ref_price_tolerance_bps": 500
+    "source_entries": [119, 129]
   },
   "121": {
     "label": "CL Lombard Staked BTC LBTC/BTC",
@@ -742,9 +726,7 @@
     "oracle_type": "MostRecentOf",
     "sources_max_age_s": 7200,
     "max_divergence_bps": 50,
-    "source_entries": [20, 123, 136],
-    "ref_price": 20,
-    "ref_price_tolerance_bps": 500
+    "source_entries": [123, 136]
   },
   "125": {
     "label": "PythLazer USDG/USD",
@@ -760,9 +742,7 @@
     "oracle_type": "MostRecentOf",
     "sources_max_age_s": 7200,
     "max_divergence_bps": 50,
-    "source_entries": [23, 125, 386],
-    "ref_price": 23,
-    "ref_price_tolerance_bps": 500
+    "source_entries": [125, 386]
   },
   "127": {
     "label": "TWAP CL Lombard LBTC/BTC",
@@ -780,7 +760,8 @@
     "label": "Chainlink USDT/USD",
     "oracle_type": "Chainlink",
     "chainlink_feed_id": "0x0003a910a43485e0685ff5d6d366541f5c21150f0634c5b14254392d1a1c06db",
-    "confidence_factor": 200
+    "confidence_factor": 200,
+    "twap_enabled": ["1h"]
   },
   "130": {
     "label": "PythPull BTC/USD",
@@ -823,7 +804,8 @@
     "label": "Chainlink FDUSD/USD",
     "oracle_type": "Chainlink",
     "chainlink_feed_id": "0x0003015244d1003436a6c7a71ac7049c1f5dee56f75616e51f0e390604374d9f",
-    "confidence_factor": 200
+    "confidence_factor": 200,
+    "twap_enabled": ["1h"]
   },
   "137": {
     "label": "Pyth Pull USDE/USD",
@@ -839,7 +821,8 @@
     "label": "Chainlink USDE/USD",
     "oracle_type": "Chainlink",
     "chainlink_feed_id": "0x000379477abdca006db92300211242ba44479369a15be0ad8d59cabe00e63074",
-    "confidence_factor": 200
+    "confidence_factor": 200,
+    "twap_enabled": ["1h"]
   },
   "140": {
     "label": "PythLazer USDE/USD",
@@ -855,9 +838,7 @@
     "oracle_type": "MostRecentOf",
     "sources_max_age_s": 7200,
     "max_divergence_bps": 50,
-    "source_entries": [137, 139, 140],
-    "ref_price": 137,
-    "ref_price_tolerance_bps": 500
+    "source_entries": [139, 140]
   },
   "142": {
     "label": "Capped USDE/USD",
@@ -879,7 +860,8 @@
     "label": "Chainlink PYUSD/USD",
     "oracle_type": "Chainlink",
     "chainlink_feed_id": "0x0003313e5ba57741dd23e2e239730977b3a2a65fcdca08a8609c6e5bac09f88f",
-    "confidence_factor": 200
+    "confidence_factor": 200,
+    "twap_enabled": ["1h"]
   },
   "146": {
     "label": "PythLazer PYUSD/USD",
@@ -895,9 +877,7 @@
     "oracle_type": "MostRecentOf",
     "sources_max_age_s": 7200,
     "max_divergence_bps": 50,
-    "source_entries": [143, 145, 146],
-    "ref_price": 143,
-    "ref_price_tolerance_bps": 500
+    "source_entries": [145, 146]
   },
   "148": {
     "label": "Capped PYUSD/USD",
@@ -905,12 +885,6 @@
     "source_entry": 147,
     "cap_entry": 12,
     "floor_entry": 189
-  },
-  "149": {
-    "label": "RateX PT-2601/fragSOL",
-    "oracle_type": "DiscountToMaturity",
-    "discount_per_year_bps": 2500,
-    "maturity_timestamp": 1769644800
   },
   "150": {
     "label": "NansenSOL/SOL",
@@ -963,6 +937,18 @@
     "cap_entry": 12,
     "floor_entry": 189
   },
+  "158": {
+    "label": "Chainlink TWAP USDT/USD",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 129,
+    "max_age_slot": 165
+  },
+  "159": {
+    "label": "Chainlink TWAP FDUSD/USD",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 136,
+    "max_age_slot": 165
+  },
   "160": {
     "label": "Exponent PT-2512/hyloSOL",
     "oracle_type": "DiscountToMaturity",
@@ -994,7 +980,9 @@
     "oracle_type": "Chainlink",
     "chainlink_feed_id": "0x0003b8b3f33c4c06a7947e86c5b4db4ef0991637d9821b9cdf897c0b5d488468",
     "confidence_factor": 100,
-    "twap_enabled": ["1h"]
+    "twap_enabled": ["1h"],
+    "ref_price": 163,
+    "ref_price_tolerance_bps": 500
   },
   "166": {
     "label": "Chainlink TWAP XAUT/USD",
@@ -1007,7 +995,9 @@
     "oracle_type": "ChainlinkRWA",
     "chainlink_feed_id": "0x0008991d4caf73e8e05f6671ef43cee5e8c5c3652a35fde0b0942e44a77b0e89",
     "market_status_behavior": "AllUpdates",
-    "twap_enabled": ["1h"]
+    "twap_enabled": ["1h"],
+    "ref_price": 161,
+    "ref_price_tolerance_bps": 500
   },
   "168": {
     "label": "Chainlink TWAP XAU/USD",
@@ -1026,12 +1016,6 @@
     "oracle_type": "DiscountToMaturity",
     "discount_per_year_bps": 2500,
     "maturity_timestamp": 1770893900
-  },
-  "171": {
-    "label": "Exponent PT-2601/ONyc",
-    "oracle_type": "DiscountToMaturity",
-    "discount_per_year_bps": 2500,
-    "maturity_timestamp": 1769338699
   },
   "172": {
     "label": "Chainlink BTC/USD",
@@ -1059,7 +1043,7 @@
     "max_age_slot": 165,
     "sources_max_age_s": 7200,
     "max_divergence_bps": 800,
-    "source_entries": [130, 172, 174]
+    "source_entries": [172, 174]
   },
   "176": {
     "label": "fwdSOL/SOL",
@@ -1216,9 +1200,7 @@
     "oracle_type": "MostRecentOf",
     "sources_max_age_s": 7200,
     "max_divergence_bps": 50,
-    "source_entries": [196, 198, 200],
-    "ref_price": 196,
-    "ref_price_tolerance_bps": 500
+    "source_entries": [198, 200]
   },
   "202": {
     "label": "Capped USD1/USD",
@@ -2240,6 +2222,24 @@
     "fixed_price": 1000000000,
     "max_age_slot": 12000
   },
+  "355": {
+    "label": "Chainlink TWAP USDE/USD",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 139,
+    "max_age_slot": 165
+  },
+  "356": {
+    "label": "Chainlink TWAP PYUSD/USD",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 145,
+    "max_age_slot": 165
+  },
+  "357": {
+    "label": "Chainlink TWAP USDG/USD",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 386,
+    "max_age_slot": 165
+  },
   "370": {
     "label": "Fixed 1.21 price",
     "oracle_type": "FixedPrice",
@@ -2343,7 +2343,8 @@
     "label": "Chainlink USDG/USD",
     "oracle_type": "Chainlink",
     "chainlink_feed_id": "0x00032a5d7bd525026e8a09dd481e5d21db9e22671943727dc31b9408f577125f",
-    "confidence_factor": 200
+    "confidence_factor": 200,
+    "twap_enabled": ["1h"]
   },
   "387": {
     "label": "Most recent USDe/USD",
@@ -2372,9 +2373,48 @@
     "cap_entry": 12,
     "floor_entry": 389
   },
+  "391": {
+    "label": "Raydium STRCx/USDC",
+    "oracle_mapping": "DU9dgBU6Yh2JjsYcjtRY21G14dhQxn6Xm5PT949Sa4tA",
+    "oracle_type": "RaydiumAmmV3AtoB"
+  },
   "392": {
     "label": "Orca USDe/USDG",
     "oracle_mapping": "5p58XYzEUuvceAb4momaQ943rTPLgigdBXtJNdnZTDJ9",
     "oracle_type": "OrcaWhirlpoolBtoA"
+  },
+  "393": {
+    "label": "MostRecent STRCx/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [302, 391],
+    "max_divergence_bps": 1000,
+    "sources_max_age_s": 60
+  },
+  "394": {
+    "label": "Checked STRCx/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 393,
+    "cap_entry": 302,
+    "floor_entry": 302
+  },
+  "395": {
+    "label": "MostRecent XAUT/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [165, 167],
+    "max_divergence_bps": 500,
+    "sources_max_age_s": 60
+  },
+  "396": {
+    "label": "Checked XAUT/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 395,
+    "cap_entry": 167,
+    "floor_entry": 167
+  },
+  "397": {
+    "label": "Exponent PT-2609/ONyc",
+    "oracle_type": "DiscountToMaturity",
+    "discount_per_year_bps": 2500,
+    "maturity_timestamp": 1789034299
   }
 }

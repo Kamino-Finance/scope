@@ -56,7 +56,7 @@ whirlpool = { git = "https://github.com/Kamino-Finance/whirlpools", branch = "an
     "no-entrypoint",
     "cpi",
 ] }
-raydium-amm-v3 = { git = "https://github.com/raydium-io/raydium-clmm", features = ["no-entrypoint", "cpi"] }
+raydium-amm-v3 = { git = "https://github.com/raydium-io/raydium-clmm", rev = "cea4d49ef5acc643cb04fb4db96af6d73a5f0a1d", features = ["no-entrypoint", "cpi"] }
 jup-perp-itf = { path = "../jup-perp-itf", features = ["cpi"] }
 lb-clmm-itf = { path = "../lb-clmm-itf", features = ["no-entrypoint"] }
 sbod-itf = { path = "../sbod-itf" }

@@ -308,20 +308,6 @@
     "max_age_slot": 200,
     "group_ids": [ 1, 2 ]
   },
-  "70": {
-    "label": "Pyth Pull SAMO/USD",
-    "oracle_mapping": "2eUVzcYccqXzsDU1iBuatUaDCbRKBjegEaPPeChzfocG",
-    "oracle_type": "PythPull",
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "71": {
-    "label": "Pyth Pull EMA SAMO/USD",
-    "oracle_mapping": "2eUVzcYccqXzsDU1iBuatUaDCbRKBjegEaPPeChzfocG",
-    "oracle_type": "PythPullEMA",
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
   "72": {
     "label": "Stake rate bSOL/SOL",
     "oracle_mapping": "stk9ApL5HeVAwPLr3TLhDXdZS8ptVu7zp6ov8HFDuMi",
@@ -497,21 +483,6 @@
     "max_age_slot": 250,
     "twap_enabled": ["1h"],
     "group_ids": [ 1 ]
-  },
-  "113": {
-    "label": "Raydium BORGY/BORG",
-    "oracle_mapping": "7my3JeD3jugd52TerjQMFNt3fNK3tgZTH4A5nhQCwK47",
-    "oracle_type": "RaydiumAmmV3AtoB",
-    "twap_enabled": ["1h"],
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "114": {
-    "label": "TWAP Raydium BORGY/BORG",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 113,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
   },
   "115": {
     "label": "Raydium kyJTO/JTO",
@@ -1805,13 +1776,15 @@
     "label": "Pyth Pull FWOG/USD",
     "oracle_mapping": "gWzECufoh81TGMrRRD9QnTUjHQpGW1kywXu8PZYLhmF",
     "oracle_type": "PythPull",
-    "group_ids": [ 1, 2 ]
+    "group_ids": [ 1, 2 ],
+    "max_age_slot": 375
   },
   "440": {
     "label": "Pyth Pull EMA FWOG/USD",
     "oracle_mapping": "gWzECufoh81TGMrRRD9QnTUjHQpGW1kywXu8PZYLhmF",
     "oracle_type": "PythPullEMA",
-    "group_ids": [ 1, 2 ]
+    "group_ids": [ 1, 2 ],
+    "max_age_slot": 380
   },
   "441": {
     "label": "Raydium ONyc/USDG",
