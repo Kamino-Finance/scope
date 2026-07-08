@@ -45,10 +45,14 @@ pub enum Condition {
     /// A is within `tolerance_bps` of reference B:
     /// |A - B| <= B * tolerance_bps / 10000.
     /// This condition is intentionally asymmetric; swapping A and B can change the result.
+    /// Edge case: when B == 0 the right-hand side is 0, so the condition reduces to |A| <= 0 and is
+    /// true only when A == 0 (regardless of `tolerance_bps`).
     WithinRangeBps = 8,
     /// A is outside `tolerance_bps` of reference B:
     /// |A - B| > B * tolerance_bps / 10000.
     /// This condition is intentionally asymmetric; swapping A and B can change the result.
+    /// Edge case: when B == 0 the right-hand side is 0, so the condition reduces to |A| > 0 and is
+    /// true whenever A != 0 (regardless of `tolerance_bps`).
     OutsideRangeBps = 9,
     /// A > 0 (only uses source A)
     NonZero = 10,
@@ -148,6 +152,9 @@ pub fn get_price(oracle_prices: &OraclePrices, generic_data: &[u8]) -> ScopeResu
                     } else {
                         dec_b - dec_a
                     };
+                    // Tolerance is a fraction of the reference B, so when B == 0 it is 0 and the
+                    // check reduces to an exact comparison of A against 0 (see the WithinRangeBps /
+                    // OutsideRangeBps docs).
                     let tolerance = dec_b * u64::from(data.tolerance_bps) / u64::from(FULL_BPS);
                     let within = diff <= tolerance;
                     if condition == Condition::WithinRangeBps {

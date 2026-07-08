@@ -214,6 +214,15 @@ pub enum ScopeError {
 
     #[msg("Signer is not authorized to freeze/unfreeze")]
     UnauthorizedFreeze,
+
+    #[msg("Property fields in the feed of the PythLazer payload do not contain an EMA price")]
+    PythLazerEmaPriceNotPresent,
+
+    #[msg("Property fields in the feed of the PythLazer payload do not contain an EMA confidence")]
+    PythLazerEmaConfidenceNotPresent,
+
+    #[msg("PythLazerEMA source entry does not have EMA enabled")]
+    PythLazerEmaNotEnabledOnSource,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError
