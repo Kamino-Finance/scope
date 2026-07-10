@@ -259,8 +259,16 @@ pub fn slots_to_secs(slots: u64) -> u64 {
     u64::try_from(secs).expect("seconds must fit if slots fit")
 }
 
+// Round up, so the returned count over- (never under-) estimates the duration.
+// `estimate_slot_update_from_ts` subtracts this as a count of *elapsed* slots from
+// the current slot, so a larger count yields an *older* `last_updated_slot` — never
+// fresher than the timestamp implies. With 400ms slots, 1s ⇒ 3 elapsed slots
+// (rounded up from 2.5), not 2.
 pub fn saturating_secs_to_slots(secs: u64) -> u64 {
-    let slots = u128::from(secs) * 1000 / u128::from(clock::DEFAULT_MS_PER_SLOT);
+    // Manual ceil division (`u128::div_ceil` is unstable on the on-chain toolchain).
+    let ms = u128::from(secs) * 1000;
+    let ms_per_slot = u128::from(clock::DEFAULT_MS_PER_SLOT);
+    let slots = (ms + ms_per_slot - 1) / ms_per_slot;
     u64::try_from(slots).unwrap_or(u64::MAX) // there is no `saturating_cast()` in std
 }
 

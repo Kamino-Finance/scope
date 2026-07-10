@@ -1,7 +1,4 @@
-use std::{
-    cmp::{max, min},
-    u64,
-};
+use std::u64;
 
 use anchor_lang::prelude::*;
 
@@ -12,7 +9,7 @@ use crate::{
         math,
         source_entries::validate_source_entries,
     },
-    warn, DatedPrice, Price, ScopeError, ScopeResult,
+    warn, DatedPrice, Price, ScopeError, ScopeResult, MAX_ENTRIES_U16,
 };
 
 #[derive(Debug, Default, AnchorDeserialize, AnchorSerialize)]
@@ -78,16 +75,33 @@ pub fn get_most_recent_price_from_sources(
         exp: 0,
     };
     let mut max_price = Price { value: 0, exp: 0 };
+    let mut min_price_index: u16 = MAX_ENTRIES_U16;
+    let mut max_price_index: u16 = MAX_ENTRIES_U16;
     let mut most_recent_price = &DatedPrice::default();
 
-    for dated_price in source_entries
-        .iter()
-        .filter_map(|&index| oracle_prices.prices.get(usize::from(index)))
-    {
-        min_price = min(dated_price.price, min_price);
-        max_price = max(dated_price.price, max_price);
+    for &index in source_entries.iter() {
+        let Some(dated_price) = oracle_prices.prices.get(usize::from(index)) else {
+            continue;
+        };
+
+        if dated_price.price < min_price {
+            min_price = dated_price.price;
+            min_price_index = index;
+        }
+        if dated_price.price > max_price {
+            max_price = dated_price.price;
+            max_price_index = index;
+        }
 
         if now.saturating_sub(dated_price.unix_timestamp) > sources_max_age_s {
+            warn!(
+                "MostRecentOf: source entry {} is too old (age {}s > max {}s). unix_timestamp = {}, now = {}",
+                index,
+                now.saturating_sub(dated_price.unix_timestamp),
+                sources_max_age_s,
+                dated_price.unix_timestamp,
+                now,
+            );
             return Err(ScopeError::CompositeOracleMaxAgeViolated);
         }
 
@@ -96,13 +110,21 @@ pub fn get_most_recent_price_from_sources(
         }
     }
 
-    assert_prices_within_max_divergence(min_price, max_price, max_divergence_bps)?;
+    assert_prices_within_max_divergence(
+        min_price,
+        min_price_index,
+        max_price,
+        max_price_index,
+        max_divergence_bps,
+    )?;
     Ok(*most_recent_price)
 }
 
 fn assert_prices_within_max_divergence(
     smaller: Price,
+    smaller_index: u16,
     greater: Price,
+    greater_index: u16,
     max_divergence_bps: u16,
 ) -> ScopeResult<()> {
     // We need to check that (greater - smaller) / smaller < divergence, which is equivalent to
@@ -112,7 +134,20 @@ fn assert_prices_within_max_divergence(
     let greater_dec = decimal_wad::decimal::Decimal::from(greater);
     let spread = greater_dec - smaller_dec;
     math::check_confidence_interval_decimal_bps(smaller_dec, spread, u32::from(max_divergence_bps))
-        .map_err(|_| ScopeError::MostRecentOfMaxDivergenceBpsViolated)
+        .map_err(|_| {
+            warn!(
+                "MostRecentOf: max divergence of {} bps violated. Smallest price (entry {}): value = {}, exp = {}. Greatest price (entry {}): value = {}, exp = {}. Spread = {}",
+                max_divergence_bps,
+                smaller_index,
+                smaller.value,
+                smaller.exp,
+                greater_index,
+                greater.value,
+                greater.exp,
+                spread,
+            );
+            ScopeError::MostRecentOfMaxDivergenceBpsViolated
+        })
 }
 
 /// Helper function to validate common MostRecentOf parameters

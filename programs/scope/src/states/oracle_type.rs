@@ -151,6 +151,8 @@ pub enum OracleType {
     /// (WithinRangeAbs, OutsideRangeAbs), proportional tolerance checks
     /// (WithinRangeBps, OutsideRangeBps), and a single-source NonZero check.
     Conditional = 47,
+    /// Pyth Lazer EMA oracle
+    PythLazerEMA = 48,
 }
 
 impl OracleType {
@@ -185,6 +187,10 @@ impl OracleType {
             OracleType::ScopeTwap7d => Ok(EmaType::Ema7d),
             _ => Err(ScopeError::InvalidConversionToEmaTypeForOracleType),
         }
+    }
+
+    pub fn is_pyth_lazer_provider(self) -> bool {
+        matches!(self, OracleType::PythLazer)
     }
 
     pub fn is_chainlink_provider(self) -> bool {
@@ -237,7 +243,8 @@ impl OracleType {
             | OracleType::SplBalance
             | OracleType::StakedSolBalance
             | OracleType::TotalMintSupply
-            | OracleType::Conditional => false,
+            | OracleType::Conditional
+            | OracleType::PythLazerEMA => false,
         }
     }
 }

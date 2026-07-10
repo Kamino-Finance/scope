@@ -88,8 +88,12 @@ impl OracleType {
             OracleType::CappedMostRecentOf => 40_000,
             OracleType::MultiplicationChain => 50_000,
             OracleType::RedStone => 20_000,
-            // PythLazer oracle is not updated through normal refresh ixs
+            // PythLazer (spot) is updated via the dedicated refresh_pyth_lazer_price ix.
             OracleType::PythLazer => 0,
+            // PythLazerEMA is a derived/reference type — refreshed by the standard
+            // refresh_prices ix, projecting the EMA bytes packed by the source spot
+            // entry's update_price call.
+            OracleType::PythLazerEMA => 10_000,
             OracleType::CappedFloored => 20_000,
             OracleType::Unused
             | OracleType::DeprecatedPlaceholder1
@@ -252,6 +256,13 @@ where
             msg!("PythLazer oracle type cannot be refreshed directly");
             return err!(ScopeError::PriceNotValid);
         }
+        OracleType::PythLazerEMA => pyth_lazer::get_ema_price(
+            oracle_prices.load()?.deref(),
+            oracle_mappings,
+            &oracle_mappings.generic[index],
+            clock,
+        )
+        .map_err(Into::into),
         OracleType::CappedFloored => capped_floored::get_price(
             oracle_prices.load()?.deref(),
             &oracle_mappings.generic[index],
@@ -378,6 +389,9 @@ pub fn validate_oracle_cfg(
         OracleType::PythLazer => {
             pyth_lazer::validate_mapping_cfg(price_account, generic_data).map_err(Into::into)
         }
+        OracleType::PythLazerEMA => {
+            pyth_lazer::validate_mapping_cfg_ema(price_account, generic_data).map_err(Into::into)
+        }
         OracleType::CappedFloored => {
             capped_floored::validate_mapping_cfg(price_account, generic_data).map_err(Into::into)
         }
@@ -454,7 +468,8 @@ pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
         | OracleType::ChainlinkRWA
         | OracleType::ChainlinkX
         | OracleType::PythLazer
-        | OracleType::Conditional => true,
+        | OracleType::Conditional
+        | OracleType::PythLazerEMA => true,
 
         OracleType::Unused
         | OracleType::DeprecatedPlaceholder1
@@ -546,6 +561,12 @@ pub fn debug_format_generic_data(
             d.field(
                 "pyth_lazer_cfg",
                 &pyth_lazer::PythLazerData::from_generic_data(generic_data).ok(),
+            );
+        }
+        OracleType::PythLazerEMA => {
+            d.field(
+                "pyth_lazer_ema_ref_cfg",
+                &pyth_lazer::PythLazerEmaRefData::from_generic_data(generic_data).ok(),
             );
         }
         OracleType::CappedFloored => {
