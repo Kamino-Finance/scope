@@ -7,26 +7,10 @@ use crate::{
     ScopeError, MAX_ENTRIES,
 };
 
-/// Check if the authority is allowed to freeze/unfreeze prices.
-/// Admin can freeze and unfreeze; emergency council can only freeze.
-fn is_allowed_authority(
-    authority: &Signer,
-    configuration: &AccountLoader<Configuration>,
-    freeze: bool,
-) -> Result<bool> {
-    let config = configuration.load()?;
-    let authority = authority.key();
-    let is_admin = authority == config.admin;
-    let is_emergency_council =
-        authority == config.emergency_council && config.emergency_council != Pubkey::default();
-
-    Ok(is_admin || (is_emergency_council && freeze))
-}
-
 #[derive(Accounts)]
 #[instruction(token: u16, feed_name: String, freeze: bool)]
 pub struct FreezePrice<'info> {
-    #[account(constraint = is_allowed_authority(&authority, &configuration, freeze)? @ ScopeError::UnauthorizedFreeze)]
+    #[account(constraint = configuration.load()?.can_freeze(&authority.key(), freeze) @ ScopeError::UnauthorizedFreeze)]
     pub authority: Signer<'info>,
 
     #[account(seeds = [seeds::CONFIG, feed_name.as_bytes()], bump, has_one = oracle_mappings)]

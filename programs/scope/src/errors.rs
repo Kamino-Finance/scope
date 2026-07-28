@@ -223,6 +223,12 @@ pub enum ScopeError {
 
     #[msg("PythLazerEMA source entry does not have EMA enabled")]
     PythLazerEmaNotEnabledOnSource,
+
+    #[msg("Signer is not authorized to resume")]
+    UnauthorizedResume,
+
+    #[msg("Property fields in the feed of the PythLazer payload do not contain a confidence")]
+    PythLazerConfidenceNotPresent,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

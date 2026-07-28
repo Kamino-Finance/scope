@@ -18,9 +18,14 @@ const PYTH_LAZER_MAX_EXPONENT: u8 = 12;
 pub struct PythLazerData {
     pub feed_id: u16,
     pub exponent: u8,
-    pub confidence_factor: u32,
+    /// Tolerance factor for the bid/ask spread check (`ask - bid` against the
+    /// price). `0` disables the spread check entirely, in which case the payload
+    /// is not required to carry `BestBidPrice`/`BestAskPrice`.
+    pub bid_ask_spread_factor: u32,
     pub ema_enabled: bool,
     pub ema_confidence_factor: u32,
+    /// Tolerance factor for the native Lazer `Confidence` check; `0` disables it.
+    pub price_confidence_factor: u32,
 }
 
 impl PythLazerData {
@@ -115,6 +120,33 @@ pub fn validate_payload_data_for_group(
     Ok(())
 }
 
+/// Convert a Pyth Lazer price mantissa to `u64`, logging `what` on a negative
+/// mantissa. Prefer the `mantissa_to_u64!` macro, which fills `what` in for you.
+fn mantissa_to_u64(price: PythLazerPrice, what: &str) -> ScopeResult<u64> {
+    let mantissa: i64 = price.mantissa_i64();
+    u64::try_from(mantissa).map_err(|_| {
+        warn!(
+            "Pyth Lazer: {} mantissa {} doesn't fit in u64",
+            what, mantissa
+        );
+        ScopeError::OutOfRangeIntegralConversion
+    })
+}
+
+/// Convert a Pyth Lazer price mantissa to `u64`, deriving the log label from the
+/// passed identifier via `stringify!`. Two forms:
+/// - `mantissa_to_u64!(opt, not_present_err)` unwraps an `Option<PythLazerPrice>`
+///   (returning `not_present_err` on `None`) before converting.
+/// - `mantissa_to_u64!(price)` converts an already-unwrapped `PythLazerPrice`.
+macro_rules! mantissa_to_u64 {
+    ($opt:ident, $not_present:expr) => {
+        mantissa_to_u64($opt.ok_or($not_present)?, stringify!($opt))
+    };
+    ($price:ident) => {
+        mantissa_to_u64($price, stringify!($price))
+    };
+}
+
 pub fn validate_payload_data_for_token(
     payload_data: &PayloadData,
     feed_idx: usize,
@@ -123,9 +155,10 @@ pub fn validate_payload_data_for_token(
     let PythLazerData {
         feed_id: expected_feed_id,
         exponent: expected_exponent,
-        confidence_factor,
+        bid_ask_spread_factor,
         ema_enabled: _,
         ema_confidence_factor: _,
+        price_confidence_factor,
     } = pyth_lazer_data;
 
     // Check that the feed id is what we expect
@@ -133,11 +166,11 @@ pub fn validate_payload_data_for_token(
         return Err(ScopeError::PythLazerInvalidFeedId);
     }
 
-    // Check that the payload contains all the properties we expect: price, exponent,
-    // best bid price and best ask price
+    // Collect the feed's properties; each check below reads only the inputs it needs.
     let mut price_opt: Option<PythLazerPrice> = None;
     let mut best_bid_price_opt: Option<PythLazerPrice> = None;
     let mut best_ask_price_opt: Option<PythLazerPrice> = None;
+    let mut confidence_opt: Option<PythLazerPrice> = None;
     let mut exponent_opt: Option<i16> = None;
     let mut feed_update_timestamp_opt: Option<TimestampUs> = None;
 
@@ -152,6 +185,9 @@ pub fn validate_payload_data_for_token(
             PayloadPropertyValue::BestAskPrice(Some(price)) => {
                 best_ask_price_opt = Some(*price);
             }
+            PayloadPropertyValue::Confidence(Some(c)) => {
+                confidence_opt = Some(*c);
+            }
             PayloadPropertyValue::Exponent(exponent) => {
                 exponent_opt = Some(*exponent);
             }
@@ -164,13 +200,7 @@ pub fn validate_payload_data_for_token(
         }
     }
 
-    let pyth_lazer_price: i64 = price_opt
-        .ok_or(ScopeError::PythLazerPriceNotPresent)?
-        .mantissa_i64();
-    let pyth_lazer_price = u64::try_from(pyth_lazer_price).map_err(|_| {
-        warn!("Pyth Lazer: error converting price to u64");
-        ScopeError::OutOfRangeIntegralConversion
-    })?;
+    let pyth_lazer_price = mantissa_to_u64!(price_opt, ScopeError::PythLazerPriceNotPresent)?;
 
     let received_exponent = exponent_opt.ok_or(ScopeError::PythLazerExponentNotPresent)?;
     // Pyth Lazer sends the exponent as a negative integer, so we need to negate it
@@ -189,50 +219,64 @@ pub fn validate_payload_data_for_token(
         exp: exponent_u64,
     };
 
-    let best_bid_price: i64 = best_bid_price_opt
-        .ok_or(ScopeError::PythLazerBestBidPriceNotPresent)?
-        .mantissa_i64();
-    let best_bid_price = u64::try_from(best_bid_price).map_err(|_| {
-        warn!("Pyth Lazer: error converting best bid price to u64");
-        ScopeError::OutOfRangeIntegralConversion
-    })?;
-    let best_bid_price = Price {
-        value: best_bid_price,
-        exp: exponent_u64,
-    };
+    // Bid/ask spread check. When the factor is 0 the check is disabled, and the
+    // payload is neither required to carry bid/ask nor inspected for them (feeds
+    // such as NAV/redemption rates publish no bid/ask).
+    if *bid_ask_spread_factor > 0 {
+        let best_bid_price = mantissa_to_u64!(
+            best_bid_price_opt,
+            ScopeError::PythLazerBestBidPriceNotPresent
+        )?;
 
-    let best_ask_price: i64 = best_ask_price_opt
-        .ok_or(ScopeError::PythLazerBestAskPriceNotPresent)?
-        .mantissa_i64();
-    let best_ask_price = u64::try_from(best_ask_price).map_err(|_| {
-        warn!("Pyth Lazer: error converting best ask price to u64");
-        ScopeError::OutOfRangeIntegralConversion
-    })?;
-    let best_ask_price = Price {
-        value: best_ask_price,
-        exp: exponent_u64,
-    };
+        let best_ask_price = mantissa_to_u64!(
+            best_ask_price_opt,
+            ScopeError::PythLazerBestAskPriceNotPresent
+        )?;
 
-    let spread_value_opt = best_ask_price.value.checked_sub(best_bid_price.value);
-    if spread_value_opt.is_none() {
-        return Err(ScopeError::PythLazerInvalidAskBidPrices);
+        let spread_value = best_ask_price
+            .checked_sub(best_bid_price)
+            .ok_or(ScopeError::PythLazerInvalidAskBidPrices)?;
+
+        check_confidence_interval(
+            u128::from(new_price.value),
+            u32::from(*expected_exponent),
+            u128::from(spread_value),
+            u32::from(*expected_exponent),
+            *bid_ask_spread_factor,
+        )
+        .map_err(|e| {
+            warn!(
+                "PythLazer provided a price '{}' with bid '{best_bid_price}' and ask \
+                '{best_ask_price}' not fitting the configured '{bid_ask_spread_factor}' \
+                bid/ask spread factor",
+                new_price.value,
+            );
+            e
+        })?;
     }
 
-    check_confidence_interval(
-        u128::from(new_price.value),
-        u32::from(*expected_exponent),
-        u128::from(spread_value_opt.unwrap()),
-        u32::from(*expected_exponent),
-        *confidence_factor,
-    )
-    .map_err(|e| {
-        warn!(
-            "PythLazer provided a price '{}' with bid '{}' and ask '{}' not fitting the \
-            configured '{confidence_factor}' confidence factor",
-            new_price.value, best_bid_price.value, best_ask_price.value,
-        );
-        e
-    })?;
+    // Native Lazer confidence check. When the factor is 0 the check is disabled,
+    // and the payload is not required to carry a `Confidence` property.
+    if *price_confidence_factor > 0 {
+        let confidence_value =
+            mantissa_to_u64!(confidence_opt, ScopeError::PythLazerConfidenceNotPresent)?;
+
+        check_confidence_interval(
+            u128::from(new_price.value),
+            u32::from(*expected_exponent),
+            u128::from(confidence_value),
+            u32::from(*expected_exponent),
+            *price_confidence_factor,
+        )
+        .map_err(|e| {
+            warn!(
+                "PythLazer provided a price '{}' with confidence '{confidence_value}' not fitting \
+                the configured '{price_confidence_factor}' price confidence factor",
+                new_price.value,
+            );
+            e
+        })?;
+    }
 
     let feed_update_timestamp =
         feed_update_timestamp_opt.ok_or(ScopeError::PythLazerFeedUpdateTimestampNotPresent)?;
@@ -332,34 +376,25 @@ fn extract_ema_from_payload(
     payload_data: &PayloadData,
     feed_idx: usize,
 ) -> ScopeResult<Option<PythLazerEmaPayload>> {
-    let mut value_opt: Option<u64> = None;
-    let mut confidence: Option<u64> = None;
+    let mut ema_price_opt: Option<PythLazerPrice> = None;
+    let mut ema_confidence_opt: Option<PythLazerPrice> = None;
     for property in payload_data.feeds[feed_idx].properties.iter() {
         match property {
-            PayloadPropertyValue::EmaPrice(Some(price)) => {
-                let mantissa: i64 = price.mantissa_i64();
-                let value = u64::try_from(mantissa).map_err(|_| {
-                    warn!("Pyth Lazer: EMA mantissa {mantissa} doesn't fit in u64");
-                    ScopeError::MathOverflow
-                })?;
-                value_opt = Some(value);
-            }
-            PayloadPropertyValue::EmaConfidence(Some(price)) => {
-                let mantissa: i64 = price.mantissa_i64();
-                let conf = u64::try_from(mantissa).map_err(|_| {
-                    warn!("Pyth Lazer: EMA confidence {mantissa} doesn't fit in u64");
-                    ScopeError::MathOverflow
-                })?;
-                confidence = Some(conf);
-            }
+            PayloadPropertyValue::EmaPrice(Some(price)) => ema_price_opt = Some(*price),
+            PayloadPropertyValue::EmaConfidence(Some(price)) => ema_confidence_opt = Some(*price),
             _ => continue,
         }
     }
 
-    match value_opt {
-        Some(value) => Ok(Some(PythLazerEmaPayload { value, confidence })),
-        None => Ok(None),
-    }
+    let Some(ema_price) = ema_price_opt else {
+        return Ok(None);
+    };
+    let value = mantissa_to_u64!(ema_price)?;
+    let confidence = match ema_confidence_opt {
+        Some(ema_confidence) => Some(mantissa_to_u64!(ema_confidence)?),
+        None => None,
+    };
+    Ok(Some(PythLazerEmaPayload { value, confidence }))
 }
 
 fn validate_ema_confidence(
@@ -459,13 +494,14 @@ pub fn validate_mapping_cfg(mapping: Option<&AccountInfo>, generic_data: &[u8]) 
     let PythLazerData {
         feed_id,
         exponent,
-        confidence_factor,
+        bid_ask_spread_factor,
         ema_enabled,
         ema_confidence_factor,
+        price_confidence_factor,
     } = PythLazerData::from_generic_data(generic_data)?;
 
     msg!(
-        "Pyth Lazer: validating mapping with feed_id = {feed_id}, exponent = {exponent}, confidence_factor = {confidence_factor}, ema_enabled = {ema_enabled}, ema_confidence_factor = {ema_confidence_factor}",
+        "Pyth Lazer: validating mapping with feed_id = {feed_id}, exponent = {exponent}, bid_ask_spread_factor = {bid_ask_spread_factor}, ema_enabled = {ema_enabled}, ema_confidence_factor = {ema_confidence_factor}, price_confidence_factor = {price_confidence_factor}",
     );
 
     if feed_id == 0 {
@@ -476,7 +512,8 @@ pub fn validate_mapping_cfg(mapping: Option<&AccountInfo>, generic_data: &[u8]) 
         return Err(ScopeError::PythLazerInvalidExponent);
     }
 
-    if confidence_factor < 1 {
+    if price_confidence_factor < 1 {
+        // bid/ask spread check is optional (0 disables it)
         return Err(ScopeError::PythLazerInvalidConfidenceFactor);
     }
 

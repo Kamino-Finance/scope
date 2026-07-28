@@ -83,6 +83,9 @@ pub fn refresh_pyth_lazer_price<'info>(
     let oracle_mappings = ctx.accounts.oracle_mappings.load()?;
     let mut oracle_prices = ctx.accounts.oracle_prices.load_mut()?;
 
+    // In case only one token is provided fail the whole transaction if the price is not valid
+    let fail_tx_on_error = tokens.len() == 1;
+
     for (i, &token) in tokens.iter().enumerate() {
         let token_idx: usize = token.into();
 
@@ -102,21 +105,16 @@ pub fn refresh_pyth_lazer_price<'info>(
 
         let is_frozen = oracle_mappings.is_frozen(token_idx);
 
-        {
-            let dated_price_ref = &mut oracle_prices.prices[token_idx];
-            let old_price = *dated_price_ref;
-            let mapping_generic_data = &oracle_mappings.generic[token_idx];
-            let clock = Clock::get()?;
+        let mut price = oracle_prices.prices[token_idx];
+        let mapping_generic_data = &oracle_mappings.generic[token_idx];
+        let clock = Clock::get()?;
 
-            match pyth_lazer::update_price(
-                dated_price_ref,
-                &payload_data,
-                i,
-                mapping_generic_data,
-                &clock,
-            ) {
-                Ok(()) => (),
-                Err(e) => {
+        match pyth_lazer::update_price(&mut price, &payload_data, i, mapping_generic_data, &clock) {
+            Ok(()) => (),
+            Err(e) => {
+                if fail_tx_on_error {
+                    return Err(e.into());
+                } else {
                     msg!(
                         "Price skipped as validation failed for token {token_idx}: {:?}",
                         e
@@ -124,51 +122,72 @@ pub fn refresh_pyth_lazer_price<'info>(
                     continue;
                 }
             }
+        }
 
-            // Frozen entries: log the fetched price but don't update state
-            if is_frozen {
-                msg!(
-                    "tk {} ({:?}) is frozen, fetched price {:?} but not updating",
-                    token_idx,
-                    price_type,
-                    dated_price_ref.price.value,
-                );
-                *dated_price_ref = old_price;
-                continue;
-            }
-
+        // Frozen entries: log the fetched price but don't update state
+        if is_frozen {
             msg!(
-                "tk {}, {:?}: {:?} to {:?} | prev_slot: {:?}, new_slot: {:?}, crt_slot: {:?}",
+                "tk {} ({:?}) is frozen, fetched price {:?} but not updating",
                 token_idx,
                 price_type,
-                old_price.price.value,
-                dated_price_ref.price.value,
-                old_price.last_updated_slot,
-                dated_price_ref.last_updated_slot,
-                clock.slot,
+                price.price.value,
             );
+            continue;
+        }
 
-            if oracle_mappings.is_twap_enabled(token_idx) {
-                let mut oracle_twaps = ctx.accounts.oracle_twaps.load_mut()?;
-                if let Err(e) = crate::oracles::twap::update_twaps(
-                    &mut oracle_twaps,
-                    token_idx,
-                    dated_price_ref,
-                    oracle_mappings.twap_enabled_bitmask[token_idx],
-                ) {
-                    msg!("Error while updating TWAP of token {token_idx}: {e:?}",);
+        if oracle_mappings.is_twap_enabled(token_idx) {
+            let mut oracle_twaps = ctx.accounts.oracle_twaps.load_mut()?;
+            if let Err(e) = crate::oracles::twap::update_twaps(
+                &mut oracle_twaps,
+                token_idx,
+                &price,
+                oracle_mappings.twap_enabled_bitmask[token_idx],
+            ) {
+                msg!("Error while updating TWAP of token {token_idx}: {e:?}",);
+            }
+        }
+
+        // Check that the price is close enough to the ref price if there is a ref price.
+        // Deliberately after the TWAP update: a price may use its own TWAP as its ref price (a
+        // circuit breaker filtering out short price bursts), and for that to work the TWAP must
+        // update even when the ref price check fails. In a multi-token refresh a failing token is
+        // skipped (its update not stored) so it can't block the group's other tokens; a
+        // single-token refresh fails loudly. Mirrors refresh_price_list.
+        if oracle_mappings.ref_price[token_idx] != u16::MAX {
+            let ref_price =
+                oracle_prices.prices[usize::from(oracle_mappings.ref_price[token_idx])].price;
+            let ref_price_tolerance_bps = oracle_mappings.get_ref_price_tolerance_bps(token_idx);
+            if let Err(diff_err) =
+                check_ref_price_difference(price.price, ref_price, ref_price_tolerance_bps)
+            {
+                if fail_tx_on_error {
+                    return Err(diff_err);
+                } else {
+                    msg!(
+                        "Price skipped as ref price check failed (token {token_idx}, type {price_type:?})",
+                    );
+                    continue;
                 }
             }
         }
 
-        // check that the price is close enough to the ref price if there is a ref price
-        if oracle_mappings.ref_price[token_idx] != u16::MAX {
-            let new_price = oracle_prices.prices[token_idx].price;
-            let ref_price =
-                oracle_prices.prices[usize::from(oracle_mappings.ref_price[token_idx])].price;
-            let ref_price_tolerance_bps = oracle_mappings.get_ref_price_tolerance_bps(token_idx);
-            check_ref_price_difference(new_price, ref_price, ref_price_tolerance_bps)?;
-        }
+        let to_update = oracle_prices
+            .prices
+            .get_mut(token_idx)
+            .ok_or(ScopeError::BadTokenNb)?;
+
+        msg!(
+            "tk {}, {:?}: {:?} to {:?} | prev_slot: {:?}, new_slot: {:?}, crt_slot: {:?}",
+            token_idx,
+            price_type,
+            to_update.price.value,
+            price.price.value,
+            to_update.last_updated_slot,
+            price.last_updated_slot,
+            clock.slot,
+        );
+
+        *to_update = price;
     }
 
     Ok(())
