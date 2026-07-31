@@ -406,7 +406,8 @@
     "oracle_type": "PythLazer",
     "pyth_lazer_feed_id": 2398,
     "pyth_lazer_exponent": 8,
-    "confidence_factor": 50,
+    "bid_ask_spread_factor": 50,
+    "price_confidence_factor": 50,
     "max_age_slot": 375,
     "group_ids": [ 2 ],
     "twap_enabled": ["1h"]
@@ -1169,7 +1170,8 @@
     "oracle_type": "PythLazer",
     "pyth_lazer_feed_id": 6,
     "pyth_lazer_exponent": 8,
-    "confidence_factor": 50,
+    "bid_ask_spread_factor": 50,
+    "price_confidence_factor": 50,
     "group_ids": [ 1 ],
     "ref_price": 0,
     "ref_price_tolerance_bps": 500
@@ -1179,7 +1181,8 @@
     "oracle_type": "PythLazer",
     "pyth_lazer_feed_id": 1,
     "pyth_lazer_exponent": 8,
-    "confidence_factor": 50,
+    "bid_ask_spread_factor": 50,
+    "price_confidence_factor": 50,
     "group_ids": [ 1 ],
     "ref_price": 2,
     "ref_price_tolerance_bps": 500
@@ -1251,7 +1254,8 @@
     "oracle_type": "PythLazer",
     "pyth_lazer_feed_id": 7,
     "pyth_lazer_exponent": 8,
-    "confidence_factor": 100,
+    "bid_ask_spread_factor": 100,
+    "price_confidence_factor": 100,
     "group_ids": [ 1 ]
   },
   "309": {
@@ -1309,7 +1313,8 @@
     "oracle_type": "PythLazer",
     "pyth_lazer_feed_id": 2,
     "pyth_lazer_exponent": 8,
-    "confidence_factor": 50,
+    "bid_ask_spread_factor": 50,
+    "price_confidence_factor": 50,
     "group_ids": [ 1 ]
   },
   "323": {
@@ -1317,7 +1322,8 @@
     "oracle_type": "PythLazer",
     "pyth_lazer_feed_id": 8,
     "pyth_lazer_exponent": 8,
-    "confidence_factor": 100,
+    "bid_ask_spread_factor": 100,
+    "price_confidence_factor": 100,
     "group_ids": [ 1 ]
   },
   "324": {

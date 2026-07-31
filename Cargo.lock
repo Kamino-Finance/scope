@@ -2554,7 +2554,7 @@ dependencies = [
 
 [[package]]
 name = "scope"
-version = "0.37.0"
+version = "0.39.0"
 dependencies = [
  "adrena-perp-itf",
  "anchor-lang",

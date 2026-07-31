@@ -149,4 +149,12 @@ pub mod scope {
     ) -> Result<()> {
         handler_set_emergency_council::process(ctx, new_emergency_council, feed_name)
     }
+
+    pub fn set_resume_authority(
+        ctx: Context<SetResumeAuthority>,
+        new_resume_authority: Pubkey,
+        feed_name: String,
+    ) -> Result<()> {
+        handler_set_resume_authority::process(ctx, new_resume_authority, feed_name)
+    }
 }

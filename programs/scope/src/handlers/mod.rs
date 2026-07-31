@@ -10,6 +10,7 @@ pub mod handler_reset_twap;
 pub mod handler_resume_chainlinkx_price;
 pub mod handler_set_admin_cached;
 pub mod handler_set_emergency_council;
+pub mod handler_set_resume_authority;
 pub mod handler_update_mapping_and_metadata;
 
 pub use handler_approve_admin_cached::*;
@@ -24,4 +25,5 @@ pub use handler_reset_twap::*;
 pub use handler_resume_chainlinkx_price::*;
 pub use handler_set_admin_cached::*;
 pub use handler_set_emergency_council::*;
+pub use handler_set_resume_authority::*;
 pub use handler_update_mapping_and_metadata::*;

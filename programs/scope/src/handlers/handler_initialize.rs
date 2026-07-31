@@ -60,6 +60,9 @@ pub fn process(ctx: Context<Initialize>, _: String) -> Result<()> {
     configuration.oracle_twaps = twaps_pbk;
     configuration.tokens_metadata = metadata_pbk;
     configuration.admin_cached = Pubkey::default();
+    // Start with no ops delegates set (default pubkey = admin-only freeze/resume).
+    configuration.emergency_council = Pubkey::default();
+    configuration.resume_authority = Pubkey::default();
 
     // Initialize oracle twap account
     oracle_twaps.oracle_prices = prices_pbk;

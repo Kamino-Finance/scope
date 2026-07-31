@@ -13,9 +13,10 @@ use crate::{
 #[derive(Accounts)]
 #[instruction(token: u16, feed_name: String)]
 pub struct ResumeChainlinkXPrice<'info> {
-    pub admin: Signer<'info>,
+    #[account(constraint = configuration.load()?.can_resume(&authority.key()) @ ScopeError::UnauthorizedResume)]
+    pub authority: Signer<'info>,
 
-    #[account(seeds = [seeds::CONFIG, feed_name.as_bytes()], bump, has_one = admin, has_one = oracle_prices, has_one = oracle_mappings, has_one = tokens_metadata)]
+    #[account(seeds = [seeds::CONFIG, feed_name.as_bytes()], bump, has_one = oracle_prices, has_one = oracle_mappings, has_one = tokens_metadata)]
     pub configuration: AccountLoader<'info, Configuration>,
 
     #[account(mut, has_one = oracle_mappings)]
@@ -40,7 +41,20 @@ pub fn process(ctx: Context<ResumeChainlinkXPrice>, token: u16) -> Result<()> {
         .name;
 
     let str_name = std::str::from_utf8(&token_name).unwrap();
-    msg!("ResumeChainlinkxPrice, token: {} ({})", token, str_name);
+    // Audit trail: record who resumed and whether it was the admin or the resume delegate.
+    let authority = ctx.accounts.authority.key();
+    let authority_role = if authority == ctx.accounts.configuration.load()?.admin {
+        "admin"
+    } else {
+        "resume_authority"
+    };
+    msg!(
+        "ResumeChainlinkxPrice, token: {} ({}), authority: {} ({})",
+        token,
+        str_name,
+        authority,
+        authority_role
+    );
 
     // Check that the token at entry_id is a ChainlinkX oracle type
     let price_type: OracleType = oracle_mappings.get_entry_type(entry_id)?;
