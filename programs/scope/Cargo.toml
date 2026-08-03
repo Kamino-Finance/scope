@@ -26,6 +26,10 @@ yvaults = ["dep:yvaults"]
 devnet = ["skip_price_validation"]
 localnet = []
 mainnet = []
+# Scope staging deliberately targets klend *prod*, not klend staging, so the staging mirror acts as
+# a prerelease check against the live klend deployment. Hence we do NOT enable `klend-itf/staging`
+# here. Scope-staging-against-klend-staging is the separate `CLUSTER=staging-to-staging` build
+# klend staging also stays an explicit `--features klend-itf/staging` opt-in.
 staging = []
 serde = ["dep:serde"]
 
@@ -75,4 +79,5 @@ chainlink-streams-report = { git = "https://github.com/smartcontractkit/data-str
 num-bigint = "0.4"
 securitize-itf = { path = "../securitize-itf", features = ["no-entrypoint"] }
 flashtrade-perp-itf = { path = "../flashtrade-perp-itf", features = ["no-entrypoint"] }
+klend-itf = { path = "../klend-itf", features = ["no-entrypoint"] }
 

@@ -16,6 +16,9 @@ fn main() {
         // Set feature according to current cluster
         match cluster.as_str() {
             "staging" => println!("cargo:rustc-cfg=feature=\"staging\""),
+            // Scope staging <-> klend staging. Scope itself uses its staging id (same as `staging`);
+            // klend-itf's own build.rs reads this same cluster and switches klend to its staging id.
+            "staging-to-staging" => println!("cargo:rustc-cfg=feature=\"staging\""),
             "localnet" => println!("cargo:rustc-cfg=feature=\"localnet\""),
             "devnet" => {
                 println!("cargo:rustc-cfg=feature=\"devnet\"");

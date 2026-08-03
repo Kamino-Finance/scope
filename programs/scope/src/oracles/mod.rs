@@ -13,6 +13,7 @@ pub mod fixed_price;
 pub mod flashtrade_lp;
 pub mod jito_restaking;
 pub mod jupiter_lp;
+pub mod klend_ctoken_exchange_rate;
 pub mod meteora_dlmm;
 pub mod most_recent_of;
 pub mod msol_stake;
@@ -112,6 +113,7 @@ impl OracleType {
             OracleType::StakedSolBalance => 15_000,
             OracleType::TotalMintSupply => 15_000,
             OracleType::Conditional => 20_000,
+            OracleType::KlendCTokenExchangeRate => 200_000,
         }
     }
 }
@@ -306,6 +308,10 @@ where
             &oracle_mappings.generic[index],
         )
         .map_err(Into::into),
+        OracleType::KlendCTokenExchangeRate => {
+            klend_ctoken_exchange_rate::get_price(base_account, clock, extra_accounts)
+                .map_err(Into::into)
+        }
     }?;
     // The price providers above are performing their type-specific validations, but are still free to return 0,
     // which we can only tolerate for certain oracle types (e.g. explicit fixed price, multiplication chains
@@ -423,6 +429,9 @@ pub fn validate_oracle_cfg(
             conditional::validate_mapping_cfg(price_account, generic_data, entry_id)
                 .map_err(Into::into)
         }
+        OracleType::KlendCTokenExchangeRate => {
+            klend_ctoken_exchange_rate::validate_account(price_account).map_err(Into::into)
+        }
     }
 }
 
@@ -456,7 +465,8 @@ pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
         | OracleType::ChainlinkExchangeRate
         | OracleType::SplBalance
         | OracleType::StakedSolBalance
-        | OracleType::TotalMintSupply => false,
+        | OracleType::TotalMintSupply
+        | OracleType::KlendCTokenExchangeRate => false,
 
         OracleType::FixedPrice
         | OracleType::DiscountToMaturity
@@ -517,6 +527,7 @@ pub fn debug_format_generic_data(
         | OracleType::SplBalance
         | OracleType::StakedSolBalance
         | OracleType::TotalMintSupply
+        | OracleType::KlendCTokenExchangeRate
         | OracleType::Unused
         | OracleType::DeprecatedPlaceholder1
         | OracleType::DeprecatedPlaceholder2

@@ -45,6 +45,9 @@ pub mod scope {
         handler_initialize::process(ctx, feed_name)
     }
 
+    /// Note: an entry whose refresh CPIs into another program (e.g. `KlendCTokenExchangeRate`) must
+    /// be refreshed in its own single-entry call, not batched with other tokens — a CPI failure
+    /// aborts the whole transaction and cannot be skipped per-entry.
     pub fn refresh_price_list<'info>(
         ctx: Context<'_, '_, '_, 'info, RefreshList<'info>>,
         tokens: Vec<u16>,
