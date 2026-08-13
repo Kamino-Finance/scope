@@ -1,6 +1,6 @@
 [package]
 name = "scope"
-version = "0.39.0"
+version = "0.40.0"
 description = "Scope is Kamino's oracle aggregator"
 repository = "https://github.com/Kamino-Finance/scope"
 edition = "2021"
