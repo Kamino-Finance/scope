@@ -1,0 +1,20 @@
+[package]
+name = "klend-itf"
+version = "0.1.0"
+description = "Minimal interface to Kamino Lending for Scope oracle"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "klend_itf"
+
+[features]
+no-entrypoint = []
+staging = []
+
+[dependencies]
+anchor-lang = "0.28.0"
+solana-program = ">1.16.18"
+bytemuck = { version = "1.4.0", features = ["min_const_generics"] }
+static_assertions = "1.1.0"
+borsh = "0.10"

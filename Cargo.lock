@@ -9,7 +9,7 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "bytemuck",
- "num 0.4.3",
+ "num",
  "num-traits",
  "solana-program",
 ]
@@ -310,7 +310,7 @@ dependencies = [
  "derivative",
  "digest 0.10.7",
  "itertools 0.10.5",
- "num-bigint 0.4.6",
+ "num-bigint",
  "num-traits",
  "paste",
  "rustc_version",
@@ -333,7 +333,7 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7abe79b0e4288889c4574159ab790824d0033b9fdcb2a112a3182fac2e514565"
 dependencies = [
- "num-bigint 0.4.6",
+ "num-bigint",
  "num-traits",
  "proc-macro2",
  "quote",
@@ -362,7 +362,7 @@ dependencies = [
  "ark-serialize-derive",
  "ark-std",
  "digest 0.10.7",
- "num-bigint 0.4.6",
+ "num-bigint",
 ]
 
 [[package]]
@@ -753,7 +753,7 @@ version = "1.0.3"
 source = "git+https://github.com/smartcontractkit/data-streams-sdk.git#fb56ce042fc72bb052f1e753a6ffe19974c136b1"
 dependencies = [
  "hex",
- "num-bigint 0.4.6",
+ "num-bigint",
  "serde",
  "serde_json",
  "snap",
@@ -1453,6 +1453,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "klend-itf"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "borsh 0.10.3",
+ "bytemuck",
+ "solana-program",
+ "static_assertions",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1674,40 +1685,15 @@ dependencies = [
 
 [[package]]
 name = "num"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8536030f9fea7127f841b45bb6243b27255787fb4eb83958aa1ef9d2fdc0c36"
-dependencies = [
- "num-bigint 0.2.6",
- "num-complex 0.2.4",
- "num-integer",
- "num-iter",
- "num-rational 0.2.4",
- "num-traits",
-]
-
-[[package]]
-name = "num"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35bd024e8b2ff75562e5f34e7f4905839deb4b22955ef5e73d2fea1b9813cb23"
 dependencies = [
- "num-bigint 0.4.6",
- "num-complex 0.4.6",
+ "num-bigint",
+ "num-complex",
  "num-integer",
  "num-iter",
- "num-rational 0.4.2",
- "num-traits",
-]
-
-[[package]]
-name = "num-bigint"
-version = "0.2.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "090c7f9998ee0ff65aa5b723e4009f7b217707f1fb5ea551329cc4d6231fb304"
-dependencies = [
- "autocfg",
- "num-integer",
+ "num-rational",
  "num-traits",
 ]
 
@@ -1718,16 +1704,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a5e44f723f1133c9deac646763579fdb3ac745e418f2a7af9cd0c431da1f20b9"
 dependencies = [
  "num-integer",
- "num-traits",
-]
-
-[[package]]
-name = "num-complex"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6b19411a9719e753aff12e5187b74d60d3dc449ec3f4dc21e3989c3f554bc95"
-dependencies = [
- "autocfg",
  "num-traits",
 ]
 
@@ -1790,23 +1766,11 @@ dependencies = [
 
 [[package]]
 name = "num-rational"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c000134b5dbf44adc5cb772486d335293351644b801551abe8f75c84cfa4aef"
-dependencies = [
- "autocfg",
- "num-bigint 0.2.6",
- "num-integer",
- "num-traits",
-]
-
-[[package]]
-name = "num-rational"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f83d14da390562dca69fc84082e73e548e1ad308d24accdedd2720017cb37824"
 dependencies = [
- "num-bigint 0.4.6",
+ "num-bigint",
  "num-integer",
  "num-traits",
 ]
@@ -2554,7 +2518,7 @@ dependencies = [
 
 [[package]]
 name = "scope"
-version = "0.39.0"
+version = "0.40.0"
 dependencies = [
  "adrena-perp-itf",
  "anchor-lang",
@@ -2567,8 +2531,9 @@ dependencies = [
  "flashtrade-perp-itf",
  "intbits",
  "jup-perp-itf",
+ "klend-itf",
  "lb-clmm-itf",
- "num-bigint 0.4.6",
+ "num-bigint",
  "num_enum 0.7.1",
  "pyth-lazer-protocol",
  "pyth-lazer-solana-contract",
@@ -2886,7 +2851,7 @@ version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "58267dd2fbaa6dceecba9e3e106d2d90a2b02497c0e8b01b8759beccf5113938"
 dependencies = [
- "num 0.2.1",
+ "num",
 ]
 
 [[package]]
@@ -2989,7 +2954,7 @@ dependencies = [
  "libsecp256k1",
  "log",
  "memoffset",
- "num-bigint 0.4.6",
+ "num-bigint",
  "num-derive 0.3.3",
  "num-traits",
  "parking_lot",
@@ -4047,7 +4012,7 @@ dependencies = [
  "decimal-wad",
  "lb_clmm",
  "mpl-token-metadata 1.13.2",
- "num 0.4.3",
+ "num",
  "num-derive 0.4.1",
  "num-traits",
  "num_enum 0.7.1",

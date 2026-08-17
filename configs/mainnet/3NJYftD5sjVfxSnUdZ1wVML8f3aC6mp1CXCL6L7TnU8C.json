@@ -408,28 +408,15 @@
     "pyth_lazer_exponent": 8,
     "bid_ask_spread_factor": 50,
     "price_confidence_factor": 50,
+    "ema_enabled": true,
+    "ema_confidence_factor": 50,
     "max_age_slot": 375,
-    "group_ids": [ 2 ],
-    "twap_enabled": ["1h"]
+    "group_ids": [ 2 ]
   },
   "87": {
-    "label": "TWAP 1h PythLazer ORE/USD",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 86,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
-  "88": {
-    "label": "Pyth SyrupUSDC/USDC RR",
-    "oracle_mapping": "GWdwWDhYFUc8ZD6uCTtEAAwx97V1ZCsxPWGL7vhSha6w",
-    "oracle_type": "PythPull",
-    "max_age_slot": 375,
-    "group_ids": [ 2 ]
-  },
-  "89": {
-    "label": "Pyth EMA SyrupUSDC/USDC RR",
-    "oracle_mapping": "GWdwWDhYFUc8ZD6uCTtEAAwx97V1ZCsxPWGL7vhSha6w",
-    "oracle_type": "PythPullEMA",
+    "label": "PythLazerEMA ORE/USD",
+    "oracle_type": "PythLazerEMA",
+    "pyth_lazer_ema_source_entry": 86,
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
@@ -503,18 +490,6 @@
     "twap_source": 104,
     "max_age_slot": 380,
     "group_ids": [ 2 ]
-  },
-  "106": {
-    "label": "Pyth Pull MEW/USD",
-    "oracle_mapping": "EF6U755BdHMXim8RBw6XSC6Yk6XaouTKpwcBZ7QkcanB",
-    "oracle_type": "PythPull",
-    "group_ids": [ 1, 2 ]
-  },
-  "107": {
-    "label": "Pyth Pull EMA MEW/USD",
-    "oracle_mapping": "EF6U755BdHMXim8RBw6XSC6Yk6XaouTKpwcBZ7QkcanB",
-    "oracle_type": "PythPullEMA",
-    "group_ids": [ 1, 2 ]
   },
   "108": {
     "label": "kSOL-bSOL_Orca/USD",
@@ -879,13 +854,6 @@
     "max_age_slot": 375,
     "group_ids": [ 2 ]
   },
-  "202": {
-    "label": "RateX PT-2505/sUSDe",
-    "oracle_type": "DiscountToMaturity",
-    "discount_per_year_bps": 2500,
-    "maturity_timestamp": 1748563200,
-    "group_ids": [ 1 ]
-  },
   "205": {
     "label": "Raydium zBTC/SOL",
     "oracle_mapping": "pBepKfFNUU7v3onEbUpRhjUZR7ajogXCAPiU9fBWTVK",
@@ -930,27 +898,6 @@
     "twap_source": 215,
     "max_age_slot": 380,
     "group_ids": [ 2 ]
-  },
-  "217": {
-    "label": "RateX PT-2507/USDe",
-    "oracle_type": "DiscountToMaturity",
-    "discount_per_year_bps": 2500,
-    "maturity_timestamp": 1754006400,
-    "group_ids": [ 1 ]
-  },
-  "220": {
-    "label": "Exponent PT-2506/kySOL",
-    "oracle_type": "DiscountToMaturity",
-    "discount_per_year_bps": 2500,
-    "maturity_timestamp": 1749913200,
-    "group_ids": [ 1 ]
-  },
-  "223": {
-    "label": "Exponent PT-2507/fragSOL",
-    "oracle_type": "DiscountToMaturity",
-    "discount_per_year_bps": 2500,
-    "maturity_timestamp": 1752159600,
-    "group_ids": [ 1 ]
   },
   "224": {
     "label": "Orca wM/USDC",
@@ -1117,13 +1064,6 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
-  "261": {
-    "label": "RateX PT-2507/PST",
-    "oracle_type": "DiscountToMaturity",
-    "discount_per_year_bps": 2500,
-    "maturity_timestamp": 1753747200,
-    "group_ids": [ 1 ]
-  },
   "262": {
     "label": "Pyth Pull USX/USD",
     "oracle_mapping": "2fLyonDim37cG8M1u7QBCFHZ1LVhQeMi6cJeNUktMQwY",
@@ -1193,13 +1133,6 @@
     "oracle_mapping": "pyZMBjpWsVjKANAYK5mpNbKiws2krjRPZ2N2UYCSnbP",
     "group_ids": [ 1, 2 ]
   },
-  "279": {
-    "label": "RateX PT-2507/sUSDe",
-    "oracle_type": "DiscountToMaturity",
-    "discount_per_year_bps": 2500,
-    "maturity_timestamp": 1754006400,
-    "group_ids": [ 1 ]
-  },
   "282": {
     "label": "digitSOL/SOL",
     "oracle_type": "SplStake",
@@ -1210,12 +1143,6 @@
     "label": "adraSOL/SOL",
     "oracle_type": "SplStake",
     "oracle_mapping": "2XhsHdwf4ZDpp2JhpTqPovoVy3L2Atfp1XkLqFMwGP4Y",
-    "group_ids": [ 1, 2 ]
-  },
-  "284": {
-    "label": "hayekSOL/SOL",
-    "oracle_type": "SplStake",
-    "oracle_mapping": "8un9sEAuriMS1UZhZ2dtf7EW2a5x2kRtFPcSbNyG7g6M",
     "group_ids": [ 1, 2 ]
   },
   "287": {
@@ -1301,13 +1228,6 @@
     "max_age_slot": 1510,
     "group_ids": [ 2 ]
   },
-  "321": {
-    "label": "RateX PT-2508/FragSOL",
-    "oracle_type": "DiscountToMaturity",
-    "discount_per_year_bps": 2500,
-    "maturity_timestamp": 1756425600,
-    "group_ids": [ 1 ]
-  },
   "322": {
     "label": "PythLazer ETH/USD",
     "oracle_type": "PythLazer",
@@ -1356,13 +1276,6 @@
     "oracle_type": "SplStake",
     "group_ids": [ 1, 2 ]
   },
-  "330": {
-    "label": "Exponent PT-2509/kySOL",
-    "oracle_type": "DiscountToMaturity",
-    "discount_per_year_bps": 2500,
-    "maturity_timestamp": 1759233500,
-    "group_ids": [ 1 ]
-  },
   "331": {
     "label": "Securitize sACRED/USD",
     "oracle_mapping": "9L4WxKkUHKBZ96EpHBc7APqvEhobmY1A2ENk5dUfdrpw",
@@ -1371,20 +1284,6 @@
     "max_age_slot": 1510,
     "ref_price": 191,
     "ref_price_tolerance_bps": 500,
-    "group_ids": [ 1 ]
-  },
-  "332": {
-    "label": "Exponent PT-2510/FragSOL",
-    "oracle_type": "DiscountToMaturity",
-    "discount_per_year_bps": 2500,
-    "maturity_timestamp": 1761904699,
-    "group_ids": [ 1 ]
-  },
-  "333": {
-    "label": "RateX PT-2508/FragSOL",
-    "oracle_type": "DiscountToMaturity",
-    "discount_per_year_bps": 2500,
-    "maturity_timestamp": 1756425600,
     "group_ids": [ 1 ]
   },
   "334": {
@@ -1796,13 +1695,6 @@
     "max_age_slot": 375,
     "group_ids": [ 2 ]
   },
-  "413": {
-    "label": "TWAP Raydium PRIME/CASH",
-    "oracle_type": "ScopeTwap1h",
-    "twap_source": 412,
-    "max_age_slot": 380,
-    "group_ids": [ 2 ]
-  },
   "414": {
     "label": "Pyth Pull deJAAA/USD RR",
     "oracle_mapping": "G7ycRzKBSLMfqotmH6kXysEvoK8U3A2rcPsEwZmYghbh",
@@ -1852,20 +1744,6 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
-  "439": {
-    "label": "Pyth Pull FWOG/USD",
-    "oracle_mapping": "gWzECufoh81TGMrRRD9QnTUjHQpGW1kywXu8PZYLhmF",
-    "oracle_type": "PythPull",
-    "group_ids": [ 1, 2 ],
-    "max_age_slot": 375
-  },
-  "440": {
-    "label": "Pyth Pull EMA FWOG/USD",
-    "oracle_mapping": "gWzECufoh81TGMrRRD9QnTUjHQpGW1kywXu8PZYLhmF",
-    "oracle_type": "PythPullEMA",
-    "group_ids": [ 1, 2 ],
-    "max_age_slot": 380
-  },
   "441": {
     "label": "Raydium ONyc/USDG",
     "oracle_mapping": "A9RdNEf4T9x1eNPnEHFX1ABHS7J4e9kxBm43S3o5r9Kw",
@@ -1900,12 +1778,6 @@
     "oracle_mapping": "9Z8yimuc3bQCWLDyMhe6jfWqNk9EggyJZUo8TLnYsqhN",
     "max_age_slot": 2000,
     "group_ids": [ 4 ]
-  },
-  "448": {
-    "label": "Pyth Pull GRASS/USD",
-    "oracle_mapping": "1vdRiUwEcjRArZFYosVaPFJKyuqYrPFNvshbZ4yCACS",
-    "oracle_type": "PythPull",
-    "group_ids": [ 1, 2 ]
   },
   "449": {
     "label": "Fixed 10010 BPS Multiplier",
@@ -2105,24 +1977,6 @@
     "oracle_type": "ScopeTwap1h",
     "twap_source": 499,
     "max_age_slot": 220,
-    "group_ids": [ 1, 2 ]
-  },
-  "501": {
-    "label": "Pyth Pull EMA GRASS/USD",
-    "oracle_mapping": "1vdRiUwEcjRArZFYosVaPFJKyuqYrPFNvshbZ4yCACS",
-    "oracle_type": "PythPullEMA",
-    "group_ids": [ 1, 2 ]
-  },
-  "502": {
-    "label": "Pyth Pull GOAT/USD",
-    "oracle_mapping": "3KebxXoZLaZvvdc3ecmdgwWQWSCLQeuouS6mrF7ar1en",
-    "oracle_type": "PythPull",
-    "group_ids": [ 1, 2 ]
-  },
-  "503": {
-    "label": "Pyth Pull EMA GOAT/USD",
-    "oracle_mapping": "3KebxXoZLaZvvdc3ecmdgwWQWSCLQeuouS6mrF7ar1en",
-    "oracle_type": "PythPullEMA",
     "group_ids": [ 1, 2 ]
   },
   "504": {

@@ -10,7 +10,6 @@
     "confidence_factor": 50,
     "twap_enabled": ["1h"]
   },
-  
   "2": {
     "label": "PythLazer SOL/USD",
     "oracle_type": "PythLazer",
@@ -159,11 +158,6 @@
     "cap_entry": 12,
     "floor_entry": 189
   },
-  "26": {
-    "label": "Pyth Pull AAPL/USD",
-    "oracle_mapping": "DJ2FyTgUAkEtXW3U5P9PF19meFTRtW4ZWKKFgACfVbUy",
-    "oracle_type": "PythPull"
-  },
   "30": {
     "label": "Chainlink AAPLx/USD Open",
     "oracle_type": "ChainlinkRWA",
@@ -182,11 +176,6 @@
     "chainlink_feed_id": "0x0008e64e9538dea4c50f9a8203d2c8993b6f3756da73cabafbb204637310c450",
     "market_status_behavior": "AllUpdates",
     "twap_enabled": ["1h"]
-  },
-  "34": {
-    "label": "Pyth Pull GOOGL/USD",
-    "oracle_mapping": "HShKFQqhYkUiXpVyyLmrAALXwWqHB7ikLmPbrwJzpRNh",
-    "oracle_type": "PythPull"
   },
   "38": {
     "label": "Chainlink GOOGLx/USD Open",
@@ -207,11 +196,6 @@
     "market_status_behavior": "AllUpdates",
     "twap_enabled": ["1h"]
   },
-  "42": {
-    "label": "Pyth Pull NVDA/USD",
-    "oracle_mapping": "2w1Tg1XTZbUib7srfRoStJ4v5JXVsK7roQEGMsMaGZFC",
-    "oracle_type": "PythPull"
-  },
   "46": {
     "label": "Chainlink NVDAx/USD Open",
     "oracle_type": "ChainlinkRWA",
@@ -230,11 +214,6 @@
     "chainlink_feed_id": "0x0008adc184847ba8d17f0030c15e78f61b83eda2e190f30346c4ea3babed647d",
     "market_status_behavior": "AllUpdates",
     "twap_enabled": ["1h"]
-  },
-  "50": {
-    "label": "Pyth Pull AMZN/USD",
-    "oracle_mapping": "GBkjjFxbaFY9TBHpAPypk5JBchpPPve2jskAcd9zuFNd",
-    "oracle_type": "PythPull"
   },
   "52": {
     "label": "Chainlink AMZNx/USD Open",
@@ -255,11 +234,6 @@
     "market_status_behavior": "AllUpdates",
     "twap_enabled": ["1h"]
   },
-  "56": {
-    "label": "Pyth Pull TSLA/USD",
-    "oracle_mapping": "E8WFH8brgP58arcuW2wwsPHiomYrSvrgWTsRLZLAEZUQ",
-    "oracle_type": "PythPull"
-  },
   "60": {
     "label": "Chainlink TSLAx/USD Open",
     "oracle_type": "ChainlinkRWA",
@@ -279,11 +253,6 @@
     "market_status_behavior": "AllUpdates",
     "twap_enabled": ["1h"]
   },
-  "64": {
-    "label": "Pyth Pull COIN/USD",
-    "oracle_mapping": "91JXaWGHr57awfqhXQP2TxrkLX6CpvtBaaRjz1PEQqXn",
-    "oracle_type": "PythPull"
-  },
   "68": {
     "label": "Chainlink COINx/USD Open",
     "oracle_type": "ChainlinkRWA",
@@ -302,11 +271,6 @@
     "chainlink_feed_id": "0x000807d210856cc2783978eb01ba478aa6ae15b7bad433e3a10e9c343421cc49",
     "market_status_behavior": "AllUpdates",
     "twap_enabled": ["1h"]
-  },
-  "72": {
-    "label": "Pyth Pull MSTR/USD",
-    "oracle_mapping": "HJGvGyWrAXdZPG4Q7LNkkKja72FDkJW7ixuyg3u6vZyP",
-    "oracle_type": "PythPull"
   },
   "76": {
     "label": "Chainlink MSTRx/USD Open",
@@ -365,16 +329,6 @@
     "market_status_behavior": "AllUpdates",
     "twap_enabled": ["1h"]
   },
-  "90": {
-    "label": "Pyth Pull QQQ/USD",
-    "oracle_mapping": "EwssJrQ7UVz6itHEaQQsKWikhZ3iHddyxRhmR7pTvwt5",
-    "oracle_type": "PythPull"
-  },
-  "94": {
-    "label": "Pyth Pull HOOD/USD",
-    "oracle_mapping": "5tZizzQN776ZWTibPJKecjk1DkTSDHu47dXM3SxR5D5i",
-    "oracle_type": "PythPull"
-  },
   "98": {
     "label": "Chainlink HOODx/USD Open",
     "oracle_type": "ChainlinkRWA",
@@ -423,22 +377,12 @@
     "chainlink_feed_id": "0x0009a5831badbd7ca44834d9943b0d4a7ea28ebad0e5119f6855b80acb84ec25",
     "twap_enabled": ["24h"]
   },
-  "109": {
-    "label": "Pyth Pull fragSOL/SOL RR",
-    "oracle_mapping": "GvXHoc7sVP2skio1s3t7ggqH8Kt73h25E9QQAozEHXSE",
-    "oracle_type": "PythPull"
-  },
   "110": {
     "label": "Pyth Pull PST/USDC RR",
     "oracle_mapping": "CBGwQddTeYn3KdvxGWtU95fqCcavzHK9XPFBLENDF5JR",
     "oracle_type": "PythPull",
     "ref_price": 403,
     "ref_price_tolerance_bps": 500
-  },
-  "111": {
-    "label": "Pyth Pull EMA PST/USDC RR",
-    "oracle_mapping": "CBGwQddTeYn3KdvxGWtU95fqCcavzHK9XPFBLENDF5JR",
-    "oracle_type": "PythPullEMA"
   },
   "112": {
     "label": "dzSOL/SOL",
@@ -735,24 +679,12 @@
     "discount_per_year_bps": 2500,
     "maturity_timestamp": 1765385899
   },
-  "161": {
-    "label": "Pyth Pull XAU/USD",
-    "oracle_mapping": "2uPQGpm8X4ZkxMHxrAW1QuhXcse1AHEgPih6Xp9NuEWW",
-    "oracle_type": "PythPull"
-  },
-  "163": {
-    "label": "Pyth Pull XAUT/USD",
-    "oracle_mapping": "6aLRPrkf5SM4mZdQCbb23YMZirN8bX7pqbbk1mZfb1s9",
-    "oracle_type": "PythPull"
-  },
   "165": {
     "label": "Chainlink XAUT/USD",
     "oracle_type": "Chainlink",
     "chainlink_feed_id": "0x0003b8b3f33c4c06a7947e86c5b4db4ef0991637d9821b9cdf897c0b5d488468",
     "confidence_factor": 100,
-    "twap_enabled": ["1h"],
-    "ref_price": 163,
-    "ref_price_tolerance_bps": 500
+    "twap_enabled": ["1h"]
   },
   "166": {
     "label": "Chainlink TWAP XAUT/USD",
@@ -765,9 +697,7 @@
     "oracle_type": "ChainlinkRWA",
     "chainlink_feed_id": "0x0008991d4caf73e8e05f6671ef43cee5e8c5c3652a35fde0b0942e44a77b0e89",
     "market_status_behavior": "AllUpdates",
-    "twap_enabled": ["1h"],
-    "ref_price": 161,
-    "ref_price_tolerance_bps": 500
+    "twap_enabled": ["1h"]
   },
   "168": {
     "label": "Chainlink TWAP XAU/USD",
@@ -1231,23 +1161,13 @@
     "twap_source": 242,
     "max_age_slot": 165
   },
-  "244": {
-    "label": "Pyth Pull ONyc/USD NAV",
-    "oracle_mapping": "8uto8utKdfs2ajrmBtcFL5s9mXbc7UPg8HSdLwCn1Mg7",
-    "oracle_type": "PythPull"
-  },
-  "245": {
-    "label": "Pyth Pull EMA ONyc/USD NAV",
-    "oracle_mapping": "8uto8utKdfs2ajrmBtcFL5s9mXbc7UPg8HSdLwCn1Mg7",
-    "oracle_type": "PythPullEMA"
-  },
   "246": {
     "label": "Most recent ONyc/USD",
     "oracle_type": "MostRecentOf",
     "max_age_slot": 165,
     "sources_max_age_s": 7200,
     "max_divergence_bps": 100,
-    "source_entries": [108, 244],
+    "source_entries": [108, 477],
     "ref_price": 402,
     "ref_price_tolerance_bps": 500
   },
@@ -1267,14 +1187,9 @@
     "max_age_slot": 165,
     "sources_max_age_s": 7200,
     "max_divergence_bps": 100,
-    "source_entries": [194, 237],
+    "source_entries": [483, 237],
     "ref_price": 254,
     "ref_price_tolerance_bps": 500
-  },
-  "249": {
-    "label": "Pyth Pull eUSX/USX RR",
-    "oracle_mapping": "w1sgiDz1vsb3GqHLbe58DeBHXCh4JpgWxu5Ko3fiGv7",
-    "oracle_type": "PythPull"
   },
   "251": {
     "label": "Most recent eUSX/USX",
@@ -1282,7 +1197,7 @@
     "max_age_slot": 165,
     "sources_max_age_s": 7200,
     "max_divergence_bps": 100,
-    "source_entries": [151, 249],
+    "source_entries": [151, 481],
     "ref_price": 205,
     "ref_price_tolerance_bps": 500
   },
@@ -1510,11 +1425,6 @@
     "oracle_type": "ScopeTwap1h",
     "twap_source": 282,
     "max_age_slot": 165
-  },
-  "284": {
-    "label": "Pyth Pull SPY/USD",
-    "oracle_mapping": "9owhtgrdLiUMAH9JKxYFt5pUY4Luy4EzzLhdcWPVuDyy",
-    "oracle_type": "PythPull"
   },
   "285": {
     "label": "Chainlink wstUSR/stUSR RR",
@@ -1924,7 +1834,7 @@
   "352": {
     "label": "MostRecent PST/USDC",
     "oracle_type": "MostRecentOf",
-    "source_entries": [110, 351],
+    "source_entries": [479, 351],
     "max_divergence_bps": 100,
     "sources_max_age_s": 60
   },
@@ -1932,8 +1842,8 @@
     "label": "Checked PST/USDC",
     "oracle_type": "CappedFloored",
     "source_entry": 352,
-    "cap_entry": 110,
-    "floor_entry": 110
+    "cap_entry": 479,
+    "floor_entry": 479
   },
   "354": {
     "label": "Fixed 1000000000 price",
@@ -2462,7 +2372,9 @@
     "label": "Chainlink reUSD/USD",
     "oracle_type": "ChainlinkExchangeRate",
     "chainlink_feed_id": "0x00072c74e4a28e4cb93cf0551e1bd992af743db37ce791d65cccadd7556f5c40",
-    "twap_enabled": ["1h"]
+    "ref_price": 252,
+    "ref_price_tolerance_bps": 500,
+    "twap_enabled": ["1h"]    
   },
   "446": {
     "label": "TWAP Chainlink reUSD/USD",
@@ -2595,5 +2507,272 @@
     "oracle_type": "ScopeTwap1h",
     "twap_source": 466,
     "max_age_slot": 165
+  },
+  "468": {
+    "label": "Raydium oTFY/USDC",
+    "oracle_mapping": "7GzGBjKG8Y326tpiNQ83CA5oePy8qZqfXgz2dLBn7qyq",
+    "oracle_type": "RaydiumAmmV3AtoB"
+  },
+  "469": {
+    "label": "MostRecent oTFY/USD",
+    "oracle_type": "MostRecentOf",
+    "source_entries": [468, 466],
+    "max_divergence_bps": 50,
+    "sources_max_age_s": 60
+  },
+  "470": {
+    "label": "Checked oTFY/USD",
+    "oracle_type": "CappedFloored",
+    "source_entry": 469,
+    "cap_entry": 466,
+    "floor_entry": 466
+  },
+  "471": {
+    "label": "Chainlink solMFOne/USD",
+    "oracle_type": "ChainlinkNAV",
+    "chainlink_feed_id": "0x0009e317dc672d25d41ef29aec9a04570f6645d9a82d36478f392b0b519600d9",
+    "twap_enabled": ["1h"],
+    "ref_price": 12,
+    "ref_price_tolerance_bps": 200
+  },
+  "472": {
+    "label": "Chainlink solMFOne/USD TWAP",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 471,
+    "max_age_slot": 165
+  },
+  "473": {
+    "label": "Chainlink solMHyper/USD",
+    "oracle_type": "ChainlinkNAV",
+    "chainlink_feed_id": "0x0009fc92d1aa7665ebec5f70acba4eff3be2388b20d52bdbcaae1c017c9dc3c8",
+    "twap_enabled": ["1h"],
+    "ref_price": 12,
+    "ref_price_tolerance_bps": 200
+  },
+  "474": {
+    "label": "Chainlink solMHyper/USD TWAP",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 473,
+    "max_age_slot": 165
+  },
+  "475": {
+    "label": "PythLazer USTB/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1831,
+    "pyth_lazer_exponent": 8,
+    "price_confidence_factor": 100,
+    "ema_enabled": true,
+    "ema_confidence_factor": 100
+  },
+  "476": {
+    "label": "PythLazerEMA USTB/USD",
+    "oracle_type": "PythLazerEMA",
+    "pyth_lazer_ema_source_entry": 475
+  },
+  "477": {
+    "label": "PythLazer ONyc/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1829,
+    "pyth_lazer_exponent": 8,
+    "price_confidence_factor": 100,
+    "ema_enabled": true,
+    "ema_confidence_factor": 100
+  },
+  "478": {
+    "label": "PythLazerEMA ONyc/USD",
+    "oracle_type": "PythLazerEMA",
+    "pyth_lazer_ema_source_entry": 477
+  },
+  "479": {
+    "label": "PythLazer PST/USDC",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1577,
+    "pyth_lazer_exponent": 8,
+    "price_confidence_factor": 100,
+    "ema_enabled": true,
+    "ema_confidence_factor": 100,
+    "ref_price": 403,
+    "ref_price_tolerance_bps": 500
+  },
+  "480": {
+    "label": "PythLazerEMA PST/USDC",
+    "oracle_type": "PythLazerEMA",
+    "pyth_lazer_ema_source_entry": 479
+  },
+  "481": {
+    "label": "PythLazer eUSX/USX",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1804,
+    "pyth_lazer_exponent": 8,
+    "price_confidence_factor": 100,
+    "ema_enabled": true,
+    "ema_confidence_factor": 100
+  },
+  "482": {
+    "label": "PythLazerEMA eUSX/USX",
+    "oracle_type": "PythLazerEMA",
+    "pyth_lazer_ema_source_entry": 481
+  },
+  "483": {
+    "label": "PythLazer USCC/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1830,
+    "pyth_lazer_exponent": 8,
+    "price_confidence_factor": 100,
+    "ema_enabled": true,
+    "ema_confidence_factor": 100
+  },
+  "484": {
+    "label": "PythLazerEMA USCC/USD",
+    "oracle_type": "PythLazerEMA",
+    "pyth_lazer_ema_source_entry": 483
+  },
+  "485": {
+    "label": "PythLazer GLXY/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 2288,
+    "pyth_lazer_exponent": 5,
+    "bid_ask_spread_factor": 50,
+    "price_confidence_factor": 50
+  },
+  "486": {
+    "label": "PythLazer GLXY.SS/GLXY.RR",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 2329,
+    "pyth_lazer_exponent": 8,
+    "price_confidence_factor": 100
+  },
+  "487": {
+    "label": "PythLazer FWDI/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 2948,
+    "pyth_lazer_exponent": 5,
+    "bid_ask_spread_factor": 50,
+    "price_confidence_factor": 50
+  },
+  "488": {
+    "label": "PythLazer FWDI.SS/FWDI.RR",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 2988,
+    "pyth_lazer_exponent": 8,
+    "price_confidence_factor": 100
+  },
+  "489": {
+    "label": "PythLazer MU/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1298,
+    "pyth_lazer_exponent": 5,
+    "bid_ask_spread_factor": 50,
+    "price_confidence_factor": 50,
+    "ema_enabled": true,
+    "ema_confidence_factor": 50
+  },
+  "490": {
+    "label": "PythLazer SPCX/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 3314,
+    "pyth_lazer_exponent": 5,
+    "bid_ask_spread_factor": 50,
+    "price_confidence_factor": 50,
+    "ema_enabled": true,
+    "ema_confidence_factor": 50
+  },
+  "491": {
+    "label": "PythLazer SKHY/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 3437,
+    "pyth_lazer_exponent": 5,
+    "bid_ask_spread_factor": 50,
+    "price_confidence_factor": 50,
+    "ema_enabled": true,
+    "ema_confidence_factor": 50
+  },
+  "492": {
+    "label": "PythLazerEMA MU/USD",
+    "oracle_type": "PythLazerEMA",
+    "pyth_lazer_ema_source_entry": 489
+  },
+  "493": {
+    "label": "PythLazerEMA SPCX/USD",
+    "oracle_type": "PythLazerEMA",
+    "pyth_lazer_ema_source_entry": 490
+  },
+  "494": {
+    "label": "PythLazerEMA SKHY/USD",
+    "oracle_type": "PythLazerEMA",
+    "pyth_lazer_ema_source_entry": 491
+  },
+  "495": {
+    "label": "PythLazer FWDI INDEX/USD",
+    "oracle_type": "MultiplicationChain",
+    "max_age_slot": 165,
+    "sources_max_age_s": 60,
+    "source_entries": [488, 487],
+    "twap_enabled": ["1h"]
+  },
+  "496": {
+    "label": "PythLazer FWDI INDEX/USD TWAP",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 495,
+    "max_age_slot": 165
+  },
+  "497": {
+    "label": "PythLazer GLXY INDEX/USD",
+    "oracle_type": "MultiplicationChain",
+    "max_age_slot": 165,
+    "sources_max_age_s": 60,
+    "source_entries": [486, 485],
+    "twap_enabled": ["1h"]
+  },
+  "498": {
+    "label": "PythLazer GLXY INDEX/USD TWAP",
+    "oracle_type": "ScopeTwap1h",
+    "twap_source": 497,
+    "max_age_slot": 165
+  },
+  "499": {
+    "label": "PythLazer PUMP/USD",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 1578,
+    "pyth_lazer_exponent": 8,
+    "bid_ask_spread_factor": 50,
+    "price_confidence_factor": 50,
+    "ema_enabled": true,
+    "ema_confidence_factor": 50
+  },
+  "500": {
+    "label": "PythLazerEMA PUMP/USD",
+    "oracle_type": "PythLazerEMA",
+    "pyth_lazer_ema_source_entry": 499
+  },
+  "501": {
+    "label": "PythLazer INF/SOL RR",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 685,
+    "pyth_lazer_exponent": 8,
+    "price_confidence_factor": 100,
+    "ema_enabled": true,
+    "ema_confidence_factor": 100,
+    "ref_price": 380,
+    "ref_price_tolerance_bps": 1000
+  },
+  "502": {
+    "label": "PythLazerEMA INF/SOL RR",
+    "oracle_type": "PythLazerEMA",
+    "pyth_lazer_ema_source_entry": 501
+  },
+  "503": {
+    "label": "PythLazer syrupUSDC/USDC RR",
+    "oracle_type": "PythLazer",
+    "pyth_lazer_feed_id": 744,
+    "pyth_lazer_exponent": 8,
+    "price_confidence_factor": 100,
+    "ema_enabled": true,
+    "ema_confidence_factor": 100
+  },
+  "504": {
+    "label": "PythLazerEMA syrupUSDC/USDC RR",
+    "oracle_type": "PythLazerEMA",
+    "pyth_lazer_ema_source_entry": 503
   }
 }

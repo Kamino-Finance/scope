@@ -153,6 +153,8 @@ pub enum OracleType {
     Conditional = 47,
     /// Pyth Lazer EMA oracle
     PythLazerEMA = 48,
+    /// Klend cToken exchange rate (cToken -> underlying token ratio via CPI)
+    KlendCTokenExchangeRate = 49,
 }
 
 impl OracleType {
@@ -244,7 +246,8 @@ impl OracleType {
             | OracleType::StakedSolBalance
             | OracleType::TotalMintSupply
             | OracleType::Conditional
-            | OracleType::PythLazerEMA => false,
+            | OracleType::PythLazerEMA
+            | OracleType::KlendCTokenExchangeRate => false,
         }
     }
 }

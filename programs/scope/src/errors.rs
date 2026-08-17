@@ -229,6 +229,14 @@ pub enum ScopeError {
 
     #[msg("Property fields in the feed of the PythLazer payload do not contain a confidence")]
     PythLazerConfidenceNotPresent,
+
+    #[msg("Klend cToken exchange rate CPI call failed")]
+    KlendCTokenExchangeRateCPIError,
+
+    #[msg(
+        "Klend reserve version does not match the expected program version (deprecated reserve)"
+    )]
+    KlendReserveDeprecated,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError
