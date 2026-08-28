@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use decimal_wad::decimal::Decimal;
+use num_traits::ToPrimitive;
 
 use super::math::ten_pow;
 use crate::{utils::consts::FULL_BPS, warn, Price, ScopeError, ScopeResult};
@@ -53,15 +54,14 @@ pub fn check_ref_price_difference(
     Ok(())
 }
 
-fn decimal_to_price(decimal: Decimal) -> ScopeResult<Price> {
+/// Returns `(exp, 10^exp)` for a number with the given integer part. Shared by the `Decimal`
+/// and `f64` conversions so both normalize identically.
+fn dynamic_price_exp(integer_part: u64) -> (u64, u64) {
     // this implementation aims to keep as much precision as possible
     // choose exp to be as big as possible (minimize what is needed for the integer part)
 
     // Use a match instead of log10 to save some CUs
-    let (exp, ten_pow_exp) = match decimal
-        .try_round::<u64>()
-        .map_err(|_| ScopeError::MathOverflow)?
-    {
+    match integer_part {
         0_u64 => (18, 10_u64.pow(18)),
         1..=9 => (17, 10_u64.pow(17)),
         10..=99 => (16, 10_u64.pow(16)),
@@ -81,7 +81,15 @@ fn decimal_to_price(decimal: Decimal) -> ScopeResult<Price> {
         1000000000000000..=9999999999999999 => (2, 10_u64.pow(2)),
         10000000000000000..=99999999999999999 => (1, 10_u64.pow(1)),
         100000000000000000..=u64::MAX => (0, 1),
-    };
+    }
+}
+
+fn decimal_to_price(decimal: Decimal) -> ScopeResult<Price> {
+    let (exp, ten_pow_exp) = dynamic_price_exp(
+        decimal
+            .try_round::<u64>()
+            .map_err(|_| ScopeError::MathOverflow)?,
+    );
     let value = (decimal * ten_pow_exp)
         .try_round::<u64>()
         .map_err(|_| ScopeError::MathOverflow)?;
@@ -96,28 +104,35 @@ impl TryFrom<Decimal> for Price {
     }
 }
 
-impl From<Price> for Decimal {
-    fn from(val: Price) -> Self {
-        Decimal::from(val.value) / 10u128.pow(val.exp as u32)
+/// The `f64` counterpart of [`decimal_to_price`], sharing its normalization
+/// ([`dynamic_price_exp`]) and its rounding behavior. Values a `Price` can't represent are
+/// rejected: NaN, infinite and negative values as `ConversionFailure`, values whose integer
+/// part exceeds `u64::MAX` as `MathOverflow`.
+fn f64_to_price(val: f64) -> ScopeResult<Price> {
+    if !val.is_finite() || val < 0.0 {
+        return Err(ScopeError::ConversionFailure);
+    }
+    // `to_u64` truncates, so adding 0.5 first rounds to the nearest integer - the intent is to
+    // match the `Decimal` path's `try_round`, though it doesn't match it for all inputs.
+    let integer_part = (val + 0.5).to_u64().ok_or(ScopeError::MathOverflow)?;
+    let (exp, ten_pow_exp) = dynamic_price_exp(integer_part);
+    let ten_pow_exp = ten_pow_exp.to_f64().ok_or(ScopeError::ConversionFailure)?;
+    let value = (val * ten_pow_exp + 0.5)
+        .to_u64()
+        .ok_or(ScopeError::MathOverflow)?;
+    Ok(Price { value, exp })
+}
+
+impl TryFrom<f64> for Price {
+    type Error = ScopeError;
+
+    fn try_from(val: f64) -> std::result::Result<Self, Self::Error> {
+        f64_to_price(val)
     }
 }
 
-#[cfg(not(target_os = "solana"))]
-impl From<f64> for Price {
-    fn from(val: f64) -> Self {
-        if val == 0.0 {
-            return Price { value: 0, exp: 0 };
-        }
-        let number_of_integer_digits = val.log10() as i64;
-        let exp = if number_of_integer_digits >= 0 {
-            12_u8.saturating_sub(number_of_integer_digits as u8)
-        } else {
-            u8::min((12 + number_of_integer_digits.abs()) as u8, 18)
-        };
-        let value = (val * 10f64.powi(exp.into())) as u64;
-        Price {
-            value,
-            exp: exp.into(),
-        }
+impl From<Price> for Decimal {
+    fn from(val: Price) -> Self {
+        Decimal::from(val.value) / 10u128.pow(val.exp as u32)
     }
 }

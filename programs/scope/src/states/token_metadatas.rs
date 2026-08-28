@@ -13,7 +13,11 @@ pub struct TokenMetadata {
     pub name: [u8; 32],
     pub max_age_price_slots: u64,
     pub group_ids_bitset: u64, // a bitset of group IDs in range [0, 64).
-    pub _reserved: [u64; 15],
+    // Minimum absolute price delta (in bps) required for the off-chain bot to eagerly push a
+    // refresh tx for this entry on an account update. 0 == eager evaluation disabled.
+    pub eager_eval_price_move_bps: u16,
+    pub _padding: [u8; 6], // explicit padding to keep `_reserved` 8-byte aligned.
+    pub _reserved: [u64; 14],
 }
 
 impl TokenMetadata {
@@ -44,6 +48,7 @@ impl std::fmt::Debug for TokenMetadata {
                 "group_ids_bitset",
                 &list_set_bit_positions(self.group_ids_bitset),
             )
+            .field("eager_eval_price_move_bps", &self.eager_eval_price_move_bps)
             .finish()
     }
 }

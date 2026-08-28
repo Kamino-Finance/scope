@@ -237,6 +237,18 @@ pub enum ScopeError {
         "Klend reserve version does not match the expected program version (deprecated reserve)"
     )]
     KlendReserveDeprecated,
+
+    #[msg("Trying to resume a price that is not suspended")]
+    PriceNotSuspended,
+
+    #[msg("The resume does not name the price data the entry holds")]
+    ResumeStateMismatch,
+
+    #[msg("This instruction is deprecated, use its replacement")]
+    DeprecatedInstruction,
+
+    #[msg("Eager eval threshold (bps) is greater than FULL_BPS")]
+    EagerEvalBpsOutOfRange,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use pyth_lazer_protocol::{
     payload::{PayloadData, PayloadPropertyValue},
     time::TimestampUs,
-    ChannelId, Price as PythLazerPrice,
+    Price as PythLazerPrice,
 };
 
 use crate::{
@@ -107,11 +107,6 @@ pub fn validate_payload_data_for_group(
     payload_data: &PayloadData,
     num_tokens_in_group: usize,
 ) -> ScopeResult<()> {
-    // Check that the channel is what we expect
-    if payload_data.channel_id != ChannelId::FIXED_RATE_200 {
-        return Err(ScopeError::PythLazerInvalidChannel);
-    }
-
     // Check that the payload has a single feed
     if payload_data.feeds.len() != num_tokens_in_group {
         return Err(ScopeError::PythLazerInvalidFeedsLength);

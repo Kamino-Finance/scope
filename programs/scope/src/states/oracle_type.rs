@@ -155,6 +155,8 @@ pub enum OracleType {
     PythLazerEMA = 48,
     /// Klend cToken exchange rate (cToken -> underlying token ratio via CPI)
     KlendCTokenExchangeRate = 49,
+    /// The effective multiplier of a Token-2022 mint's `ScaledUiAmount` extension
+    Token2022Multiplier = 50,
 }
 
 impl OracleType {
@@ -247,7 +249,8 @@ impl OracleType {
             | OracleType::TotalMintSupply
             | OracleType::Conditional
             | OracleType::PythLazerEMA
-            | OracleType::KlendCTokenExchangeRate => false,
+            | OracleType::KlendCTokenExchangeRate
+            | OracleType::Token2022Multiplier => false,
         }
     }
 }
