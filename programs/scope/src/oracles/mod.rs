@@ -30,6 +30,7 @@ pub mod spl_balance;
 pub mod spl_stake;
 pub mod staked_sol_balance;
 pub mod switchboard_on_demand;
+pub mod token_2022_multiplier;
 pub mod total_mint_supply;
 pub mod twap;
 
@@ -114,8 +115,18 @@ impl OracleType {
             OracleType::TotalMintSupply => 15_000,
             OracleType::Conditional => 20_000,
             OracleType::KlendCTokenExchangeRate => 200_000,
+            // Measured at ~13.6k CU under `cargo test-sbf` against a real 8-extension mainnet
+            // mint (`test_token_2022_multiplier_refresh_from_real_mainnet_mint`).
+            OracleType::Token2022Multiplier => 20_000,
         }
     }
+}
+
+/// Outcome of computing an entry's price.
+pub enum PriceRefreshOutcome {
+    Updated(DatedPrice),
+    /// Only the entry's `generic_data` changes; its price, slot and timestamp stay as stored.
+    Suspended([u8; 24]),
 }
 
 /// Get the price for a given oracle type
@@ -133,7 +144,7 @@ pub fn get_non_zero_price<'a, 'b>(
     oracle_mappings: &OracleMappings,
     oracle_prices: &AccountLoader<OraclePrices>,
     index: usize,
-) -> crate::Result<DatedPrice>
+) -> crate::Result<PriceRefreshOutcome>
 where
     'a: 'b,
 {
@@ -312,6 +323,15 @@ where
             klend_ctoken_exchange_rate::get_price(base_account, clock, extra_accounts)
                 .map_err(Into::into)
         }
+        OracleType::Token2022Multiplier => {
+            let oracle_prices = oracle_prices.load()?;
+            let dated_price = oracle_prices.prices[index];
+            match token_2022_multiplier::get_price(base_account, &dated_price, clock)? {
+                // No price to run the checks below on
+                outcome @ PriceRefreshOutcome::Suspended(_) => return Ok(outcome),
+                PriceRefreshOutcome::Updated(price) => Ok(price),
+            }
+        }
     }?;
     // The price providers above are performing their type-specific validations, but are still free to return 0,
     // which we can only tolerate for certain oracle types (e.g. explicit fixed price, multiplication chains
@@ -320,7 +340,7 @@ where
         warn!("Price is 0 (token {index}, type {price_type:?}): {price:?}",);
         return err!(ScopeError::PriceNotValid);
     }
-    Ok(price)
+    Ok(PriceRefreshOutcome::Updated(price))
 }
 
 /// Validate the given account as being an appropriate price account for the
@@ -432,6 +452,9 @@ pub fn validate_oracle_cfg(
         OracleType::KlendCTokenExchangeRate => {
             klend_ctoken_exchange_rate::validate_account(price_account).map_err(Into::into)
         }
+        OracleType::Token2022Multiplier => {
+            token_2022_multiplier::validate_oracle_config(price_account)
+        }
     }
 }
 
@@ -479,7 +502,8 @@ pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
         | OracleType::ChainlinkX
         | OracleType::PythLazer
         | OracleType::Conditional
-        | OracleType::PythLazerEMA => true,
+        | OracleType::PythLazerEMA
+        | OracleType::Token2022Multiplier => true,
 
         OracleType::Unused
         | OracleType::DeprecatedPlaceholder1
@@ -528,6 +552,7 @@ pub fn debug_format_generic_data(
         | OracleType::StakedSolBalance
         | OracleType::TotalMintSupply
         | OracleType::KlendCTokenExchangeRate
+        | OracleType::Token2022Multiplier
         | OracleType::Unused
         | OracleType::DeprecatedPlaceholder1
         | OracleType::DeprecatedPlaceholder2

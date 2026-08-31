@@ -1,4 +1,5 @@
 #![allow(clippy::result_large_err)] //Needed because we can't change Anchor result type
+pub mod compat;
 pub mod errors;
 pub mod oracles;
 pub mod program_id;
@@ -125,14 +126,27 @@ pub mod scope {
         handler_close_mint_map::process(ctx)
     }
 
+    pub fn resume_suspended_price(
+        ctx: Context<ResumeSuspendedPrice>,
+        token: u16,
+        feed_name: String,
+        expected_price_data: [u8; 24],
+    ) -> Result<()> {
+        // `feed_name` is used in `ResumeSuspendedPrice` for computing the seeds of the Configuration account
+        let _ = feed_name;
+        handler_resume_suspended_price::process(ctx, token, expected_price_data)
+    }
+
+    /// Deprecated: use `resume_suspended_price` instead. This one names no price data, so it
+    /// cannot be tied to the suspension it approves, and it now errors instead of resuming.
     pub fn resume_chainlinkx_price(
-        ctx: Context<ResumeChainlinkXPrice>,
+        ctx: Context<ResumeSuspendedPrice>,
         token: u16,
         feed_name: String,
     ) -> Result<()> {
-        // `feed_name` is used in `ResumeChainlinkXPrice` for computing the seeds of the Configuration account
-        let _ = feed_name;
-        handler_resume_chainlinkx_price::process(ctx, token)
+        // Named as before: the parameters are what the generated args struct and the IDL expose.
+        let _ = (ctx, token, feed_name);
+        err!(ScopeError::DeprecatedInstruction)
     }
 
     pub fn freeze_price(

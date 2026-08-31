@@ -8,7 +8,7 @@ use solana_program::{
 };
 
 use crate::{
-    oracles::{get_non_zero_price, OracleType},
+    oracles::{get_non_zero_price, OracleType, PriceRefreshOutcome},
     states::{OracleMappings, OraclePrices, OracleTwaps},
     utils::price_impl::check_ref_price_difference,
     ScopeError,
@@ -99,11 +99,11 @@ pub fn refresh_price_list<'info>(
             &ctx.accounts.oracle_prices,
             token_idx,
         );
-        let price = if fail_tx_on_error {
+        let outcome = if fail_tx_on_error {
             price_res?
         } else {
             match price_res {
-                Ok(price) => price,
+                Ok(outcome) => outcome,
                 Err(_) => {
                     msg!(
                         "Price skipped as validation failed (token {token_idx}, type {price_type:?})",
@@ -111,6 +111,30 @@ pub fn refresh_price_list<'info>(
                     continue;
                 }
             }
+        };
+
+        // Only temporary load as mut to allow prices to be computed based on a scope chain
+        // from the price feed that is currently updated
+        let mut oracle_prices = ctx.accounts.oracle_prices.load_mut()?;
+
+        let price = match outcome {
+            PriceRefreshOutcome::Suspended(generic_data) => {
+                if !is_frozen {
+                    oracle_prices
+                        .prices
+                        .get_mut(token_idx)
+                        .ok_or(ScopeError::BadTokenNb)?
+                        .generic_data = generic_data;
+                }
+                msg!(
+                    "tk {} ({:?}) suspended, is frozen: {}",
+                    token_idx,
+                    price_type,
+                    is_frozen
+                );
+                continue;
+            }
+            PriceRefreshOutcome::Updated(price) => price,
         };
 
         // Frozen entries: log the fetched price but don't update state
@@ -134,11 +158,6 @@ pub fn refresh_price_list<'info>(
                 msg!("Error while updating TWAP of token {token_idx}: {e:?}",);
             }
         }
-
-        // Only temporary load as mut to allow prices to be computed based on a scope chain
-        // from the price feed that is currently updated
-
-        let mut oracle_prices = ctx.accounts.oracle_prices.load_mut()?;
 
         // check that the price is close enough to the ref price if there is a ref price
         if oracle_mappings.ref_price[token_idx] != u16::MAX {

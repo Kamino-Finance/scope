@@ -7,7 +7,7 @@ use crate::{
         token_metadatas::list_set_bit_positions, Configuration, EmaType, OracleMappings,
         OraclePrices, OracleTwaps, TokenMetadata, TokenMetadatas, TwapEnabledBitmask,
     },
-    utils::{maybe_account, pdas::seeds},
+    utils::{consts::FULL_BPS, maybe_account, pdas::seeds},
     ScopeError, MAX_ENTRIES, MAX_ENTRIES_U16,
 };
 
@@ -39,6 +39,7 @@ pub enum UpdateOracleMappingAndMetadataEntry {
     MetadataName(String),
     MetadataMaxPriceAgeSlots(u64),
     MetadataGroupIdsBitset(u64),
+    MetadataEagerEvalBps(u16),
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -345,6 +346,21 @@ pub fn process(
                         list_set_bit_positions(bitset),
                     );
                     metadatas[entry_id].group_ids_bitset = bitset;
+                }
+                UpdateOracleMappingAndMetadataEntry::MetadataEagerEvalBps(
+                    eager_eval_price_move_bps,
+                ) => {
+                    require_gte!(
+                        FULL_BPS,
+                        eager_eval_price_move_bps,
+                        ScopeError::EagerEvalBpsOutOfRange
+                    );
+                    msg!(
+                        "Setting token eager eval threshold (in bps) from {} to {}",
+                        metadatas[entry_id].eager_eval_price_move_bps,
+                        eager_eval_price_move_bps
+                    );
+                    metadatas[entry_id].eager_eval_price_move_bps = eager_eval_price_move_bps;
                 }
             }
         }
