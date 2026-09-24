@@ -126,19 +126,31 @@ pub mod scope {
         handler_close_mint_map::process(ctx)
     }
 
+    pub fn resume_suspended_price_v2(
+        ctx: Context<ResumeSuspendedPrice>,
+        token: u16,
+        feed_name: String,
+        approved_multiplier: f64,
+    ) -> Result<()> {
+        // `feed_name` is used in `ResumeSuspendedPrice` for computing the seeds of the Configuration account
+        let _ = feed_name;
+        handler_resume_suspended_price::process(ctx, token, approved_multiplier)
+    }
+
+    /// Deprecated: use `resume_suspended_price_v2`, which names the multiplier it approves rather
+    /// than the price data the entry holds.
     pub fn resume_suspended_price(
         ctx: Context<ResumeSuspendedPrice>,
         token: u16,
         feed_name: String,
         expected_price_data: [u8; 24],
     ) -> Result<()> {
-        // `feed_name` is used in `ResumeSuspendedPrice` for computing the seeds of the Configuration account
-        let _ = feed_name;
-        handler_resume_suspended_price::process(ctx, token, expected_price_data)
+        let _ = (ctx, token, feed_name, expected_price_data);
+        err!(ScopeError::DeprecatedInstruction)
     }
 
-    /// Deprecated: use `resume_suspended_price` instead. This one names no price data, so it
-    /// cannot be tied to the suspension it approves, and it now errors instead of resuming.
+    /// Deprecated: use `resume_suspended_price_v2` instead. This one names no multiplier to
+    /// approve, so it now errors instead of resuming.
     pub fn resume_chainlinkx_price(
         ctx: Context<ResumeSuspendedPrice>,
         token: u16,

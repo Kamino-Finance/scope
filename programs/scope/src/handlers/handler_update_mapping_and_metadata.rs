@@ -238,6 +238,13 @@ pub fn process(
                 } => {
                     mapping_updated_check()?;
 
+                    // A self-referencing TWAP source is always a config mistake: the entry would
+                    // sample the accumulator it reads, which no refresh can ever fill.
+                    require!(
+                        usize::from(twap_source) != entry_id,
+                        ScopeError::TwapSourceSelfReference
+                    );
+
                     let target_name =
                         maybe_get_entry_name(&oracle_mappings, metadatas, twap_source.into());
 
@@ -312,6 +319,11 @@ pub fn process(
 
                     if let Some(ref_price_index) = ref_price_index {
                         require_gt!(MAX_ENTRIES_U16, ref_price_index, ScopeError::BadTokenNb);
+                        // A self-reference ref price is always a config mistake.
+                        require!(
+                            usize::from(ref_price_index) != entry_id,
+                            ScopeError::RefPriceSelfReference
+                        );
                         if !oracle_mappings.is_entry_used(ref_price_index.into()) {
                             msg!("WARNING: Reference price entry {ref_price_index} is not defined",);
                         }

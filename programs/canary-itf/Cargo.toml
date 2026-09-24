@@ -1,0 +1,17 @@
+[package]
+name = "canary-itf"
+version = "0.1.0"
+description = "Interface to Canary price feeds"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "canary_itf"
+
+[features]
+no-entrypoint = []
+staging = []
+
+[dependencies]
+anchor-lang = "0.28.0"
+bytemuck = { version = "1.4.0", features = ["min_const_generics"] }

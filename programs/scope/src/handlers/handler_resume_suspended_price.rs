@@ -1,13 +1,16 @@
 use anchor_lang::prelude::*;
+use decimal_wad::decimal::Decimal;
 
 use crate::{
     oracles::{
-        chainlink::{ChainlinkXPriceData, GenericDataConvertible},
+        chainlink::{
+            decimal_from_approved_multiplier, ChainlinkXPriceData, GenericDataConvertible,
+        },
         check_context,
         token_2022_multiplier::Token2022MultiplierStoredData,
         OracleType,
     },
-    states::{Configuration, OracleMappings, OraclePrices, TokenMetadatas},
+    states::{Configuration, OracleMappings, OraclePrices, Price, TokenMetadatas},
     utils::pdas::seeds,
     ScopeError,
 };
@@ -31,7 +34,7 @@ pub struct ResumeSuspendedPrice<'info> {
 pub fn process(
     ctx: Context<ResumeSuspendedPrice>,
     token: u16,
-    expected_price_data: [u8; 24],
+    approved_multiplier: f64,
 ) -> Result<()> {
     check_context(&ctx)?;
 
@@ -55,9 +58,10 @@ pub fn process(
         "resume_authority"
     };
     msg!(
-        "ResumeSuspendedPrice, token: {} ({}), authority: {} ({})",
+        "ResumeSuspendedPrice, token: {} ({}), approving the multiplier {}, authority: {} ({})",
         token,
         str_name,
+        approved_multiplier,
         authority,
         authority_role
     );
@@ -70,48 +74,56 @@ pub fn process(
         .get_mut(entry_id)
         .ok_or(ScopeError::BadTokenNb)?;
 
-    // A resume approves the suspension it was built for: the caller names the price data the
-    // entry holds, so an approval collected for one suspension cannot be executed on a later one.
-    // Naming the whole record rather than one of its fields covers the suspensions that agree on
-    // a field, such as two multiplier changes applied with the same effective timestamp.
-    require!(
-        dated_price.generic_data == expected_price_data,
-        ScopeError::ResumeStateMismatch
-    );
-
+    // The resume records the multiplier it approves and leaves the price suspended. The next
+    // refresh publishes once the oracle carries that multiplier, or one within the entry's auto
+    // approval threshold, so a value that oracle cannot carry is refused: it would leave the
+    // entry suspended with no sign that the resume did nothing.
     match price_type {
         OracleType::ChainlinkX => {
+            // The refresh compares an approval against the report through this conversion, so a
+            // value that does not survive it, or that lands on zero, matches no report.
+            require!(
+                decimal_from_approved_multiplier(approved_multiplier)
+                    .map_or(false, |value| value > Decimal::zero()),
+                ScopeError::InvalidApprovedMultiplier
+            );
+
             // Parse existing price data
             let mut existing_price_data =
                 ChainlinkXPriceData::from_generic_data(&dated_price.generic_data)?;
             msg!("Current deserialized price data: {:?}", existing_price_data);
 
-            // Check that the price is currently suspended and resume its refresh
-            if existing_price_data.suspended {
-                // Resume the price refresh by setting suspended to false
-                existing_price_data.suspended = false;
-                // Set the observations timestamp to the current timestamp, such that only new
-                // reports are able to refresh the price
-                let clock = Clock::get()?;
-                existing_price_data.observations_timestamp = clock
-                    .unix_timestamp
-                    .try_into()
-                    .map_err(|_| ScopeError::OutOfRangeIntegralConversion)?;
-                // Update the generic_data with the modified struct
-                dated_price.generic_data = existing_price_data.to_generic_data();
-            } else {
+            // Check that the price is currently suspended
+            if !existing_price_data.suspended {
                 // Kept for compatibility of the error code; new suspendable types use
                 // PriceNotSuspended.
                 return Err(ScopeError::ChainlinkXPriceNotSuspended.into());
             }
+            existing_price_data.approved_multiplier_bits = Some(approved_multiplier.to_bits());
+            // Set the observations timestamp to the current timestamp, such that only new
+            // reports are able to refresh the price
+            let clock = Clock::get()?;
+            existing_price_data.observations_timestamp = clock
+                .unix_timestamp
+                .try_into()
+                .map_err(|_| ScopeError::OutOfRangeIntegralConversion)?;
+            // Update the generic_data with the modified struct
+            dated_price.generic_data = existing_price_data.to_generic_data();
         }
         OracleType::Token2022Multiplier => {
+            // The entry publishes the multiplier as its price, so a value that does not convert,
+            // or that converts to zero, never resumes it. Subnormals convert to a zero price.
+            require!(
+                Price::try_from(approved_multiplier).map_or(false, |price| price.value != 0),
+                ScopeError::InvalidApprovedMultiplier
+            );
+
             let mut stored_data =
                 Token2022MultiplierStoredData::from_generic_data(&dated_price.generic_data)?;
             msg!("Current deserialized price data: {:?}", stored_data);
 
             require!(stored_data.suspended, ScopeError::PriceNotSuspended);
-            stored_data.suspended = false;
+            stored_data.approved_multiplier_bits = Some(approved_multiplier.to_bits());
             dated_price.generic_data = stored_data.to_generic_data();
         }
         _ => return err!(ScopeError::BadTokenType),

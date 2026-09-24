@@ -98,7 +98,11 @@ pub fn get_price(
     })
 }
 
-pub fn validate_mapping_cfg(mapping: Option<&AccountInfo>, generic_data: &[u8]) -> ScopeResult<()> {
+pub fn validate_mapping_cfg(
+    mapping: Option<&AccountInfo>,
+    generic_data: &[u8],
+    own_index: u16,
+) -> ScopeResult<()> {
     if mapping.is_some() {
         warn!("No mapping account is expected for MultiplicationChain oracle");
         return Err(ScopeError::PriceAccountNotExpected);
@@ -111,8 +115,8 @@ pub fn validate_mapping_cfg(mapping: Option<&AccountInfo>, generic_data: &[u8]) 
 
     msg!("Validate MultiplicationChain price with source_entries = {source_entries:?}, sources_max_age_s = {sources_max_age_s}",);
 
-    // Validate at least one valid entry, sentinels only at the end
-    validate_source_entries(&source_entries)?;
+    // Validate at least one valid entry, sentinels only at the end, no self-reference
+    validate_source_entries(&source_entries, own_index)?;
 
     if sources_max_age_s == 0 {
         return Err(ScopeError::CompositeOracleInvalidMaxAge);

@@ -241,6 +241,7 @@ pub enum ScopeError {
     #[msg("Trying to resume a price that is not suspended")]
     PriceNotSuspended,
 
+    /// No longer produced: a resume names the multiplier it approves, not the record it expects.
     #[msg("The resume does not name the price data the entry holds")]
     ResumeStateMismatch,
 
@@ -249,6 +250,24 @@ pub enum ScopeError {
 
     #[msg("Eager eval threshold (bps) is greater than FULL_BPS")]
     EagerEvalBpsOutOfRange,
+
+    #[msg("The reference price of an entry cannot be the entry itself")]
+    RefPriceSelfReference,
+
+    #[msg("The TWAP source of an entry cannot be the entry itself")]
+    TwapSourceSelfReference,
+
+    #[msg("Canary get_price CPI did not return usable price data")]
+    CanaryPriceCPIError,
+
+    #[msg("Canary feed exponent is above the scope-supported bound")]
+    CanaryFeedExpTooLarge,
+
+    #[msg("The multiplier a resume approves must convert to a non-zero price for the oracle type")]
+    InvalidApprovedMultiplier,
+
+    #[msg("Token2022Multiplier auto approval threshold (bps) is greater than the allowed maximum")]
+    AutoApprovalBpsOutOfRange,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

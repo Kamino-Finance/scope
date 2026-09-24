@@ -54,13 +54,25 @@ pub fn get_price(
     )?;
 
     // Apply cap
-    let cap_price = oracle_prices
+    let cap_dated_price = oracle_prices
         .prices
         .get(usize::from(cap_entry))
-        .ok_or(ScopeError::CompositeOracleInvalidSourceIndex)?
-        .price;
+        .ok_or(ScopeError::CompositeOracleInvalidSourceIndex)?;
 
-    result_price.price = result_price.price.min(cap_price);
+    let now: u64 = clock
+        .unix_timestamp
+        .try_into()
+        .expect("Clock is in the past");
+    let cap_age_s = now.saturating_sub(cap_dated_price.unix_timestamp);
+    if cap_age_s > sources_max_age_s {
+        warn!(
+            "CappedMostRecentOf: cap entry {} is too old (age {}s > max {}s). unix_timestamp = {}, now = {}",
+            cap_entry, cap_age_s, sources_max_age_s, cap_dated_price.unix_timestamp, now,
+        );
+        return Err(ScopeError::CompositeOracleMaxAgeViolated);
+    }
+
+    result_price.price = result_price.price.min(cap_dated_price.price);
 
     Ok(DatedPrice {
         generic_data: [0; 24],
@@ -68,7 +80,11 @@ pub fn get_price(
     })
 }
 
-pub fn validate_mapping_cfg(mapping: Option<&AccountInfo>, generic_data: &[u8]) -> ScopeResult<()> {
+pub fn validate_mapping_cfg(
+    mapping: Option<&AccountInfo>,
+    generic_data: &[u8],
+    own_index: u16,
+) -> ScopeResult<()> {
     if mapping.is_some() {
         warn!("No mapping account is expected for CappedMostRecentOf oracle");
         return Err(ScopeError::PriceAccountNotExpected);
@@ -84,7 +100,12 @@ pub fn validate_mapping_cfg(mapping: Option<&AccountInfo>, generic_data: &[u8]) 
     msg!("Validate CappedMostRecentOf price with source_entries = {source_entries:?}, max_divergence_bps = {max_divergence_bps}, sources_max_age_s = {sources_max_age_s}, cap_entry = {cap_entry}",);
 
     // Validate common MostRecentOf parameters using shared helper
-    validate_most_recent_of_params(&source_entries, max_divergence_bps, sources_max_age_s)?;
+    validate_most_recent_of_params(
+        &source_entries,
+        max_divergence_bps,
+        sources_max_age_s,
+        own_index,
+    )?;
 
     // Validate cap entry
     if cap_entry >= MAX_ENTRIES_U16 {
@@ -96,6 +117,14 @@ pub fn validate_mapping_cfg(mapping: Option<&AccountInfo>, generic_data: &[u8]) 
     if source_entries.contains(&cap_entry) {
         warn!("Cap source index {cap_entry} cannot be the same as any source entry for CappedMostRecentOf oracle");
         return Err(ScopeError::CompositeOracleInvalidSourceIndex);
+    }
+
+    // Cap entry should not be the entry itself
+    if cap_entry == own_index {
+        msg!(
+            "Cap source index {cap_entry} is the entry's own index; self-reference is not allowed"
+        );
+        return Err(ScopeError::OracleConfigInvalidSourceIndices);
     }
 
     Ok(())

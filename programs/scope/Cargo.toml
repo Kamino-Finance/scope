@@ -1,6 +1,6 @@
 [package]
 name = "scope"
-version = "0.40.0"
+version = "0.41.0"
 description = "Scope is Kamino's oracle aggregator"
 repository = "https://github.com/Kamino-Finance/scope"
 edition = "2021"
@@ -30,6 +30,7 @@ mainnet = []
 # a prerelease check against the live klend deployment. Hence we do NOT enable `klend-itf/staging`
 # here. Scope-staging-against-klend-staging is the separate `CLUSTER=staging-to-staging` build
 # klend staging also stays an explicit `--features klend-itf/staging` opt-in.
+# canary-itf selects its id from CLUSTER in its own build.rs, same as klend-itf.
 staging = []
 serde = ["dep:serde"]
 
@@ -65,6 +66,7 @@ jup-perp-itf = { path = "../jup-perp-itf", features = ["cpi"] }
 lb-clmm-itf = { path = "../lb-clmm-itf", features = ["no-entrypoint"] }
 sbod-itf = { path = "../sbod-itf" }
 redstone-itf = { path = "../redstone-itf", features = ["no-entrypoint"] }
+canary-itf = { path = "../canary-itf", features = ["no-entrypoint"] }
 adrena-perp-itf = { path = "../adrena-perp-itf", features = ["no-entrypoint"] }
 pyth-lazer-solana-contract = { git = "https://github.com/Kamino-Finance/pyth-lazer-public.git", branch = "lazer_on_anchor_0.28", features = [
     "no-entrypoint",

@@ -155,9 +155,10 @@ pub fn validate_most_recent_of_params(
     source_entries: &[u16],
     max_divergence_bps: u16,
     sources_max_age_s: u64,
+    own_index: u16,
 ) -> ScopeResult<()> {
-    // Validate at least one valid entry, sentinels only at the end
-    validate_source_entries(source_entries)?;
+    // Validate at least one valid entry, sentinels only at the end, no self-reference
+    validate_source_entries(source_entries, own_index)?;
 
     // Validate max divergence
     if max_divergence_bps == 0 || max_divergence_bps > FULL_BPS {
@@ -172,7 +173,11 @@ pub fn validate_most_recent_of_params(
     Ok(())
 }
 
-pub fn validate_mapping_cfg(mapping: Option<&AccountInfo>, generic_data: &[u8]) -> ScopeResult<()> {
+pub fn validate_mapping_cfg(
+    mapping: Option<&AccountInfo>,
+    generic_data: &[u8],
+    own_index: u16,
+) -> ScopeResult<()> {
     if mapping.is_some() {
         warn!("No mapping account is expected for MostRecentOf oracle");
         return Err(ScopeError::PriceAccountNotExpected);
@@ -186,5 +191,10 @@ pub fn validate_mapping_cfg(mapping: Option<&AccountInfo>, generic_data: &[u8]) 
 
     msg!("Validate MostRecentOf price with source_entries = {source_entries:?}, max_divergence_bps = {max_divergence_bps}, sources_max_age_s = {sources_max_age_s}",);
 
-    validate_most_recent_of_params(&source_entries, max_divergence_bps, sources_max_age_s)
+    validate_most_recent_of_params(
+        &source_entries,
+        max_divergence_bps,
+        sources_max_age_s,
+        own_index,
+    )
 }
