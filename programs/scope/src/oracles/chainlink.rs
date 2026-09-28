@@ -6,11 +6,12 @@ use chainlink_streams_report::{
     },
 };
 use decimal_wad::{
-    common::TryMul,
+    common::{TryMul, TrySub, WAD},
     decimal::{Decimal, U192},
 };
 use num_bigint::BigInt;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use num_traits::ToPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -33,6 +34,11 @@ const NAV_REPORT_STALENESS_IN_MS: u64 = 7 * 24 * 60 * 60 * 1000; // 7 days in mi
 // Our current design is to suspend the refresh of the price a certain period of time (given by this constant)
 // before the `activation_date_time` and manually resume it later
 const V10_TIME_PERIOD_BEFORE_ACTIVATION_TO_SUSPEND_S: i64 = 24 * 60 * 60; // 24 hours
+
+/// The approved multiplier and the one in a report may differ by at most the approved value
+/// divided by this. An exact match is not possible: the approval is an `f64`, the report a
+/// decimal.
+const APPROVED_MULTIPLIER_TOLERANCE_DENOMINATOR: u64 = 1_000_000_000_000;
 
 #[derive(IntoPrimitive, TryFromPrimitive, Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u32)]
@@ -125,15 +131,25 @@ impl ChainlinkStandardPriceData {
 pub struct ChainlinkXPriceData {
     pub observations_timestamp: u64,
     pub suspended: bool,
-    pub activation_date_time: u64,
+    /// The activation the last report announced, as the `u32` the report carries.
+    pub activation_date_time: u32,
+    /// Raw `f64` bits of the multiplier a resume approved. Set by a resume, cleared by the next
+    /// report: each suspension needs its own.
+    pub approved_multiplier_bits: Option<u64>,
 }
 
 impl ChainlinkXPriceData {
-    pub fn new(observations_timestamp: u64, suspended: bool, activation_date_time: u64) -> Self {
+    pub fn new(
+        observations_timestamp: u64,
+        suspended: bool,
+        activation_date_time: u32,
+        approved_multiplier_bits: Option<u64>,
+    ) -> Self {
         Self {
             observations_timestamp,
             suspended,
             activation_date_time,
+            approved_multiplier_bits,
         }
     }
 }
@@ -423,12 +439,21 @@ pub fn update_price_v10(
             clock,
         )?;
 
-    // Check if this price was suspended
-    if existing_price_data.suspended {
+    // A suspended price stays suspended until a report carries the multiplier a resume approved.
+    // The checks below then decide whether it can be published.
+    if existing_price_data.suspended
+        && !report_multiplier_is_approved(
+            &chainlink_report.current_multiplier,
+            existing_price_data.approved_multiplier_bits,
+        )?
+    {
         warn!(
-            "Price suspended, rejecting update: feed_id={} activation_date_time={} current_multiplier={} new_multiplier={} price={} last_valid_price={:?} market_status={}",
+            "Price suspended, rejecting update: feed_id={} activation_date_time={} approved_multiplier={:?} current_multiplier={} new_multiplier={} price={} last_valid_price={:?} market_status={}",
             chainlink_report.feed_id,
             existing_price_data.activation_date_time,
+            existing_price_data
+                .approved_multiplier_bits
+                .map(f64::from_bits),
             chainlink_report.current_multiplier,
             chainlink_report.new_multiplier,
             chainlink_report.price,
@@ -463,7 +488,8 @@ pub fn update_price_v10(
             let price_data = ChainlinkXPriceData::new(
                 last_observations_ts,
                 true,
-                chainlink_report.activation_date_time.into(),
+                chainlink_report.activation_date_time,
+                None,
             );
             dated_price.generic_data = price_data.to_generic_data();
             return Ok(PriceUpdateResult::SuspendExistingPrice);
@@ -490,7 +516,8 @@ pub fn update_price_v10(
     let price_data = ChainlinkXPriceData::new(
         chainlink_report.observations_timestamp.into(),
         false,
-        chainlink_report.activation_date_time.into(),
+        chainlink_report.activation_date_time,
+        None,
     );
 
     *dated_price = DatedPrice {
@@ -563,6 +590,42 @@ pub fn validate_mapping_v7_v9(price_account: Option<&AccountInfo>) -> ScopeResul
     );
 
     Ok(())
+}
+
+/// The approved multiplier as a `Decimal`, which stores a value as an integer scaled by 1e18.
+/// `None` for a value that cannot be a multiplier, which then matches no report.
+pub fn decimal_from_approved_multiplier(approved: f64) -> Option<Decimal> {
+    if !approved.is_finite() || approved < 0.0 {
+        return None;
+    }
+    let scaled_by_wad = approved * WAD.to_f64()?;
+    Some(Decimal::from_scaled_val(scaled_by_wad.to_u128()?))
+}
+
+/// Whether the multiplier a report carries is the one a resume approved. An entry with no
+/// approval recorded matches nothing.
+fn report_multiplier_is_approved(
+    current_multiplier: &BigInt,
+    approved_bits: Option<u64>,
+) -> ScopeResult<bool> {
+    let Some(approved) = approved_bits
+        .map(f64::from_bits)
+        .and_then(decimal_from_approved_multiplier)
+    else {
+        return Ok(false);
+    };
+    let reported = chainlink_bigint_value_parse(current_multiplier)?;
+    let difference = if reported > approved {
+        reported.try_sub(approved)
+    } else {
+        approved.try_sub(reported)
+    }
+    .map_err(|_| ScopeError::MathOverflow)?;
+
+    Ok(difference
+        .try_mul(Decimal::from(APPROVED_MULTIPLIER_TOLERANCE_DENOMINATOR))
+        .map_err(|_| ScopeError::MathOverflow)?
+        <= approved)
 }
 
 fn chainlink_bigint_value_parse(value: &BigInt) -> ScopeResult<Decimal> {

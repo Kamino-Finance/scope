@@ -522,6 +522,7 @@ pub fn validate_mapping_cfg(mapping: Option<&AccountInfo>, generic_data: &[u8]) 
 pub fn validate_mapping_cfg_ema(
     mapping: Option<&AccountInfo>,
     generic_data: &[u8],
+    own_index: u16,
 ) -> ScopeResult<()> {
     // No price account expected: EMA is sourced from another scope entry.
     // The source's type is validated at runtime (in get_non_zero_price)
@@ -532,6 +533,12 @@ pub fn validate_mapping_cfg_ema(
     }
     let parsed = PythLazerEmaRefData::from_generic_data(generic_data)?;
     if parsed.source_entry >= crate::MAX_ENTRIES_U16 {
+        return Err(ScopeError::CompositeOracleInvalidSourceIndex);
+    }
+    // The source has to be a PythLazer spot entry, which this one is not: the refresh would fail
+    // on the type check for as long as the entry exists.
+    if parsed.source_entry == own_index {
+        warn!("Source index {own_index} is the entry's own index; self-reference is not allowed");
         return Err(ScopeError::CompositeOracleInvalidSourceIndex);
     }
     Ok(())

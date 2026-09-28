@@ -4,6 +4,7 @@ pub mod ktokens;
 pub mod ktokens_token_x;
 
 pub mod adrena_lp;
+pub mod canary;
 pub mod capped_floored;
 pub mod capped_most_recent_of;
 pub mod chainlink;
@@ -118,6 +119,7 @@ impl OracleType {
             // Measured at ~13.6k CU under `cargo test-sbf` against a real 8-extension mainnet
             // mint (`test_token_2022_multiplier_refresh_from_real_mainnet_mint`).
             OracleType::Token2022Multiplier => 20_000,
+            OracleType::Canary => 20_000,
         }
     }
 }
@@ -279,6 +281,7 @@ where
         OracleType::CappedFloored => capped_floored::get_price(
             oracle_prices.load()?.deref(),
             &oracle_mappings.generic[index],
+            clock,
         )
         .map_err(Into::into),
         OracleType::CappedMostRecentOf => capped_most_recent_of::get_price(
@@ -326,12 +329,18 @@ where
         OracleType::Token2022Multiplier => {
             let oracle_prices = oracle_prices.load()?;
             let dated_price = oracle_prices.prices[index];
-            match token_2022_multiplier::get_price(base_account, &dated_price, clock)? {
+            match token_2022_multiplier::get_price(
+                base_account,
+                &dated_price,
+                &oracle_mappings.generic[index],
+                clock,
+            )? {
                 // No price to run the checks below on
                 outcome @ PriceRefreshOutcome::Suspended(_) => return Ok(outcome),
                 PriceRefreshOutcome::Updated(price) => Ok(price),
             }
         }
+        OracleType::Canary => canary::get_price(base_account, clock, extra_accounts),
     }?;
     // The price providers above are performing their type-specific validations, but are still free to return 0,
     // which we can only tolerate for certain oracle types (e.g. explicit fixed price, multiplication chains
@@ -409,24 +418,27 @@ pub fn validate_oracle_cfg(
                 .map_err(Into::into)
         }
         OracleType::MostRecentOf => {
-            most_recent_of::validate_mapping_cfg(price_account, generic_data).map_err(Into::into)
+            most_recent_of::validate_mapping_cfg(price_account, generic_data, entry_id)
+                .map_err(Into::into)
         }
         OracleType::RedStone => redstone::validate_price_account(price_account).map_err(Into::into),
         OracleType::PythLazer => {
             pyth_lazer::validate_mapping_cfg(price_account, generic_data).map_err(Into::into)
         }
         OracleType::PythLazerEMA => {
-            pyth_lazer::validate_mapping_cfg_ema(price_account, generic_data).map_err(Into::into)
+            pyth_lazer::validate_mapping_cfg_ema(price_account, generic_data, entry_id)
+                .map_err(Into::into)
         }
         OracleType::CappedFloored => {
-            capped_floored::validate_mapping_cfg(price_account, generic_data).map_err(Into::into)
+            capped_floored::validate_mapping_cfg(price_account, generic_data, entry_id)
+                .map_err(Into::into)
         }
         OracleType::CappedMostRecentOf => {
-            capped_most_recent_of::validate_mapping_cfg(price_account, generic_data)
+            capped_most_recent_of::validate_mapping_cfg(price_account, generic_data, entry_id)
                 .map_err(Into::into)
         }
         OracleType::MultiplicationChain => {
-            multiplication_chain::validate_mapping_cfg(price_account, generic_data)
+            multiplication_chain::validate_mapping_cfg(price_account, generic_data, entry_id)
                 .map_err(Into::into)
         }
         OracleType::Securitize => Ok(()),
@@ -453,8 +465,9 @@ pub fn validate_oracle_cfg(
             klend_ctoken_exchange_rate::validate_account(price_account).map_err(Into::into)
         }
         OracleType::Token2022Multiplier => {
-            token_2022_multiplier::validate_oracle_config(price_account)
+            token_2022_multiplier::validate_oracle_config(price_account, generic_data)
         }
+        OracleType::Canary => canary::validate_price_account(price_account),
     }
 }
 
@@ -489,7 +502,9 @@ pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
         | OracleType::SplBalance
         | OracleType::StakedSolBalance
         | OracleType::TotalMintSupply
-        | OracleType::KlendCTokenExchangeRate => false,
+        | OracleType::KlendCTokenExchangeRate
+        | OracleType::Canary
+        | OracleType::Token2022Multiplier => false,
 
         OracleType::FixedPrice
         | OracleType::DiscountToMaturity
@@ -502,8 +517,7 @@ pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
         | OracleType::ChainlinkX
         | OracleType::PythLazer
         | OracleType::Conditional
-        | OracleType::PythLazerEMA
-        | OracleType::Token2022Multiplier => true,
+        | OracleType::PythLazerEMA => true,
 
         OracleType::Unused
         | OracleType::DeprecatedPlaceholder1
@@ -552,7 +566,7 @@ pub fn debug_format_generic_data(
         | OracleType::StakedSolBalance
         | OracleType::TotalMintSupply
         | OracleType::KlendCTokenExchangeRate
-        | OracleType::Token2022Multiplier
+        | OracleType::Canary
         | OracleType::Unused
         | OracleType::DeprecatedPlaceholder1
         | OracleType::DeprecatedPlaceholder2
@@ -561,6 +575,16 @@ pub fn debug_format_generic_data(
         | OracleType::DeprecatedPlaceholder5
         | OracleType::DeprecatedPlaceholder6
         | OracleType::DeprecatedPlaceholder7 => (), // no generic data to print
+
+        OracleType::Token2022Multiplier => {
+            d.field(
+                "token_2022_multiplier_cfg",
+                &token_2022_multiplier::Token2022MultiplierMappingData::from_generic_data(
+                    generic_data,
+                )
+                .ok(),
+            );
+        }
 
         OracleType::Chainlink => {
             d.field(

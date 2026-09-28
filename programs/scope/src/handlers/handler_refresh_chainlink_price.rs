@@ -107,139 +107,142 @@ pub fn refresh_chainlink_price<'info>(
 
     let is_frozen = oracle_mappings.is_frozen(token_idx);
 
-    let price_update_result = {
-        let oracle_mapping = oracle_mappings.price_info_accounts[token_idx];
+    let oracle_mapping = oracle_mappings.price_info_accounts[token_idx];
 
-        let price_type: OracleType = oracle_mappings.get_entry_type(token_idx)?;
-        require!(
-            [
-                OracleType::Chainlink,
-                OracleType::ChainlinkRWA,
-                OracleType::ChainlinkNAV,
-                OracleType::ChainlinkX,
-                OracleType::ChainlinkExchangeRate
-            ]
-            .contains(&price_type),
-            ScopeError::BadTokenType
-        );
+    let price_type: OracleType = oracle_mappings.get_entry_type(token_idx)?;
+    require!(
+        [
+            OracleType::Chainlink,
+            OracleType::ChainlinkRWA,
+            OracleType::ChainlinkNAV,
+            OracleType::ChainlinkX,
+            OracleType::ChainlinkExchangeRate
+        ]
+        .contains(&price_type),
+        ScopeError::BadTokenType
+    );
 
-        let mapping_generic_data = &oracle_mappings.generic[token_idx];
+    let mapping_generic_data = &oracle_mappings.generic[token_idx];
 
-        let dated_price_ref = &mut oracle_prices.prices[token_idx];
-        let old_price = *dated_price_ref;
-        let clock = Clock::get()?;
+    let mut price = oracle_prices.prices[token_idx];
+    let clock = Clock::get()?;
 
-        // Decode the verified report data before updating the price
-        // Note: for ChainlinkX we might just be updating the current price with the `suspended` flag set to true.
-        // In this case we won't be setting a new price (and result will be `SuspendExistingPrice`)
-        let price_update_result = match price_type {
-            OracleType::Chainlink => {
-                let chainlink_report = ReportDataV3::decode(&return_data)
-                    .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
-                chainlink::update_price_v3(
-                    dated_price_ref,
-                    oracle_mapping,
-                    mapping_generic_data,
-                    &clock,
-                    &chainlink_report,
-                )?
-            }
-            OracleType::ChainlinkRWA => {
-                let chainlink_report = ReportDataV8::decode(&return_data)
-                    .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
-                chainlink::update_price_v8(
-                    dated_price_ref,
-                    oracle_mapping,
-                    mapping_generic_data,
-                    &clock,
-                    &chainlink_report,
-                )?
-            }
-            OracleType::ChainlinkNAV => {
-                let chainlink_report = ReportDataV9::decode(&return_data)
-                    .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
-                chainlink::update_price_v9(
-                    dated_price_ref,
-                    oracle_mapping,
-                    &clock,
-                    &chainlink_report,
-                )?
-            }
-            OracleType::ChainlinkX => {
-                let chainlink_report = ReportDataV10::decode(&return_data)
-                    .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
-                chainlink::update_price_v10(
-                    dated_price_ref,
-                    oracle_mapping,
-                    mapping_generic_data,
-                    &clock,
-                    &chainlink_report,
-                )?
-            }
-            OracleType::ChainlinkExchangeRate => {
-                let chainlink_report = ReportDataV7::decode(&return_data)
-                    .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
-                chainlink::update_price_v7(
-                    dated_price_ref,
-                    oracle_mapping,
-                    &clock,
-                    &chainlink_report,
-                )?
-            }
-            _ => return Err(error!(ScopeError::BadTokenType)),
-        };
-
-        // Frozen entries: log the fetched price but don't update state
-        if is_frozen {
-            msg!(
-                "tk {} ({:?}) is frozen, fetched price {:?} but not updating",
-                token_idx,
-                price_type,
-                dated_price_ref.price.value,
-            );
-            *dated_price_ref = old_price;
-            return Ok(());
+    // Decode the verified report data before updating the price
+    // Note: for ChainlinkX we might just be updating the current price with the `suspended` flag set to true.
+    // In this case we won't be setting a new price (and result will be `SuspendExistingPrice`)
+    let price_update_result = match price_type {
+        OracleType::Chainlink => {
+            let chainlink_report = ReportDataV3::decode(&return_data)
+                .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
+            chainlink::update_price_v3(
+                &mut price,
+                oracle_mapping,
+                mapping_generic_data,
+                &clock,
+                &chainlink_report,
+            )?
         }
-
-        match price_update_result {
-            PriceUpdateResult::Updated if oracle_mappings.is_twap_enabled(token_idx) => {
-                if let Err(e) = crate::oracles::twap::update_twaps(
-                    &mut oracle_twaps,
-                    token_idx,
-                    dated_price_ref,
-                    oracle_mappings.twap_enabled_bitmask[token_idx],
-                ) {
-                    msg!("Error while updating TWAP of token {token_idx}: {e:?}",);
-                }
-            }
-            _ => {}
+        OracleType::ChainlinkRWA => {
+            let chainlink_report = ReportDataV8::decode(&return_data)
+                .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
+            chainlink::update_price_v8(
+                &mut price,
+                oracle_mapping,
+                mapping_generic_data,
+                &clock,
+                &chainlink_report,
+            )?
         }
+        OracleType::ChainlinkNAV => {
+            let chainlink_report = ReportDataV9::decode(&return_data)
+                .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
+            chainlink::update_price_v9(&mut price, oracle_mapping, &clock, &chainlink_report)?
+        }
+        OracleType::ChainlinkX => {
+            let chainlink_report = ReportDataV10::decode(&return_data)
+                .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
+            chainlink::update_price_v10(
+                &mut price,
+                oracle_mapping,
+                mapping_generic_data,
+                &clock,
+                &chainlink_report,
+            )?
+        }
+        OracleType::ChainlinkExchangeRate => {
+            let chainlink_report = ReportDataV7::decode(&return_data)
+                .map_err(|_| error!(ScopeError::InvalidChainlinkReportData))?;
+            chainlink::update_price_v7(&mut price, oracle_mapping, &clock, &chainlink_report)?
+        }
+        _ => return Err(error!(ScopeError::BadTokenType)),
+    };
 
+    // The update paths above perform their type-specific validations but are still free to
+    // produce a 0 price: apply the same gate as `get_non_zero_price`, driven by the same
+    // `allows_zero_price` policy.
+    match price_update_result {
+        PriceUpdateResult::Updated if price.price.value == 0 && !price_type.allows_zero_price() => {
+            msg!("Price is 0 (token {token_idx}, type {price_type:?})",);
+            return Err(error!(ScopeError::PriceNotValid));
+        }
+        _ => {}
+    }
+
+    // Frozen entries: log the fetched price but don't update state
+    if is_frozen {
         msg!(
-            "tk {}, {:?}: {:?} to {:?} | prev_slot: {:?}, new_slot: {:?}, crt_slot: {:?}",
+            "tk {} ({:?}) is frozen, fetched price {:?} but not updating",
             token_idx,
             price_type,
-            old_price.price.value,
-            dated_price_ref.price.value,
-            old_price.last_updated_slot,
-            dated_price_ref.last_updated_slot,
-            clock.slot,
+            price.price.value,
         );
+        return Ok(());
+    }
 
-        price_update_result
-    };
+    match price_update_result {
+        PriceUpdateResult::Updated if oracle_mappings.is_twap_enabled(token_idx) => {
+            if let Err(e) = crate::oracles::twap::update_twaps(
+                &mut oracle_twaps,
+                token_idx,
+                &price,
+                oracle_mappings.twap_enabled_bitmask[token_idx],
+            ) {
+                msg!("Error while updating TWAP of token {token_idx}: {e:?}",);
+            }
+        }
+        _ => {}
+    }
 
     // check that the price is close enough to the ref price if there is a ref price
     match price_update_result {
         PriceUpdateResult::Updated if oracle_mappings.ref_price[token_idx] != u16::MAX => {
-            let new_price = oracle_prices.prices[token_idx].price;
             let ref_price =
                 oracle_prices.prices[usize::from(oracle_mappings.ref_price[token_idx])].price;
             let ref_price_tolerance_bps = oracle_mappings.get_ref_price_tolerance_bps(token_idx);
-            check_ref_price_difference(new_price, ref_price, ref_price_tolerance_bps)?;
+            check_ref_price_difference(price.price, ref_price, ref_price_tolerance_bps)?;
         }
         _ => {}
     }
+
+    let to_update = oracle_prices
+        .prices
+        .get_mut(token_idx)
+        .ok_or(ScopeError::BadTokenNb)?;
+
+    msg!(
+        "tk {}, {:?}: {:?} to {:?} | prev_slot: {:?}, new_slot: {:?}, crt_slot: {:?}",
+        token_idx,
+        price_type,
+        to_update.price.value,
+        price.price.value,
+        to_update.last_updated_slot,
+        price.last_updated_slot,
+        clock.slot,
+    );
+
+    // `SuspendExistingPrice` also mutates the entry (suspension bookkeeping), so the update is
+    // stored for every non-gated outcome, not only `Updated`.
+    *to_update = price;
 
     Ok(())
 }

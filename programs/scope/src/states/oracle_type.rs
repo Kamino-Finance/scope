@@ -157,6 +157,8 @@ pub enum OracleType {
     KlendCTokenExchangeRate = 49,
     /// The effective multiplier of a Token-2022 mint's `ScaledUiAmount` extension
     Token2022Multiplier = 50,
+    /// Canary median oracle. Mapping is a Canary `PriceFeed`; refresh CPIs `get_price`.
+    Canary = 51,
 }
 
 impl OracleType {
@@ -250,7 +252,8 @@ impl OracleType {
             | OracleType::Conditional
             | OracleType::PythLazerEMA
             | OracleType::KlendCTokenExchangeRate
-            | OracleType::Token2022Multiplier => false,
+            | OracleType::Token2022Multiplier
+            | OracleType::Canary => false,
         }
     }
 }
