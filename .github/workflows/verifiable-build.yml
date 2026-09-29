@@ -7,6 +7,9 @@ on:
     branches: [master]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   verifiable-build:
     name: Build scope (solana-verify)
@@ -19,7 +22,7 @@ jobs:
       # Before the checkout: the repo's rust-toolchain.toml (1.74.1) is too old to build solana-verify
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
       - name: Install solana-verify
-        run: cargo install --locked solana-verify
+        run: cargo install --locked solana-verify --version 0.5.2
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Build with solana-verify
         run: solana-verify build --library-name scope
