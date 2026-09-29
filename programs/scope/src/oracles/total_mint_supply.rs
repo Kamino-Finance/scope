@@ -42,6 +42,10 @@ fn parse_mint(account_info: &AccountInfo) -> ScopeResult<Mint> {
 /// fully reflected in the public base-mint state, and mints using InterestBearing or
 /// ScaledUiAmount can have a UI-visible amount that diverges from the raw base amount.
 /// This oracle intentionally returns the raw public `mint.supply`.
+///
+/// Listing rule: this is a raw observation, not a manipulation-resistant value. Supply can
+/// swing within a bundle (mint, refresh, burn), so entries for tokens whose issuance is
+/// user-triggerable must only be consumed through a TWAP entry, rather than directly.
 pub fn get_price(mint_account_info: &AccountInfo, clock: &Clock) -> Result<DatedPrice> {
     let mint = parse_mint(mint_account_info)?;
 

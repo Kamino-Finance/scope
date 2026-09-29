@@ -1324,8 +1324,7 @@
     "oracle_type": "CappedFloored",
     "source_entry": 416,
     "cap_entry": 496,
-    "floor_entry": 496,
-    "sources_max_age_s": 600
+    "floor_entry": 496
   },
   "441": {
     "label": "Raydium ONyc/USDG",
