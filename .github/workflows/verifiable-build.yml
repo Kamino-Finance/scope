@@ -3,8 +3,20 @@ name: Verifiable build
 on:
   push:
     branches: [master]
+    paths:
+      - 'programs/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust-toolchain.toml'
+      - '.github/workflows/verifiable-build.yml'
   pull_request:
     branches: [master]
+    paths:
+      - 'programs/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust-toolchain.toml'
+      - '.github/workflows/verifiable-build.yml'
   workflow_dispatch:
 
 permissions:
