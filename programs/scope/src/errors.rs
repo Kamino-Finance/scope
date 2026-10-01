@@ -266,8 +266,11 @@ pub enum ScopeError {
     #[msg("The multiplier a resume approves must convert to a non-zero price for the oracle type")]
     InvalidApprovedMultiplier,
 
-    #[msg("Token2022Multiplier auto approval threshold (bps) is greater than the allowed maximum")]
+    #[msg("The auto approval threshold (bps) is greater than the allowed maximum")]
     AutoApprovalBpsOutOfRange,
+
+    #[msg("Exponent tranching update_market CPI call failed")]
+    ExponentTranchingCPIError,
 }
 
 impl<T> From<TryFromPrimitiveError<T>> for ScopeError

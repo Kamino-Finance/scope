@@ -34,7 +34,7 @@ use crate::{
         parse_scaled_ui_amount_multipliers, ScaledUiAmountMultipliers,
     },
     oracles::PriceRefreshOutcome,
-    utils::consts::FULL_BPS,
+    utils::consts::{AUTO_APPROVAL_ANCHOR_PERIOD_S, FULL_BPS, MAX_DAILY_AUTO_APPROVAL_BPS},
     warn, DatedPrice, Price, ScopeError, ScopeResult,
 };
 
@@ -47,15 +47,6 @@ use crate::{
 /// the past — so size max age against that exposure. The 24h blackout only helps for switches
 /// announced further ahead than it.
 pub const TIME_PERIOD_BEFORE_ACTIVATION_TO_SUSPEND_S: i64 = 24 * 60 * 60; // 24 hours
-
-/// How long the approved multiplier stays the reference auto approval is measured against. Once
-/// elapsed, the next published multiplier becomes the reference, so the auto approval threshold
-/// bounds the cumulative change per day rather than each step.
-pub const AUTO_APPROVAL_ANCHOR_PERIOD_S: u64 = 24 * 60 * 60; // 24 hours
-
-/// Largest auto approval threshold a mapping may configure. A multiplier moving more than this in
-/// a day is a corporate action an operator should look at, not something to publish unattended.
-pub const MAX_DAILY_AUTO_APPROVAL_BPS: u16 = 100; // 1%
 
 /// Per-entry configuration, stored in the mapping's generic data.
 #[derive(Debug, Default, PartialEq, Eq, AnchorDeserialize, AnchorSerialize)]

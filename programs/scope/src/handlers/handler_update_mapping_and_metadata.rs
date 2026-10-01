@@ -211,8 +211,13 @@ pub fn process(
                         u16::try_from(entry_id).map_err(|_| ScopeError::BadTokenNb)?,
                     )?;
 
-                    // Reset the twap source/ref price tolerance bps
-                    oracle_mappings.twap_source_or_ref_price_tolerance_bps[entry_id] = u16::MAX;
+                    // The slot is shared: twap source for TWAP types, ref-price tolerance
+                    // otherwise. The twap source is part of the old type's config, so replacing
+                    // the type stales it; the tolerance is independent of the type and only
+                    // MappingRefPrice updates it.
+                    if current_type.is_twap() {
+                        oracle_mappings.twap_source_or_ref_price_tolerance_bps[entry_id] = u16::MAX;
+                    }
 
                     let new_mapping_pk = price_info_opt.map(|a| a.key());
 
@@ -265,6 +270,11 @@ pub fn process(
                     }
 
                     oracle_mappings.set_twap_source(entry_id, new_price_type, twap_source)?;
+                    // A TWAP entry has no ref-price check: the shared slot now holds the source,
+                    // so it cannot carry a tolerance. Clear the reference a previous type set,
+                    // otherwise the refresh would check the TWAP against it at the default
+                    // tolerance.
+                    oracle_mappings.set_ref_price(entry_id, None);
 
                     let new_ema_type = new_price_type.to_ema_type()?;
                     if !oracle_mappings.is_entry_used(twap_source.into()) {

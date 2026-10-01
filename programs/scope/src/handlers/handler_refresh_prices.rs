@@ -168,14 +168,16 @@ pub fn refresh_price_list<'info>(
             if let Err(diff_err) =
                 check_ref_price_difference(price.price, ref_price, ref_price_tolerance_bps)
             {
-                if fail_tx_on_error {
+                // A TWAP-enabled entry skips even in a single-token refresh, where other failures
+                // revert the tx: the TWAP sample recorded above must survive, as a TWAP used as
+                // ref price converges only through it. With no TWAP there is nothing to preserve.
+                if fail_tx_on_error && !oracle_mappings.is_twap_enabled(token_idx) {
                     return Err(diff_err);
-                } else {
-                    msg!(
-                        "Price skipped as ref price check failed (token {token_idx}, type {price_type:?})",
-                    );
-                    continue;
                 }
+                msg!(
+                    "Price skipped as ref price check failed (token {token_idx}, type {price_type:?})",
+                );
+                continue;
             }
         }
         let to_update = oracle_prices

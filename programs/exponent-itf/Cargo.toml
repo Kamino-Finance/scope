@@ -1,0 +1,16 @@
+[package]
+name = "exponent-itf"
+version = "0.1.0"
+description = "Minimal interface to the Exponent tranching program for Scope oracle"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "exponent_itf"
+
+[features]
+no-entrypoint = []
+
+[dependencies]
+anchor-lang = "0.28.0"
+solana-program = "~1.16.18"

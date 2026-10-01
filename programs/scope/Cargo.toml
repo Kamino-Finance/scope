@@ -82,5 +82,6 @@ num-bigint = "0.4"
 securitize-itf = { path = "../securitize-itf", features = ["no-entrypoint"] }
 flashtrade-perp-itf = { path = "../flashtrade-perp-itf", features = ["no-entrypoint"] }
 klend-itf = { path = "../klend-itf", features = ["no-entrypoint"] }
+exponent-itf = { path = "../exponent-itf", features = ["no-entrypoint"] }
 num-traits = "0.2.15"
 

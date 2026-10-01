@@ -150,9 +150,7 @@ pub fn refresh_pyth_lazer_price<'info>(
         // Check that the price is close enough to the ref price if there is a ref price.
         // Deliberately after the TWAP update: a price may use its own TWAP as its ref price (a
         // circuit breaker filtering out short price bursts), and for that to work the TWAP must
-        // update even when the ref price check fails. In a multi-token refresh a failing token is
-        // skipped (its update not stored) so it can't block the group's other tokens; a
-        // single-token refresh fails loudly. Mirrors refresh_price_list.
+        // update even when the ref price check fails. Mirrors refresh_price_list.
         if oracle_mappings.ref_price[token_idx] != u16::MAX {
             let ref_price =
                 oracle_prices.prices[usize::from(oracle_mappings.ref_price[token_idx])].price;
@@ -160,14 +158,16 @@ pub fn refresh_pyth_lazer_price<'info>(
             if let Err(diff_err) =
                 check_ref_price_difference(price.price, ref_price, ref_price_tolerance_bps)
             {
-                if fail_tx_on_error {
+                // A TWAP-enabled entry skips even in a single-token refresh, where other failures
+                // revert the tx: the TWAP sample recorded above must survive, as a TWAP used as
+                // ref price converges only through it. With no TWAP there is nothing to preserve.
+                if fail_tx_on_error && !oracle_mappings.is_twap_enabled(token_idx) {
                     return Err(diff_err);
-                } else {
-                    msg!(
-                        "Price skipped as ref price check failed (token {token_idx}, type {price_type:?})",
-                    );
-                    continue;
                 }
+                msg!(
+                    "Price skipped as ref price check failed (token {token_idx}, type {price_type:?})",
+                );
+                continue;
             }
         }
 

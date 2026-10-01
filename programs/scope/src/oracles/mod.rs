@@ -10,6 +10,7 @@ pub mod capped_most_recent_of;
 pub mod chainlink;
 pub mod conditional;
 pub mod discount_to_maturity;
+pub mod exponent_tranching;
 pub mod fixed_price;
 pub mod flashtrade_lp;
 pub mod jito_restaking;
@@ -39,6 +40,7 @@ use std::{fmt::DebugStruct, ops::Deref};
 
 use anchor_lang::{accounts::account_loader::AccountLoader, prelude::*};
 
+use self::chainlink::GenericDataConvertible;
 #[cfg(feature = "yvaults")]
 use self::ktokens_token_x::TokenTypes;
 // Re-export OracleType from states
@@ -120,6 +122,9 @@ impl OracleType {
             // mint (`test_token_2022_multiplier_refresh_from_real_mainnet_mint`).
             OracleType::Token2022Multiplier => 20_000,
             OracleType::Canary => 20_000,
+            // Measured at ~160k CU against the real tranching program and the real SY rate leg
+            // (via the exponent fidelity harness on a mainnet market snapshot).
+            OracleType::ExponentTranching => 175_000,
         }
     }
 }
@@ -341,6 +346,13 @@ where
             }
         }
         OracleType::Canary => canary::get_price(base_account, clock, extra_accounts),
+        OracleType::ExponentTranching => exponent_tranching::get_price(
+            base_account,
+            &oracle_mappings.generic[index],
+            clock,
+            extra_accounts,
+        )
+        .map_err(Into::into),
     }?;
     // The price providers above are performing their type-specific validations, but are still free to return 0,
     // which we can only tolerate for certain oracle types (e.g. explicit fixed price, multiplication chains
@@ -408,7 +420,7 @@ pub fn validate_oracle_cfg(
             chainlink::validate_mapping_v7_v9(price_account).map_err(Into::into)
         }
         OracleType::ChainlinkX => {
-            chainlink::validate_mapping_v8_v10(price_account, generic_data).map_err(Into::into)
+            chainlink::validate_mapping_v10(price_account, generic_data).map_err(Into::into)
         }
         OracleType::ChainlinkExchangeRate => {
             chainlink::validate_mapping_v7_v9(price_account).map_err(Into::into)
@@ -468,6 +480,10 @@ pub fn validate_oracle_cfg(
             token_2022_multiplier::validate_oracle_config(price_account, generic_data)
         }
         OracleType::Canary => canary::validate_price_account(price_account),
+        OracleType::ExponentTranching => {
+            exponent_tranching::validate_mapping_cfg(price_account, generic_data)
+                .map_err(Into::into)
+        }
     }
 }
 
@@ -504,7 +520,13 @@ pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
         | OracleType::TotalMintSupply
         | OracleType::KlendCTokenExchangeRate
         | OracleType::Canary
-        | OracleType::Token2022Multiplier => false,
+        // A change to their generic data (the auto approval threshold, and for ChainlinkX the
+        // market status behaviour) must not un-suspend the entry or drop the auto approval
+        // reference and its period start. The last price and TWAP stay as well, also after a
+        // market status behaviour change: they were accepted under the behaviour in force at the
+        // time and age out normally.
+        | OracleType::Token2022Multiplier
+        | OracleType::ChainlinkX => false,
 
         OracleType::FixedPrice
         | OracleType::DiscountToMaturity
@@ -514,10 +536,10 @@ pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
         | OracleType::MultiplicationChain
         | OracleType::Chainlink
         | OracleType::ChainlinkRWA
-        | OracleType::ChainlinkX
         | OracleType::PythLazer
         | OracleType::Conditional
-        | OracleType::PythLazerEMA => true,
+        | OracleType::PythLazerEMA
+        | OracleType::ExponentTranching => true,
 
         OracleType::Unused
         | OracleType::DeprecatedPlaceholder1
@@ -586,16 +608,29 @@ pub fn debug_format_generic_data(
             );
         }
 
+        OracleType::ExponentTranching => {
+            d.field(
+                "exponent_tranching_cfg",
+                &exponent_tranching::ExponentTranchingData::from_generic_data(generic_data).ok(),
+            );
+        }
+
         OracleType::Chainlink => {
             d.field(
                 "chainlink_v3_cfg",
                 &chainlink::cfg_data::V3::from_generic_data(generic_data).ok(),
             );
         }
-        OracleType::ChainlinkRWA | OracleType::ChainlinkX => {
+        OracleType::ChainlinkRWA => {
             d.field(
-                "chainlink_v8_v10_cfg",
-                &chainlink::cfg_data::V8V10::from_generic_data(generic_data).ok(),
+                "chainlink_v8_cfg",
+                &chainlink::cfg_data::V8::from_generic_data(generic_data).ok(),
+            );
+        }
+        OracleType::ChainlinkX => {
+            d.field(
+                "chainlink_x_cfg",
+                &chainlink::ChainlinkXMappingData::from_generic_data(generic_data).ok(),
             );
         }
 

@@ -159,6 +159,8 @@ pub enum OracleType {
     Token2022Multiplier = 50,
     /// Canary median oracle. Mapping is a Canary `PriceFeed`; refresh CPIs `get_price`.
     Canary = 51,
+    /// Exponent tranching LP price (per-LP net asset value via CPI)
+    ExponentTranching = 52,
 }
 
 impl OracleType {
@@ -172,6 +174,7 @@ impl OracleType {
                 | OracleType::StakedSolBalance
                 | OracleType::TotalMintSupply
                 | OracleType::Conditional
+                | OracleType::ExponentTranching
         )
     }
 
@@ -253,7 +256,8 @@ impl OracleType {
             | OracleType::PythLazerEMA
             | OracleType::KlendCTokenExchangeRate
             | OracleType::Token2022Multiplier
-            | OracleType::Canary => false,
+            | OracleType::Canary
+            | OracleType::ExponentTranching => false,
         }
     }
 }
