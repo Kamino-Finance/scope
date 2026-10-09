@@ -3,7 +3,7 @@
 //! Scope codebase is not aware of the token configuration. This module defines how to store onchain
 //! a price chain that allows to compute a price in a different quotation indexed with a foreign token id.
 //!
-//! This tools used for ktokens for now but can be reused in the future for other price based on others available in scope.
+//! Consumers can use these chains to derive a price from other entries available in Scope.
 //!
 //! An account can store up to `crate::MAX_ENTRIES` chains.
 //! One chain is composed of at most 4 prices.
@@ -238,7 +238,7 @@ impl ScopeChainAccount {
     }
 }
 
-// TODO not working with latest prices that have a lot of decimals. Backport yvault version here.
+// TODO: support source prices with a large number of decimal places.
 pub fn get_price_from_chain(
     prices: &OraclePrices,
     chain: &[u16; MAX_CHAIN_LENGTH],

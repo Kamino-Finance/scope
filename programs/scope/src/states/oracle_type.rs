@@ -44,8 +44,9 @@ pub enum OracleType {
     /// - The stake rate does not take into account the fees that applies on staking or unstaking.
     /// - Unstaking is not immediate and the market price is often lower than the "stake price".
     SplStake = 5,
-    /// KTokens from Kamino
-    KToken = 6,
+    /// Deprecated (formerly KToken)
+    // Do not remove - breaks persisted account and IDL compatibility
+    DeprecatedPlaceholder8 = 6,
     /// Deprecated (formerly PythEMA)
     // Do not remove - breaks the typescript idl codegen
     DeprecatedPlaceholder5 = 7,
@@ -56,10 +57,12 @@ pub enum OracleType {
     /// - The stake rate does not take into account the fees that applies on staking or unstaking.
     /// - Unstaking is not immediate and the market price is often lower than the "stake price".
     MsolStake = 8,
-    /// Number of token A for 1 kToken
-    KTokenToTokenA = 9,
-    /// Number of token B for 1 kToken
-    KTokenToTokenB = 10,
+    /// Deprecated (formerly KTokenToTokenA)
+    // Do not remove - breaks persisted account and IDL compatibility
+    DeprecatedPlaceholder9 = 9,
+    /// Deprecated (formerly KTokenToTokenB)
+    // Do not remove - breaks persisted account and IDL compatibility
+    DeprecatedPlaceholder10 = 10,
     /// Jupiter's perpetual LP tokens
     /// This oracle type provide a reference and is not meant to be used directly because
     /// the price is just fetched from the Jupiter's pool and can be stalled.
@@ -84,14 +87,17 @@ pub enum OracleType {
     /// Deprecated (formerly JupiterLpScope)
     // Do not remove - breaks the typescript idl codegen
     DeprecatedPlaceholder7 = 20,
-    /// Pyth Pull oracles
-    PythPull = 21,
-    /// Pyth Pull oracles EMA
-    PythPullEMA = 22,
+    /// Deprecated (formerly Pyth Pull)
+    // Do not remove - breaks the typescript idl codegen
+    DeprecatedPlaceholder12 = 21,
+    /// Deprecated (formerly Pyth Pull EMA)
+    // Do not remove - breaks the typescript idl codegen
+    DeprecatedPlaceholder13 = 22,
     /// Fixed price oracle
     FixedPrice = 23,
-    /// Switchboard on demand
-    SwitchboardOnDemand = 24,
+    /// Deprecated (formerly SwitchboardOnDemand)
+    // Do not remove - breaks the typescript idl codegen
+    DeprecatedPlaceholder11 = 24,
     /// Jito restaking tokens
     JitoRestaking = 25,
     /// Chainlink oracles
@@ -164,6 +170,26 @@ pub enum OracleType {
 }
 
 impl OracleType {
+    /// Whether this value is a compatibility tombstone for a retired oracle provider.
+    pub const fn is_deprecated_placeholder(self) -> bool {
+        matches!(
+            self,
+            OracleType::DeprecatedPlaceholder1
+                | OracleType::DeprecatedPlaceholder2
+                | OracleType::DeprecatedPlaceholder3
+                | OracleType::DeprecatedPlaceholder4
+                | OracleType::DeprecatedPlaceholder5
+                | OracleType::DeprecatedPlaceholder6
+                | OracleType::DeprecatedPlaceholder7
+                | OracleType::DeprecatedPlaceholder8
+                | OracleType::DeprecatedPlaceholder9
+                | OracleType::DeprecatedPlaceholder10
+                | OracleType::DeprecatedPlaceholder11
+                | OracleType::DeprecatedPlaceholder12
+                | OracleType::DeprecatedPlaceholder13
+        )
+    }
+
     /// Whether this oracle type can legitimately report a zero value.
     pub fn allows_zero_price(self) -> bool {
         matches!(
@@ -218,11 +244,13 @@ impl OracleType {
             | OracleType::DeprecatedPlaceholder5
             | OracleType::DeprecatedPlaceholder6
             | OracleType::DeprecatedPlaceholder7
+            | OracleType::DeprecatedPlaceholder12
+            | OracleType::DeprecatedPlaceholder13
             | OracleType::SplStake
-            | OracleType::KToken
+            | OracleType::DeprecatedPlaceholder8
             | OracleType::MsolStake
-            | OracleType::KTokenToTokenA
-            | OracleType::KTokenToTokenB
+            | OracleType::DeprecatedPlaceholder9
+            | OracleType::DeprecatedPlaceholder10
             | OracleType::JupiterLpFetch
             | OracleType::ScopeTwap1h
             | OracleType::ScopeTwap8h
@@ -234,10 +262,8 @@ impl OracleType {
             | OracleType::RaydiumAmmV3BtoA
             | OracleType::MeteoraDlmmAtoB
             | OracleType::MeteoraDlmmBtoA
-            | OracleType::PythPull
-            | OracleType::PythPullEMA
             | OracleType::FixedPrice
-            | OracleType::SwitchboardOnDemand
+            | OracleType::DeprecatedPlaceholder11
             | OracleType::JitoRestaking
             | OracleType::DiscountToMaturity
             | OracleType::MostRecentOf

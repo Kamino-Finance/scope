@@ -16,8 +16,4 @@ debug = []
 
 [dependencies]
 anchor-lang = "0.28.0"
-anchor-spl = "0.28.0"
-solana-program = "~1.16.18"
 bytemuck = { version = "1.12", default-features = false, features = ["derive"] }
-num-traits = "0.2.15"
-num = "0.4.0"

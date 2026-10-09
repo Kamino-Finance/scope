@@ -4,9 +4,8 @@ use decimal_wad::{
 };
 use raydium_amm_v3::libraries::U256;
 use solana_program::clock;
-use yvaults::utils::FULL_BPS;
 
-use crate::{Price, ScopeError, ScopeResult};
+use crate::{utils::consts::FULL_BPS, Price, ScopeError, ScopeResult};
 
 /// Transform sqrt price to normal price scaled by 2^64
 fn sqrt_price_to_x64_price(sqrt_price: u128, decimals_a: u8, decimals_b: u8) -> U192 {
@@ -241,7 +240,7 @@ pub fn check_confidence_interval_decimal_bps(
     deviation: Decimal,
     confidence_bps: u32,
 ) -> ScopeResult<()> {
-    if price * confidence_bps <= deviation * FULL_BPS {
+    if price * confidence_bps <= deviation * u32::from(FULL_BPS) {
         Err(ScopeError::ConfidenceIntervalCheckFailed)
     } else {
         Ok(())

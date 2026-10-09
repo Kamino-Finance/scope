@@ -71,6 +71,7 @@ pub fn validate_price_account(price_data_account: Option<&AccountInfo>) -> Resul
         warn!("No RedStone price account provided");
         return err!(ScopeError::ExpectedPriceAccount);
     };
+
     require_keys_eq!(
         *price_data_account.owner,
         redstone_itf::ID,
