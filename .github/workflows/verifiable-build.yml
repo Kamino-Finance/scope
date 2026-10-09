@@ -22,6 +22,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 jobs:
   verifiable-build:
     name: Build scope (solana-verify)
@@ -42,6 +46,6 @@ jobs:
         run: solana-verify get-executable-hash target/deploy/scope.so
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: scope-so
+          name: scope-${{ github.sha }}
           path: target/deploy/scope.so
-          retention-days: 7
+          retention-days: 30
