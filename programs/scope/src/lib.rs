@@ -17,8 +17,6 @@ use handlers::*;
 pub use num_enum;
 use program_id::PROGRAM_ID;
 pub use whirlpool;
-#[cfg(feature = "yvaults")]
-pub use yvaults;
 
 pub use crate::{
     errors::*,

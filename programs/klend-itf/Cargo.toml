@@ -14,7 +14,5 @@ staging = []
 
 [dependencies]
 anchor-lang = "0.28.0"
-solana-program = ">1.16.18"
 bytemuck = { version = "1.4.0", features = ["min_const_generics"] }
 static_assertions = "1.1.0"
-borsh = "0.10"

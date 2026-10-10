@@ -1,8 +1,3 @@
-#[cfg(feature = "yvaults")]
-pub mod ktokens;
-#[cfg(feature = "yvaults")]
-pub mod ktokens_token_x;
-
 pub mod adrena_lp;
 pub mod canary;
 pub mod capped_floored;
@@ -21,17 +16,13 @@ pub mod most_recent_of;
 pub mod msol_stake;
 pub mod multiplication_chain;
 pub mod orca_whirlpool;
-pub mod pyth;
 pub mod pyth_lazer;
-pub mod pyth_pull;
-pub mod pyth_pull_ema;
 pub mod raydium_ammv3;
 pub mod redstone;
 pub mod securitize;
 pub mod spl_balance;
 pub mod spl_stake;
 pub mod staked_sol_balance;
-pub mod switchboard_on_demand;
 pub mod token_2022_multiplier;
 pub mod total_mint_supply;
 pub mod twap;
@@ -41,8 +32,6 @@ use std::{fmt::DebugStruct, ops::Deref};
 use anchor_lang::{accounts::account_loader::AccountLoader, prelude::*};
 
 use self::chainlink::GenericDataConvertible;
-#[cfg(feature = "yvaults")]
-use self::ktokens_token_x::TokenTypes;
 // Re-export OracleType from states
 pub use crate::states::OracleType;
 use crate::{
@@ -64,12 +53,7 @@ impl OracleType {
     pub fn get_update_cu_budget(&self) -> u32 {
         match self {
             OracleType::FixedPrice => 10_000,
-            OracleType::PythPull => 20_000,
-            OracleType::PythPullEMA => 20_000,
-            OracleType::SwitchboardOnDemand => 30_000,
             OracleType::SplStake => 20_000,
-            OracleType::KToken => 120_000,
-            OracleType::KTokenToTokenA | OracleType::KTokenToTokenB => 100_000,
             OracleType::MsolStake => 20_000,
             OracleType::JupiterLpFetch => 40_000,
             OracleType::ScopeTwap1h
@@ -107,9 +91,13 @@ impl OracleType {
             | OracleType::DeprecatedPlaceholder4
             | OracleType::DeprecatedPlaceholder5
             | OracleType::DeprecatedPlaceholder6
-            | OracleType::DeprecatedPlaceholder7 => {
-                panic!("DeprecatedPlaceholder is not a valid oracle type")
-            }
+            | OracleType::DeprecatedPlaceholder7
+            | OracleType::DeprecatedPlaceholder8
+            | OracleType::DeprecatedPlaceholder9
+            | OracleType::DeprecatedPlaceholder10
+            | OracleType::DeprecatedPlaceholder11
+            | OracleType::DeprecatedPlaceholder12
+            | OracleType::DeprecatedPlaceholder13 => 0,
             OracleType::Securitize => 30_000,
             OracleType::AdrenaLp => 20_000,
             OracleType::FlashtradeLp => 20_000,
@@ -156,53 +144,7 @@ where
     'a: 'b,
 {
     let price = match price_type {
-        OracleType::PythPull => pyth_pull::get_price(base_account, clock),
-        OracleType::PythPullEMA => pyth_pull_ema::get_price(base_account, clock),
-        OracleType::SwitchboardOnDemand => {
-            switchboard_on_demand::get_price(base_account, clock).map_err(Into::into)
-        }
         OracleType::SplStake => spl_stake::get_price(base_account, clock),
-        #[cfg(not(feature = "yvaults"))]
-        OracleType::KToken => {
-            panic!("yvaults feature is not enabled, KToken oracle type is not available")
-        }
-        #[cfg(feature = "yvaults")]
-        OracleType::KToken => {
-            ktokens::get_price(base_account, clock, extra_accounts).map_err(|e| {
-                warn!("Error getting KToken price: {:?}", e);
-                e.into()
-            })
-        }
-        #[cfg(feature = "yvaults")]
-        OracleType::KTokenToTokenA => ktokens_token_x::get_token_x_per_share(
-            base_account,
-            clock,
-            extra_accounts,
-            TokenTypes::TokenA,
-        )
-        .map_err(|e| {
-            warn!("Error getting KToken share ratio: {:?}", e);
-            e.into()
-        }),
-        #[cfg(feature = "yvaults")]
-        OracleType::KTokenToTokenB => ktokens_token_x::get_token_x_per_share(
-            base_account,
-            clock,
-            extra_accounts,
-            TokenTypes::TokenB,
-        )
-        .map_err(|e| {
-            warn!("Error getting KToken share ratio: {:?}", e);
-            e.into()
-        }),
-        #[cfg(not(feature = "yvaults"))]
-        OracleType::KTokenToTokenA => {
-            panic!("yvaults feature is not enabled, KToken oracle type is not available")
-        }
-        #[cfg(not(feature = "yvaults"))]
-        OracleType::KTokenToTokenB => {
-            panic!("yvaults feature is not enabled, KToken oracle type is not available")
-        }
         OracleType::MsolStake => msol_stake::get_price(base_account, clock).map_err(Into::into),
         OracleType::JupiterLpFetch => {
             jupiter_lp::get_price_no_recompute(base_account, clock, extra_accounts).map_err(|e| {
@@ -314,9 +256,13 @@ where
         | OracleType::DeprecatedPlaceholder4
         | OracleType::DeprecatedPlaceholder5
         | OracleType::DeprecatedPlaceholder6
-        | OracleType::DeprecatedPlaceholder7 => {
-            panic!("DeprecatedPlaceholder is not a valid oracle type")
-        }
+        | OracleType::DeprecatedPlaceholder7
+        | OracleType::DeprecatedPlaceholder8
+        | OracleType::DeprecatedPlaceholder9
+        | OracleType::DeprecatedPlaceholder10
+        | OracleType::DeprecatedPlaceholder11
+        | OracleType::DeprecatedPlaceholder12
+        | OracleType::DeprecatedPlaceholder13 => return err!(ScopeError::BadTokenType),
         OracleType::AdrenaLp => adrena_lp::get_price(base_account, clock),
         OracleType::FlashtradeLp => flashtrade_lp::get_price(base_account, clock),
         OracleType::SplBalance => spl_balance::get_price(base_account, clock, extra_accounts),
@@ -382,15 +328,7 @@ pub fn validate_oracle_cfg(
     }
 
     match price_type {
-        OracleType::PythPull => pyth_pull::validate_price_update_v2_info(price_account),
-        OracleType::PythPullEMA => pyth_pull::validate_price_update_v2_info(price_account),
-        OracleType::SwitchboardOnDemand => {
-            switchboard_on_demand::validate_price_account(price_account)
-        }
         OracleType::SplStake => Ok(()),
-        OracleType::KToken => Ok(()), // TODO, should validate ownership of the ktoken account
-        OracleType::KTokenToTokenA => Ok(()), // TODO, should validate ownership of the ktoken account
-        OracleType::KTokenToTokenB => Ok(()), // TODO, should validate ownership of the ktoken account
         OracleType::MsolStake => Ok(()),
         OracleType::JupiterLpFetch => jupiter_lp::validate_jlp_pool(price_account),
         OracleType::ScopeTwap1h
@@ -461,9 +399,13 @@ pub fn validate_oracle_cfg(
         | OracleType::DeprecatedPlaceholder4
         | OracleType::DeprecatedPlaceholder5
         | OracleType::DeprecatedPlaceholder6
-        | OracleType::DeprecatedPlaceholder7 => {
-            panic!("DeprecatedPlaceholder is not a valid oracle type")
-        }
+        | OracleType::DeprecatedPlaceholder7
+        | OracleType::DeprecatedPlaceholder8
+        | OracleType::DeprecatedPlaceholder9
+        | OracleType::DeprecatedPlaceholder10
+        | OracleType::DeprecatedPlaceholder11
+        | OracleType::DeprecatedPlaceholder12
+        | OracleType::DeprecatedPlaceholder13 => err!(ScopeError::BadTokenType),
         OracleType::AdrenaLp => adrena_lp::validate_adrena_pool(price_account, clock),
         OracleType::FlashtradeLp => flashtrade_lp::validate_flashtrade_pool(price_account, clock),
         OracleType::SplBalance => spl_balance::validate_account(price_account),
@@ -490,10 +432,7 @@ pub fn validate_oracle_cfg(
 pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
     match price_type {
         OracleType::SplStake
-        | OracleType::KToken
         | OracleType::MsolStake
-        | OracleType::KTokenToTokenA
-        | OracleType::KTokenToTokenB
         | OracleType::JupiterLpFetch
         | OracleType::ScopeTwap1h
         | OracleType::ScopeTwap8h
@@ -505,9 +444,6 @@ pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
         | OracleType::RaydiumAmmV3BtoA
         | OracleType::MeteoraDlmmAtoB
         | OracleType::MeteoraDlmmBtoA
-        | OracleType::PythPull
-        | OracleType::PythPullEMA
-        | OracleType::SwitchboardOnDemand
         | OracleType::JitoRestaking
         | OracleType::RedStone
         | OracleType::AdrenaLp
@@ -548,7 +484,13 @@ pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
         | OracleType::DeprecatedPlaceholder4
         | OracleType::DeprecatedPlaceholder5
         | OracleType::DeprecatedPlaceholder6
-        | OracleType::DeprecatedPlaceholder7 => unreachable!(),
+        | OracleType::DeprecatedPlaceholder7
+        | OracleType::DeprecatedPlaceholder8
+        | OracleType::DeprecatedPlaceholder9
+        | OracleType::DeprecatedPlaceholder10
+        | OracleType::DeprecatedPlaceholder11
+        | OracleType::DeprecatedPlaceholder12
+        | OracleType::DeprecatedPlaceholder13 => true,
     }
 }
 
@@ -558,13 +500,8 @@ pub fn debug_format_generic_data(
     generic_data: &[u8; 20],
 ) {
     match price_type {
-        OracleType::PythPull
-        | OracleType::PythPullEMA
-        | OracleType::SplStake
-        | OracleType::KToken
+        OracleType::SplStake
         | OracleType::MsolStake
-        | OracleType::KTokenToTokenA
-        | OracleType::KTokenToTokenB
         | OracleType::JupiterLpFetch
         | OracleType::OrcaWhirlpoolAtoB
         | OracleType::OrcaWhirlpoolBtoA
@@ -572,7 +509,6 @@ pub fn debug_format_generic_data(
         | OracleType::RaydiumAmmV3BtoA
         | OracleType::MeteoraDlmmAtoB
         | OracleType::MeteoraDlmmBtoA
-        | OracleType::SwitchboardOnDemand
         | OracleType::JitoRestaking
         | OracleType::RedStone
         | OracleType::Securitize
@@ -596,7 +532,13 @@ pub fn debug_format_generic_data(
         | OracleType::DeprecatedPlaceholder4
         | OracleType::DeprecatedPlaceholder5
         | OracleType::DeprecatedPlaceholder6
-        | OracleType::DeprecatedPlaceholder7 => (), // no generic data to print
+        | OracleType::DeprecatedPlaceholder7
+        | OracleType::DeprecatedPlaceholder8
+        | OracleType::DeprecatedPlaceholder9
+        | OracleType::DeprecatedPlaceholder10
+        | OracleType::DeprecatedPlaceholder11
+        | OracleType::DeprecatedPlaceholder12
+        | OracleType::DeprecatedPlaceholder13 => (), // no generic data to print
 
         OracleType::Token2022Multiplier => {
             d.field(
