@@ -1,0 +1,71 @@
+name: Verifiable build
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'programs/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust-toolchain.toml'
+      - '.github/workflows/verifiable-build.yml'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'programs/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust-toolchain.toml'
+      - '.github/workflows/verifiable-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  verifiable-build:
+    name: Build scope (solana-verify)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: solana-verify-cache
+        with:
+          path: ~/.cargo/bin/solana-verify
+          key: solana-verify-0.5.2-${{ runner.os }}-${{ runner.arch }}
+      - name: Install essentials
+        if: steps.solana-verify-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config build-essential libudev-dev
+      # Before the checkout: the repo's rust-toolchain.toml (1.74.1) is too old to build solana-verify
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        if: steps.solana-verify-cache.outputs.cache-hit != 'true'
+      - name: Install solana-verify
+        if: steps.solana-verify-cache.outputs.cache-hit != 'true'
+        run: cargo install --locked solana-verify --version 0.5.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      # Only PRs reuse the build output: master builds from scratch, and saves the cache for the PRs
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: github.event_name == 'pull_request'
+        with:
+          path: target
+          key: sbf-target-${{ hashFiles('Cargo.lock') }}
+          restore-keys: sbf-target-
+      - name: Build with solana-verify
+        run: solana-verify build --library-name scope
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: github.event_name != 'pull_request'
+        with:
+          path: target
+          key: sbf-target-${{ hashFiles('Cargo.lock') }}
+      - name: Print executable hash
+        run: solana-verify get-executable-hash target/deploy/scope.so
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: scope-${{ github.sha }}
+          path: target/deploy/scope.so
+          retention-days: 30
