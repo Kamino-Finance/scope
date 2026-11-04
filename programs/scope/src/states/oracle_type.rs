@@ -167,6 +167,10 @@ pub enum OracleType {
     Canary = 51,
     /// Exponent tranching LP price (per-LP net asset value via CPI)
     ExponentTranching = 52,
+    /// Canary breaker feed, 0 (paused) or 1 (enabled). Mapping and refresh are those of
+    /// `Canary`, and refresh also requires exactly 0 or 1 at exp 0. Used in a
+    /// `MultiplicationChain`, or as a ref price for an entry priced near 1.
+    CanaryBreakers = 53,
 }
 
 impl OracleType {
@@ -201,6 +205,7 @@ impl OracleType {
                 | OracleType::TotalMintSupply
                 | OracleType::Conditional
                 | OracleType::ExponentTranching
+                | OracleType::CanaryBreakers
         )
     }
 
@@ -283,7 +288,8 @@ impl OracleType {
             | OracleType::KlendCTokenExchangeRate
             | OracleType::Token2022Multiplier
             | OracleType::Canary
-            | OracleType::ExponentTranching => false,
+            | OracleType::ExponentTranching
+            | OracleType::CanaryBreakers => false,
         }
     }
 }
