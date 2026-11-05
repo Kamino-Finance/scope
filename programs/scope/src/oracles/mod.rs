@@ -1,5 +1,6 @@
 pub mod adrena_lp;
 pub mod canary;
+pub mod canary_breakers;
 pub mod capped_floored;
 pub mod capped_most_recent_of;
 pub mod chainlink;
@@ -109,7 +110,7 @@ impl OracleType {
             // Measured at ~13.6k CU under `cargo test-sbf` against a real 8-extension mainnet
             // mint (`test_token_2022_multiplier_refresh_from_real_mainnet_mint`).
             OracleType::Token2022Multiplier => 20_000,
-            OracleType::Canary => 20_000,
+            OracleType::Canary | OracleType::CanaryBreakers => 20_000,
             // Measured at ~160k CU against the real tranching program and the real SY rate leg
             // (via the exponent fidelity harness on a mainnet market snapshot).
             OracleType::ExponentTranching => 175_000,
@@ -292,6 +293,9 @@ where
             }
         }
         OracleType::Canary => canary::get_price(base_account, clock, extra_accounts),
+        OracleType::CanaryBreakers => {
+            canary_breakers::get_price(base_account, clock, extra_accounts)
+        }
         OracleType::ExponentTranching => exponent_tranching::get_price(
             base_account,
             &oracle_mappings.generic[index],
@@ -421,7 +425,9 @@ pub fn validate_oracle_cfg(
         OracleType::Token2022Multiplier => {
             token_2022_multiplier::validate_oracle_config(price_account, generic_data)
         }
-        OracleType::Canary => canary::validate_price_account(price_account),
+        OracleType::Canary | OracleType::CanaryBreakers => {
+            canary::validate_price_account(price_account)
+        }
         OracleType::ExponentTranching => {
             exponent_tranching::validate_mapping_cfg(price_account, generic_data)
                 .map_err(Into::into)
@@ -456,6 +462,7 @@ pub fn update_generic_data_must_reset_price(price_type: OracleType) -> bool {
         | OracleType::TotalMintSupply
         | OracleType::KlendCTokenExchangeRate
         | OracleType::Canary
+        | OracleType::CanaryBreakers
         // A change to their generic data (the auto approval threshold, and for ChainlinkX the
         // market status behaviour) must not un-suspend the entry or drop the auto approval
         // reference and its period start. The last price and TWAP stay as well, also after a
@@ -525,6 +532,7 @@ pub fn debug_format_generic_data(
         | OracleType::TotalMintSupply
         | OracleType::KlendCTokenExchangeRate
         | OracleType::Canary
+        | OracleType::CanaryBreakers
         | OracleType::Unused
         | OracleType::DeprecatedPlaceholder1
         | OracleType::DeprecatedPlaceholder2
