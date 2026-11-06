@@ -20,6 +20,7 @@
     "price_confidence_factor": 50,
     "ema_enabled": true,
     "ema_confidence_factor": 50,
+    "max_age_slot": 85,
     "group_ids": [ 0, 1, 2 ]
   },
   "1": {
@@ -31,6 +32,7 @@
     "price_confidence_factor": 50,
     "ema_enabled": true,
     "ema_confidence_factor": 50,
+    "max_age_slot": 85,
     "group_ids": [ 0, 1 ]
   },
   "2": {
@@ -48,6 +50,7 @@
     "label": "Fixed 10^-6",
     "oracle_type": "FixedPrice",
     "fixed_price": 1e-6,
+    "max_age_slot": 85,
     "group_ids": [ 0, 1 ]
   },
   "4": {
@@ -59,6 +62,7 @@
     "price_confidence_factor": 50,
     "ema_enabled": true,
     "ema_confidence_factor": 50,
+    "max_age_slot": 85,
     "group_ids": [ 0, 2 ]
   },
   "5": {
@@ -76,12 +80,14 @@
     "price_confidence_factor": 50,
     "ema_enabled": true,
     "ema_confidence_factor": 50,
+    "max_age_slot": 85,
     "group_ids": [ 0 ]
   },
   "10": {
     "label": "daoSOL/SOL",
     "oracle_mapping": "7ge2xKsZXmqPxa3YmXxXmzCp9Hc2ezrTxh6PECaxCwrL",
     "oracle_type": "SplStake",
+    "max_age_slot": 85,
     "group_ids": [ 0 ]
   },
   "18": {
@@ -163,6 +169,13 @@
     "max_age_slot": 380,
     "group_ids": [ 2 ]
   },
+  "42": {
+    "label": "Fixed 1.0 price",
+    "oracle_type": "FixedPrice",
+    "fixed_price": 1.0,
+    "max_age_slot": 85,
+    "group_ids": [ 0 ]
+  },
   "43": {
     "label": "PythLazerEMA USX/USD",
     "oracle_type": "PythLazerEMA",
@@ -205,6 +218,7 @@
     "label": "JITOSOL/SOL",
     "oracle_mapping": "Jito4APyf642JPZPx3hGc6WWJ8zPKtRbRs4P815Awbb",
     "oracle_type": "SplStake",
+    "max_age_slot": 85,
     "group_ids": [ 0, 2 ]
   },
   "52": {
